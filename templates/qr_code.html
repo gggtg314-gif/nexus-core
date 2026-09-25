@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code · {{ computer.computer_name }}</title>
+
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('nexus-theme') || 'dark';
+                var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var effective = saved === 'auto' ? (systemDark ? 'dark' : 'light') : saved;
+                document.documentElement.setAttribute('data-theme', effective);
+                document.documentElement.setAttribute('data-theme-pref', saved);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════
+           THEME TOKENS
+           ═══════════════════════════════════════════════════════ */
+        :root,
+        [data-theme="light"] {
+            --bg-canvas: #f7f8fa;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f2f4f7;
+            --bg-hover: #eaecf0;
+            --border-subtle: #eaecf0;
+            --border-default: #d0d5dd;
+            --text-primary: #101828;
+            --text-secondary: #475467;
+            --text-tertiary: #667085;
+            --text-quaternary: #98a2b3;
+            --accent: #1570ef;
+            --accent-hover: #175cd3;
+            --accent-subtle: rgba(21, 112, 239, 0.08);
+            --success: #12b76a;
+            --success-subtle: rgba(18, 183, 106, 0.08);
+            --warning: #f79009;
+            --warning-subtle: rgba(247, 144, 9, 0.08);
+            --danger: #f04438;
+            --danger-subtle: rgba(240, 68, 56, 0.08);
+            --info: #06aed4;
+            --info-subtle: rgba(6, 174, 212, 0.08);
+            --purple: #7a5af8;
+            --purple-subtle: rgba(122, 90, 248, 0.08);
+            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+            --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08);
+            --shadow-lg: 0 20px 60px -20px rgba(16, 24, 40, 0.2);
+            --scrollbar-thumb: #d0d5dd;
+        }
+
+        [data-theme="dark"] {
+            --bg-canvas: #0a0e1a;
+            --bg-surface: #0f1524;
+            --bg-elevated: #171e2f;
+            --bg-hover: #1f2937;
+            --border-subtle: #1a2235;
+            --border-default: #2a3347;
+            --text-primary: #f9fafb;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-quaternary: #475569;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-subtle: rgba(59, 130, 246, 0.1);
+            --success: #22c55e;
+            --success-subtle: rgba(34, 197, 94, 0.1);
+            --warning: #f59e0b;
+            --warning-subtle: rgba(245, 158, 11, 0.1);
+            --danger: #ef4444;
+            --danger-subtle: rgba(239, 68, 68, 0.1);
+            --info: #06b6d4;
+            --info-subtle: rgba(6, 182, 212, 0.1);
+            --purple: #a78bfa;
+            --purple-subtle: rgba(167, 139, 250, 0.1);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+            --shadow-lg: 0 25px 70px rgba(0, 0, 0, 0.5);
+            --scrollbar-thumb: #2a3347;
+        }
+
+        :root {
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            --radius-xl: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body { min-height: 100vh; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-canvas);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            position: relative;
+            overflow-x: hidden;
+            font-size: 13px;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+        html.theme-transitioning *,
+        html.theme-transitioning *::before,
+        html.theme-transitioning *::after {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+        }
+
+        /* Ambient background glow */
+        .bg-glow {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(140px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.4;
+        }
+        [data-theme="light"] .bg-glow { opacity: 0.2; }
+        .bg-glow-1 {
+            width: 500px; height: 500px;
+            background: var(--accent);
+            top: -200px; left: -150px;
+        }
+        .bg-glow-2 {
+            width: 500px; height: 500px;
+            background: var(--purple);
+            bottom: -220px; right: -150px;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           FLOATING THEME TOGGLE
+           ═══════════════════════════════════════════════════════ */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: inline-flex;
+            align-items: center;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 3px;
+            gap: 2px;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+        .theme-btn {
+            width: 30px; height: 30px;
+            background: transparent; border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-tertiary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 12px;
+            transition: all 0.15s ease;
+        }
+        .theme-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+        [data-theme-pref="auto"] .theme-btn[data-theme-value="auto"],
+        [data-theme-pref="light"] .theme-btn[data-theme-value="light"],
+        [data-theme-pref="dark"] .theme-btn[data-theme-value="dark"] {
+            background: var(--accent-subtle); color: var(--accent); box-shadow: var(--shadow-sm);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           QR CARD
+           ═══════════════════════════════════════════════════════ */
+        .qr-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            color: var(--text-primary);
+            max-width: 520px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 2;
+        }
+
+        .qr-card .device-id {
+            background: var(--accent-subtle);
+            padding: 4px 14px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .qr-card h3 {
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .qr-card .computer-name {
+            color: var(--text-tertiary);
+            font-size: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .qr-card .computer-name i {
+            color: var(--text-quaternary);
+        }
+
+        /* Status badges */
+        .status-badge {
+            font-size: 9px;
+            padding: 3px 9px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border: 1px solid transparent;
+        }
+
+        [data-theme="light"] .status-badge.online {
+            background: rgba(18, 183, 106, 0.1);
+            color: #12b76a;
+            border-color: rgba(18, 183, 106, 0.2);
+        }
+        [data-theme="dark"] .status-badge.online {
+            background: rgba(34, 197, 94, 0.12);
+            color: #34d399;
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+
+        [data-theme="light"] .status-badge.warning {
+            background: rgba(247, 144, 9, 0.1);
+            color: #f79009;
+            border-color: rgba(247, 144, 9, 0.2);
+        }
+        [data-theme="dark"] .status-badge.warning {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        [data-theme="light"] .status-badge.critical {
+            background: rgba(240, 68, 56, 0.1);
+            color: #f04438;
+            border-color: rgba(240, 68, 56, 0.2);
+        }
+        [data-theme="dark"] .status-badge.critical {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .status-badge.offline {
+            background: var(--bg-elevated);
+            color: var(--text-tertiary);
+            border-color: var(--border-subtle);
+        }
+
+        /* Specs grid */
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin: 14px 0;
+            text-align: left;
+            font-size: 11px;
+        }
+
+        .specs-grid .spec-item {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 10px;
+            border-radius: 7px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .specs-grid .spec-item .label {
+            color: var(--text-tertiary);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+        }
+
+        .specs-grid .spec-item .value {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+
+        /* QR container */
+        .qr-container {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 18px auto;
+            box-shadow: var(--shadow-md);
+            min-height: 290px;
+            min-width: 290px;
+            max-width: 290px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .qr-container img {
+            width: 250px;
+            height: 250px;
+            image-rendering: pixelated;
+            display: block;
+        }
+
+        .spinner-border {
+            color: var(--accent) !important;
+        }
+
+        .qr-hint {
+            color: var(--text-tertiary);
+            font-size: 10px;
+            margin-top: 8px;
+        }
+
+        /* Buttons */
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            border: none;
+            padding: 9px 18px;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 11px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 14px rgba(21, 112, 239, 0.22);
+        }
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(21, 112, 239, 0.4);
+            color: #fff;
+        }
+
+        .btn-outline-custom {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            padding: 9px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-outline-custom:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--border-strong);
+        }
+
+        .btn-back-qr {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            padding: 9px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .btn-back-qr:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--border-strong);
+        }
+
+        /* QR info line */
+        .qr-info {
+            color: var(--text-tertiary);
+            font-size: 10px;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .qr-info span {
+            background: var(--bg-elevated);
+            padding: 3px 9px;
+            border-radius: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--text-quaternary);
+            cursor: pointer;
+            transition: color 0.2s ease;
+            font-size: 11px;
+            padding: 2px 4px;
+        }
+        .copy-btn:hover {
+            color: var(--accent);
+        }
+
+        /* Toast */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast-custom {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 10px 14px;
+            border-radius: 10px;
+            animation: slideIn 0.3s ease;
+            color: var(--text-primary);
+            min-width: 220px;
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast-custom.success { border-left: 3px solid var(--success); }
+        .toast-custom.success i { color: var(--success); }
+        .toast-custom.error { border-left: 3px solid var(--danger); }
+        .toast-custom.error i { color: var(--danger); }
+
+        @keyframes slideIn {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Print */
+        @media print {
+            body { background: white; padding: 0; display: block; }
+            .bg-glow, .theme-toggle { display: none !important; }
+            .qr-card {
+                background: white;
+                border: none;
+                box-shadow: none;
+                max-width: 100%;
+            }
+            .qr-card h3,
+            .qr-card .computer-name,
+            .qr-card .device-id,
+            .specs-grid .spec-item .value {
+                color: #111 !important;
+            }
+            .specs-grid .spec-item {
+                background: #f5f5f5;
+                border-color: #ddd;
+            }
+            .btn-primary-custom,
+            .btn-outline-custom,
+            .btn-back-qr,
+            .qr-info {
+                display: none !important;
+            }
+            .qr-container {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .qr-card { padding: 20px 16px; }
+            .specs-grid { grid-template-columns: 1fr; }
+            .theme-toggle { top: 12px; right: 12px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient background glows -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- Floating Theme Toggle -->
+    <div class="theme-toggle" role="group" aria-label="Theme">
+        <button type="button" class="theme-btn" data-theme-value="light" title="Light mode">
+            <i class="fas fa-sun"></i>
+        </button>
+        <button type="button" class="theme-btn" data-theme-value="auto" title="System default">
+            <i class="fas fa-circle-half-stroke"></i>
+        </button>
+        <button type="button" class="theme-btn" data-theme-value="dark" title="Dark mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+
+    <!-- QR CARD -->
+    <div class="qr-card">
+
+        <div class="device-id">
+            <i class="fas fa-qrcode"></i>
+            {{ computer.device_id }}
+        </div>
+
+        <h3>{{ computer.computer_name }}</h3>
+
+        <div class="computer-name">
+            <span><i class="fas fa-desktop me-1"></i>{{ computer.operating_system }}</span>
+            <span class="status-badge {{ computer.status }}">{{ computer.status }}</span>
+        </div>
+
+        <!-- Specs Grid -->
+        <div class="specs-grid">
+            <div class="spec-item">
+                <span class="label">CPU</span>
+                <span class="value">{{ computer.cpu_usage|default(0) }}%</span>
+            </div>
+            <div class="spec-item">
+                <span class="label">RAM</span>
+                <span class="value">{{ computer.ram_usage|default(0) }}%</span>
+            </div>
+            <div class="spec-item">
+                <span class="label">Disk</span>
+                <span class="value">{{ computer.disk_usage|default(0) }}%</span>
+            </div>
+            <div class="spec-item">
+                <span class="label">GPU</span>
+                <span class="value">{{ computer.gpu_usage|default(0) }}%</span>
+            </div>
+            <div class="spec-item">
+                <span class="label">IP</span>
+                <span class="value">{{ computer.ip_address }}</span>
+            </div>
+            <div class="spec-item">
+                <span class="label">Uptime</span>
+                <span class="value">{{ computer.uptime|default('N/A') }}</span>
+            </div>
+        </div>
+
+        <!-- QR container -->
+        <div class="qr-container" id="qr-container">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <div class="qr-hint">
+            <i class="fas fa-info-circle me-1"></i>Scan with any QR reader
+        </div>
+
+        <!-- Action buttons -->
+        <div class="d-flex gap-2 justify-content-center flex-wrap mt-3">
+            <a href="{{ url_for('qr_selection') }}" class="btn-back-qr">
+                <i class="fas fa-arrow-left"></i>Back
+            </a>
+            <a href="#" id="download-btn" class="btn-outline-custom">
+                <i class="fas fa-download"></i>Download
+            </a>
+            <button class="btn-outline-custom" onclick="window.print()">
+                <i class="fas fa-print"></i>Print
+            </button>
+            <a href="{{ url_for('qr_scanner') }}" class="btn-primary-custom">
+                <i class="fas fa-camera"></i>Scan
+            </a>
+        </div>
+
+        <div class="qr-info">
+            <i class="fas fa-info-circle"></i>
+            Device ID: <span id="deviceIdText">{{ computer.device_id }}</span>
+            <button class="copy-btn" onclick="copyDeviceId()" title="Copy Device ID">
+                <i class="fas fa-copy"></i>
+            </button>
+        </div>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // THEME MANAGER
+        (function () {
+            var STORAGE_KEY = 'nexus-theme';
+            var root = document.documentElement;
+
+            function getSystemTheme() {
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            function resolveTheme(pref) { return pref === 'auto' ? getSystemTheme() : pref; }
+
+            function applyTheme(pref, animate) {
+                var effective = resolveTheme(pref);
+                if (animate) {
+                    root.classList.add('theme-transitioning');
+                    setTimeout(function () { root.classList.remove('theme-transitioning'); }, 250);
+                }
+                root.setAttribute('data-theme', effective);
+                root.setAttribute('data-theme-pref', pref);
+                try { localStorage.setItem(STORAGE_KEY, pref); } catch (e) {}
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('.theme-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () { applyTheme(btn.dataset.themeValue, true); });
+                });
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+                    if (root.getAttribute('data-theme-pref') === 'auto') applyTheme('auto', true);
+                });
+            });
+        })();
+
+        // QR LOAD
+        $(document).ready(function() {
+            var computerId = {{ computer.id }};
+
+            $.ajax({
+                url: '/api/qrcode/' + computerId,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        $('#qr-container').html(
+                            '<img src="' + response.qr_code + '" alt="QR Code" id="qrImage">'
+                        );
+                        $('#download-btn').attr('href', response.qr_code);
+                        $('#download-btn').attr('download', 'qr-{{ computer.computer_name }}.png');
+                    }
+                },
+                error: function() {
+                    $('#qr-container').html(`
+                        <div style="color: var(--danger); padding: 1rem; text-align: center;">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                            <p style="font-size: 12px; margin: 0 0 10px;">Failed to generate QR Code</p>
+                            <button onclick="location.reload()" style="background: linear-gradient(135deg, var(--accent), var(--purple)); border: none; color: white; padding: 6px 14px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                <i class="fas fa-sync me-1"></i>Retry
+                            </button>
+                        </div>
+                    `);
+                }
+            });
+        });
+
+        // COPY DEVICE ID
+        function copyDeviceId() {
+            var text = document.getElementById('deviceIdText').textContent;
+            navigator.clipboard.writeText(text).then(function() {
+                showToast('Device ID copied!', 'success');
+            }).catch(function() {
+                var input = document.createElement('input');
+                input.value = text;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showToast('Device ID copied!', 'success');
+            });
+        }
+
+        // TOAST
+        function showToast(message, type) {
+            var toast = $('#toast-container');
+            if (toast.length === 0) {
+                $('body').append('<div id="toast-container"></div>');
+                toast = $('#toast-container');
+            }
+            var iconClass = type === 'success' ? 'check-circle' : 'exclamation-circle';
+            toast.append(
+                '<div class="toast-custom ' + type + '">' +
+                    '<i class="fas fa-' + iconClass + '"></i>' +
+                    message +
+                '</div>'
+            );
+            setTimeout(function() { $('.toast-custom:first').remove(); }, 3000);
+        }
+    </script>
+
+</body>
+</html>

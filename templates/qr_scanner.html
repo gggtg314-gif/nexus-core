@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Scanner · Nexus Core</title>
+
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('nexus-theme') || 'dark';
+                var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var effective = saved === 'auto' ? (systemDark ? 'dark' : 'light') : saved;
+                document.documentElement.setAttribute('data-theme', effective);
+                document.documentElement.setAttribute('data-theme-pref', saved);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════
+           THEME TOKENS
+           ═══════════════════════════════════════════════════════ */
+        :root,
+        [data-theme="light"] {
+            --bg-canvas: #f7f8fa;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f2f4f7;
+            --bg-hover: #eaecf0;
+            --border-subtle: #eaecf0;
+            --border-default: #d0d5dd;
+            --text-primary: #101828;
+            --text-secondary: #475467;
+            --text-tertiary: #667085;
+            --text-quaternary: #98a2b3;
+            --accent: #1570ef;
+            --accent-hover: #175cd3;
+            --accent-subtle: rgba(21, 112, 239, 0.08);
+            --success: #12b76a;
+            --success-subtle: rgba(18, 183, 106, 0.08);
+            --warning: #f79009;
+            --warning-subtle: rgba(247, 144, 9, 0.08);
+            --danger: #f04438;
+            --danger-subtle: rgba(240, 68, 56, 0.08);
+            --info: #06aed4;
+            --info-subtle: rgba(6, 174, 212, 0.08);
+            --purple: #7a5af8;
+            --purple-subtle: rgba(122, 90, 248, 0.08);
+            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+            --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08);
+            --shadow-lg: 0 20px 60px -20px rgba(16, 24, 40, 0.2);
+            --scrollbar-thumb: #d0d5dd;
+        }
+
+        [data-theme="dark"] {
+            --bg-canvas: #0a0e1a;
+            --bg-surface: #0f1524;
+            --bg-elevated: #171e2f;
+            --bg-hover: #1f2937;
+            --border-subtle: #1a2235;
+            --border-default: #2a3347;
+            --text-primary: #f9fafb;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-quaternary: #475569;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-subtle: rgba(59, 130, 246, 0.1);
+            --success: #22c55e;
+            --success-subtle: rgba(34, 197, 94, 0.1);
+            --warning: #f59e0b;
+            --warning-subtle: rgba(245, 158, 11, 0.1);
+            --danger: #ef4444;
+            --danger-subtle: rgba(239, 68, 68, 0.1);
+            --info: #06b6d4;
+            --info-subtle: rgba(6, 182, 212, 0.1);
+            --purple: #a78bfa;
+            --purple-subtle: rgba(167, 139, 250, 0.1);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+            --shadow-lg: 0 25px 70px rgba(0, 0, 0, 0.5);
+            --scrollbar-thumb: #2a3347;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body { min-height: 100vh; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-canvas);
+            color: var(--text-primary);
+            padding: 30px 20px;
+            position: relative;
+            overflow-x: hidden;
+            font-size: 13px;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+        /* Ambient background glow */
+        .bg-glow {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(140px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.4;
+        }
+        [data-theme="light"] .bg-glow { opacity: 0.2; }
+        .bg-glow-1 {
+            width: 500px; height: 500px;
+            background: var(--accent);
+            top: -200px; left: -150px;
+        }
+        .bg-glow-2 {
+            width: 500px; height: 500px;
+            background: var(--purple);
+            bottom: -220px; right: -150px;
+        }
+
+        /* Floating theme toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: inline-flex;
+            align-items: center;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 3px;
+            gap: 2px;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+        .theme-btn {
+            width: 30px; height: 30px;
+            background: transparent; border: none;
+            border-radius: 4px;
+            color: var(--text-tertiary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 12px;
+            transition: all 0.15s ease;
+        }
+        .theme-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+        [data-theme-pref="auto"] .theme-btn[data-theme-value="auto"],
+        [data-theme-pref="light"] .theme-btn[data-theme-value="light"],
+        [data-theme-pref="dark"] .theme-btn[data-theme-value="dark"] {
+            background: var(--accent-subtle); color: var(--accent); box-shadow: var(--shadow-sm);
+        }
+
+        .container-main {
+            max-width: 850px;
+            margin: auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .scanner-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .header-icon {
+            width: 68px;
+            height: 68px;
+            margin: auto;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            box-shadow: 0 10px 30px rgba(21, 112, 239, 0.3);
+            color: #fff;
+        }
+
+        .header h2 {
+            margin-top: 14px;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .header p {
+            color: var(--text-tertiary);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        /* Camera box */
+        .scanner-box {
+            width: 100%;
+            height: 480px;
+            background: #050509;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-subtle);
+        }
+
+        [data-theme="light"] .scanner-box {
+            background: #1a1d2b;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            background: black;
+        }
+
+        .placeholder {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .placeholder i {
+            font-size: 58px;
+            margin-bottom: 14px;
+            color: var(--purple);
+        }
+
+        .placeholder p {
+            margin: 0;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .placeholder small {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        /* Scan overlay */
+        .scan-overlay {
+            position: absolute;
+            width: min(70vw, 340px);
+            height: min(70vw, 340px);
+            max-width: 340px;
+            max-height: 340px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            pointer-events: none;
+        }
+
+        .corner {
+            position: absolute;
+            width: 42px;
+            height: 42px;
+            border-color: var(--accent);
+            border-style: solid;
+        }
+
+        .corner.tl { top: 0; left: 0; border-width: 4px 0 0 4px; border-radius: 8px 0 0 0; }
+        .corner.tr { top: 0; right: 0; border-width: 4px 4px 0 0; border-radius: 0 8px 0 0; }
+        .corner.bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; border-radius: 0 0 0 8px; }
+        .corner.br { bottom: 0; right: 0; border-width: 0 4px 4px 0; border-radius: 0 0 8px 0; }
+
+        .scan-line {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            display: none;
+            background: linear-gradient(90deg, transparent, var(--accent), var(--purple), var(--accent), transparent);
+            box-shadow: 0 0 15px var(--accent);
+            animation: scanAnimation 1.5s ease-in-out infinite;
+        }
+
+        @keyframes scanAnimation {
+            0% { top: 10%; }
+            50% { top: 90%; }
+            100% { top: 10%; }
+        }
+
+        .scan-status {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 18px;
+            border-radius: 30px;
+            background: rgba(0, 0, 0, 0.75);
+            color: var(--info);
+            font-size: 12px;
+            display: none;
+            white-space: nowrap;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+        }
+        .scan-status.success { color: var(--success); }
+        .scan-status.error { color: var(--danger); }
+
+        /* Buttons */
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .btn-scan {
+            border: none;
+            color: #fff;
+            padding: 11px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(21, 112, 239, 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-scan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(21, 112, 239, 0.4);
+            color: #fff;
+        }
+        .btn-scan:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-stop {
+            display: none;
+            border: 1px solid var(--danger-subtle);
+            background: var(--danger-subtle);
+            color: var(--danger);
+            padding: 11px 22px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-stop:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-link {
+            padding: 11px 18px;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-link:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+            border-color: var(--border-strong);
+        }
+
+        .flash-toggle {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            padding: 11px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .flash-toggle:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .flash-toggle.active {
+            background: var(--warning-subtle);
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        /* Result */
+        #scanResult {
+            display: none;
+            margin-top: 18px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        #scanResult.info {
+            display: block;
+            background: var(--info-subtle);
+            border: 1px solid rgba(6, 174, 212, 0.2);
+            color: var(--info);
+        }
+        #scanResult.success {
+            display: block;
+            background: var(--success-subtle);
+            border: 1px solid rgba(18, 183, 106, 0.2);
+            color: var(--success);
+        }
+        #scanResult.error {
+            display: block;
+            background: var(--danger-subtle);
+            border: 1px solid rgba(240, 68, 56, 0.2);
+            color: var(--danger);
+        }
+
+        /* Device Details */
+        .result-details {
+            display: none;
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+        }
+        .result-details.show { display: block; }
+
+        .device-card {
+            padding: 14px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-subtle), var(--purple-subtle));
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 14px;
+        }
+
+        .device-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .device-id {
+            color: var(--accent);
+            font-size: 12px;
+            margin-top: 3px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 9px 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .detail-row:last-child { border-bottom: none; }
+
+        .label {
+            color: var(--text-tertiary);
+            font-size: 11px;
+        }
+
+        .value {
+            color: var(--text-primary);
+            font-size: 11px;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 20px;
+            padding: 0 9px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+        [data-theme="light"] .badge.bg-success {
+            background: rgba(18, 183, 106, 0.1);
+            color: #12b76a;
+            border-color: rgba(18, 183, 106, 0.2);
+        }
+        [data-theme="dark"] .badge.bg-success {
+            background: rgba(34, 197, 94, 0.12);
+            color: #4ade80;
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+        [data-theme="light"] .badge.bg-warning {
+            background: rgba(247, 144, 9, 0.1);
+            color: #f79009;
+            border-color: rgba(247, 144, 9, 0.2);
+        }
+        [data-theme="dark"] .badge.bg-warning {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+        [data-theme="light"] .badge.bg-danger {
+            background: rgba(240, 68, 56, 0.1);
+            color: #f04438;
+            border-color: rgba(240, 68, 56, 0.2);
+        }
+        [data-theme="dark"] .badge.bg-danger {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+        [data-theme="light"] .badge.bg-secondary {
+            background: rgba(100, 116, 139, 0.1);
+            color: #64748b;
+            border-color: rgba(100, 116, 139, 0.2);
+        }
+        [data-theme="dark"] .badge.bg-secondary {
+            background: rgba(100, 116, 139, 0.12);
+            color: #94a3b8;
+            border-color: rgba(100, 116, 139, 0.2);
+        }
+
+        /* Action buttons in device details */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn-action {
+            flex: 1;
+            min-width: 120px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .btn-action-primary {
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            color: #fff;
+            border: none;
+            box-shadow: 0 3px 10px rgba(21, 112, 239, 0.22);
+        }
+        .btn-action-primary:hover {
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(21, 112, 239, 0.35);
+        }
+
+        .btn-action-secondary {
+            background: var(--bg-surface);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-default);
+        }
+        .btn-action-secondary:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--border-strong);
+        }
+
+        /* Permission hint */
+        .permission-hint {
+            display: none;
+            margin-top: 14px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: var(--purple-subtle);
+            color: var(--purple);
+            font-size: 12px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body { padding: 14px 10px; }
+            .scanner-card { padding: 16px; border-radius: 16px; }
+            .scanner-box { height: 400px; }
+            .controls { flex-direction: column; }
+            .btn-scan, .btn-stop, .btn-link, .flash-toggle {
+                width: 100%;
+                justify-content: center;
+            }
+            .detail-row { flex-direction: column; gap: 3px; }
+            .value { text-align: left; }
+            .theme-toggle { top: 12px; right: 12px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient glows -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- Floating theme toggle -->
+    <div class="theme-toggle" role="group" aria-label="Theme">
+        <button type="button" class="theme-btn" data-theme-value="light" title="Light mode">
+            <i class="fas fa-sun"></i>
+        </button>
+        <button type="button" class="theme-btn" data-theme-value="auto" title="System default">
+            <i class="fas fa-circle-half-stroke"></i>
+        </button>
+        <button type="button" class="theme-btn" data-theme-value="dark" title="Dark mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+
+    <div class="container-main">
+
+        <div class="scanner-card">
+
+            <!-- HEADER -->
+            <div class="header">
+                <div class="header-icon">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <h2>QR Scanner</h2>
+                <p>Fast QR scanning for Nexus Core devices</p>
+            </div>
+
+            <!-- CAMERA -->
+            <div class="scanner-box">
+                <div class="placeholder" id="placeholder">
+                    <i class="fas fa-camera"></i>
+                    <p>Click "Start Camera"</p>
+                    <small>Allow camera permission when asked</small>
+                </div>
+
+                <video id="video" autoplay muted playsinline></video>
+
+                <div class="scan-overlay" id="scanOverlay">
+                    <div class="corner tl"></div>
+                    <div class="corner tr"></div>
+                    <div class="corner bl"></div>
+                    <div class="corner br"></div>
+                </div>
+
+                <div class="scan-line" id="scanLine"></div>
+
+                <div class="scan-status" id="scanStatus">
+                    📷 Scanning...
+                </div>
+            </div>
+
+            <!-- PERMISSION HINT -->
+            <div class="permission-hint" id="permissionHint">
+                <i class="fas fa-info-circle me-2"></i>
+                Camera permission required. Allow camera in browser settings.
+            </div>
+
+            <!-- CONTROLS -->
+            <div class="controls">
+                <button id="startCamera" class="btn-scan">
+                    <i class="fas fa-camera"></i>
+                    Start Camera
+                </button>
+
+                <button id="stopCamera" class="btn-stop">
+                    <i class="fas fa-stop"></i>
+                    Stop Camera
+                </button>
+
+                <button id="flashToggle" class="flash-toggle">
+                    <i class="fas fa-bolt"></i>
+                    Flash
+                </button>
+
+                <a href="{{ url_for('qr_selection') }}" class="btn-link">
+                    <i class="fas fa-qrcode"></i>
+                    QR Codes
+                </a>
+
+                <a href="{{ url_for('index') }}" class="btn-link">
+                    <i class="fas fa-home"></i>
+                    Dashboard
+                </a>
+            </div>
+
+            <!-- RESULT -->
+            <div id="scanResult"></div>
+
+            <!-- DEVICE DETAILS -->
+            <div id="deviceDetails" class="result-details"></div>
+
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+<script>
+    /* ═══════════════════════════════════════════════════════
+       THEME MANAGER
+       ═══════════════════════════════════════════════════════ */
+    (function () {
+        var STORAGE_KEY = 'nexus-theme';
+        var root = document.documentElement;
+
+        function getSystemTheme() {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        function resolveTheme(pref) { return pref === 'auto' ? getSystemTheme() : pref; }
+
+        function applyTheme(pref, animate) {
+            var effective = resolveTheme(pref);
+            if (animate) {
+                root.style.transition = 'background-color 0.2s ease, color 0.2s ease';
+                setTimeout(function () { root.style.transition = ''; }, 250);
+            }
+            root.setAttribute('data-theme', effective);
+            root.setAttribute('data-theme-pref', pref);
+            try { localStorage.setItem(STORAGE_KEY, pref); } catch (e) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.theme-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () { applyTheme(btn.dataset.themeValue, true); });
+            });
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+                if (root.getAttribute('data-theme-pref') === 'auto') applyTheme('auto', true);
+            });
+        });
+    })();
+
+    /* ═══════════════════════════════════════════════════════
+       QR SCANNER LOGIC
+       ═══════════════════════════════════════════════════════ */
+
+    let cameraStream = null;
+    let scanning = false;
+    let scanTimer = null;
+    let lastScannedCode = null;
+    let flashOn = false;
+
+    const SCAN_INTERVAL = 80;
+    const MAX_SCAN_WIDTH = 640;
+
+    const video = document.getElementById("video");
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+
+    const startBtn = document.getElementById("startCamera");
+    const stopBtn = document.getElementById("stopCamera");
+    const flashBtn = document.getElementById("flashToggle");
+
+    const scanStatus = document.getElementById("scanStatus");
+    const scanResult = document.getElementById("scanResult");
+    const deviceDetails = document.getElementById("deviceDetails");
+
+    const placeholder = document.getElementById("placeholder");
+    const scanOverlay = document.getElementById("scanOverlay");
+    const scanLine = document.getElementById("scanLine");
+    const permissionHint = document.getElementById("permissionHint");
+
+    startBtn.addEventListener("click", startCamera);
+    stopBtn.addEventListener("click", stopScanner);
+    flashBtn.addEventListener("click", toggleFlash);
+
+    async function startCamera() {
+        if (scanning) return;
+
+        if (typeof jsQR === "undefined") {
+            showResult("❌ QR scanner library load nahi hui. Internet connection check karo.", "error");
+            return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showResult("❌ Browser camera access support nahi karta.", "error");
+            return;
+        }
+
+        try {
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
+            permissionHint.style.display = "block";
+
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: { ideal: "environment" },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            });
+
+            video.srcObject = cameraStream;
+            await video.play();
+
+            placeholder.style.display = "none";
+            video.style.display = "block";
+            scanOverlay.style.display = "block";
+            scanLine.style.display = "block";
+            scanStatus.style.display = "block";
+            stopBtn.style.display = "inline-flex";
+            permissionHint.style.display = "none";
+
+            scanStatus.textContent = "📷 Point camera at QR";
+            scanStatus.classList.remove("error", "success");
+
+            showResult("⚡ Scanner active — Place the QR code in the center.", "info");
+
+            scanning = true;
+            startBtn.disabled = false;
+            startBtn.innerHTML = '<i class="fas fa-qrcode"></i> Scanning...';
+
+            startFastScanner();
+        } catch (error) {
+            console.error("Camera Error:", error);
+            scanning = false;
+            let message = "Camera start nahi hua.";
+
+            if (error.name === "NotAllowedError") {
+                message = "Camera permission denied. Allow camera in browser settings.";
+            } else if (error.name === "NotFoundError") {
+                message = "Camera device nahi mila.";
+            } else if (error.name === "NotReadableError") {
+                message = "Camera kisi doosri application me use ho raha hai.";
+            } else {
+                message += " " + error.message;
+            }
+
+            showResult(message, "error");
+            resetUI();
+        }
+    }
+
+    function startFastScanner() {
+        stopFastScanner();
+        scanTimer = setInterval(scanFrame, SCAN_INTERVAL);
+    }
+
+    function stopFastScanner() {
+        if (scanTimer) {
+            clearInterval(scanTimer);
+            scanTimer = null;
+        }
+    }
+
+    function scanFrame() {
+        if (!scanning) return;
+        if (video.readyState < 2 || video.videoWidth <= 0 || video.videoHeight <= 0) return;
+
+        const videoWidth = video.videoWidth;
+        const videoHeight = video.videoHeight;
+
+        const roiSize = Math.min(videoWidth, videoHeight) * 0.72;
+        const sx = (videoWidth - roiSize) / 2;
+        const sy = (videoHeight - roiSize) / 2;
+
+        const scale = Math.min(1, MAX_SCAN_WIDTH / roiSize);
+        const scanWidth = Math.floor(roiSize * scale);
+        const scanHeight = scanWidth;
+
+        canvas.width = scanWidth;
+        canvas.height = scanHeight;
+
+        context.drawImage(video, sx, sy, roiSize, roiSize, 0, 0, scanWidth, scanHeight);
+
+        let imageData;
+        try {
+            imageData = context.getImageData(0, 0, scanWidth, scanHeight);
+        } catch (error) {
+            console.error("Canvas error:", error);
+            return;
+        }
+
+        const qrCode = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert"
+        });
+
+        if (!qrCode) return;
+
+        const data = String(qrCode.data || "").trim();
+        if (!data) return;
+
+        console.log("✅ QR DETECTED:", data);
+
+        if (data === lastScannedCode) return;
+        lastScannedCode = data;
+
+        scanning = false;
+        stopFastScanner();
+
+        scanStatus.textContent = "✅ QR Detected";
+        scanStatus.classList.remove("error");
+        scanStatus.classList.add("success");
+
+        stopCameraStream();
+
+        const deviceId = extractDeviceId(data);
+
+        if (!deviceId) {
+            showResult("⚠️ QR detected but Device ID nahi mila.<br><small>QR Data: " + escapeHTML(data) + "</small>", "error");
+            return;
+        }
+
+        showResult("✅ QR scanned: " + escapeHTML(deviceId), "success");
+        scanDeviceId(deviceId);
+    }
+
+    function extractDeviceId(data) {
+        data = String(data).trim();
+
+        let match = data.match(/^PC\d{3}$/i);
+        if (match) return match[0].toUpperCase();
+
+        match = data.match(/NC-[A-Z0-9]+/i);
+        if (match) return match[0].toUpperCase();
+
+        match = data.match(/PC\d{3}/i);
+        if (match) return match[0].toUpperCase();
+
+        try {
+            const url = new URL(data);
+            match = url.pathname.match(/NC-[A-Z0-9]+/i) || url.pathname.match(/PC\d{3}/i);
+            if (match) return match[0].toUpperCase();
+        } catch (e) {}
+
+        return null;
+    }
+
+    function stopCameraStream() {
+        stopFastScanner();
+
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+            cameraStream = null;
+        }
+
+        video.srcObject = null;
+        flashOn = false;
+        flashBtn.classList.remove("active");
+    }
+
+    function stopScanner() {
+        scanning = false;
+        stopCameraStream();
+        resetUI();
+        showResult("Camera stopped.", "info");
+        lastScannedCode = null;
+    }
+
+    function resetUI() {
+        placeholder.style.display = "block";
+        video.style.display = "none";
+        scanOverlay.style.display = "none";
+        scanLine.style.display = "none";
+        scanStatus.style.display = "none";
+        stopBtn.style.display = "none";
+        permissionHint.style.display = "none";
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<i class="fas fa-camera"></i> Start Camera';
+    }
+
+    async function toggleFlash() {
+        if (!cameraStream) {
+            showResult("Camera start karo pehle.", "info");
+            return;
+        }
+
+        const track = cameraStream.getVideoTracks()[0];
+        if (!track) return;
+
+        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+
+        if (!capabilities.torch) {
+            showResult("Flash support nahi hai is camera me.", "error");
+            return;
+        }
+
+        flashOn = !flashOn;
+
+        try {
+            await track.applyConstraints({
+                advanced: [{ torch: flashOn }]
+            });
+            flashBtn.classList.toggle("active", flashOn);
+        } catch (error) {
+            console.error("Flash error:", error);
+            showResult("Flash enable nahi ho saka.", "error");
+        }
+    }
+
+    function scanDeviceId(deviceId) {
+        console.log("Looking for device:", deviceId);
+        showResult("🔍 Searching for " + escapeHTML(deviceId) + "...", "info");
+        deviceDetails.classList.remove("show");
+
+        fetch("/api/device/" + encodeURIComponent(deviceId), {
+            method: "GET",
+            credentials: "same-origin",
+            headers: { "Accept": "application/json" }
+        })
+        .then(async function(response) {
+            let data = null;
+            try { data = await response.json(); } catch (e) { data = null; }
+
+            if (!response.ok) {
+                if (response.status === 401) throw new Error("Login required");
+                if (response.status === 404) throw new Error("Device not found");
+                throw new Error("Server error " + response.status);
+            }
+            return data;
+        })
+        .then(function(response) {
+            if (response && response.success && response.computer) {
+                const computer = response.computer;
+                showResult("✅ Device found: " + escapeHTML(computer.computer_name || deviceId), "success");
+                showDeviceDetails(computer);
+            } else {
+                showResult("❌ Device " + escapeHTML(deviceId) + " database me nahi mila.", "error");
+            }
+        })
+        .catch(function(error) {
+            console.error("API ERROR:", error);
+
+            if (error.message === "Login required") {
+                showResult("❌ Login required. Pehle Nexus Core me login karo.", "error");
+            } else if (error.message === "Device not found") {
+                showResult("❌ Device " + escapeHTML(deviceId) + " database me nahi mila.", "error");
+            } else {
+                showResult("❌ " + escapeHTML(error.message || "API error. Server check karo."), "error");
+            }
+        });
+    }
+
+    function showDeviceDetails(computer) {
+        const status = computer.status || "Unknown";
+        let statusClass = "secondary";
+
+        if (status.toLowerCase() === "online") statusClass = "success";
+        else if (status.toLowerCase() === "warning") statusClass = "warning";
+        else if (status.toLowerCase() === "critical") statusClass = "danger";
+
+        const html = `
+            <div class="device-card">
+                <div class="device-name">
+                    <i class="fas fa-desktop me-2" style="color: var(--accent);"></i>
+                    ${escapeHTML(computer.computer_name || "Unknown")}
+                </div>
+                <div class="device-id">
+                    <i class="fas fa-qrcode me-1"></i>
+                    ${escapeHTML(computer.device_id || "N/A")}
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">Status</span>
+                <span class="value">
+                    <span class="badge bg-${statusClass}">${escapeHTML(status)}</span>
+                </span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">IP Address</span>
+                <span class="value">${escapeHTML(computer.ip_address || "N/A")}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label"><i class="fas fa-microchip me-1"></i>CPU Usage</span>
+                <span class="value">${computer.cpu_usage ?? 0}%</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label"><i class="fas fa-memory me-1"></i>RAM Usage</span>
+                <span class="value">${computer.ram_usage ?? 0}%</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label"><i class="fas fa-hdd me-1"></i>Disk Usage</span>
+                <span class="value">${computer.disk_usage ?? 0}%</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">CPU Model</span>
+                <span class="value">${escapeHTML(computer.cpu_model || "N/A")}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">Cores / Threads</span>
+                <span class="value">${computer.cpu_cores ?? 0} / ${computer.cpu_threads ?? 0}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">RAM Total</span>
+                <span class="value">${escapeHTML(computer.ram_total || "N/A")}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">GPU Model</span>
+                <span class="value">${escapeHTML(computer.gpu_model || "N/A")}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">Operating System</span>
+                <span class="value">${escapeHTML(computer.operating_system || "N/A")}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">Last Update</span>
+                <span class="value">${escapeHTML(computer.last_update || "Never")}</span>
+            </div>
+
+            <div class="action-buttons">
+                <a href="/computer/${computer.id}" class="btn-action btn-action-primary">
+                    <i class="fas fa-desktop"></i>
+                    View Details
+                </a>
+                <a href="/qr/${computer.id}" class="btn-action btn-action-secondary">
+                    <i class="fas fa-qrcode"></i>
+                    Generate QR
+                </a>
+                <button onclick="copyDeviceId('${escapeHTML(computer.device_id || '')}')" class="btn-action btn-action-secondary">
+                    <i class="fas fa-copy"></i>
+                    Copy ID
+                </button>
+            </div>
+        `;
+
+        deviceDetails.innerHTML = html;
+        deviceDetails.classList.add("show");
+        deviceDetails.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function copyDeviceId(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            showResult("✅ Device ID copied!", "success");
+        }).catch(function() {
+            const input = document.createElement("input");
+            input.value = text;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand("copy");
+            document.body.removeChild(input);
+            showResult("✅ Device ID copied!", "success");
+        });
+    }
+
+    function showResult(message, type) {
+        scanResult.innerHTML = message;
+        scanResult.className = type;
+        scanResult.style.display = "block";
+    }
+
+    function escapeHTML(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    window.addEventListener("beforeunload", function() {
+        scanning = false;
+        stopCameraStream();
+    });
+</script>
+
+</body>
+</html>

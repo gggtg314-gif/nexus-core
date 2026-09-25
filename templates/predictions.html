@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictions · Nexus Core</title>
+
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('nexus-theme') || 'dark';
+                var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var effective = saved === 'auto' ? (systemDark ? 'dark' : 'light') : saved;
+                document.documentElement.setAttribute('data-theme', effective);
+                document.documentElement.setAttribute('data-theme-pref', saved);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* ═══════════════════════════════════════════════════════
+           THEME TOKENS
+           ═══════════════════════════════════════════════════════ */
+        :root,
+        [data-theme="light"] {
+            --bg-canvas: #f7f8fa;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f2f4f7;
+            --bg-hover: #eaecf0;
+            --border-subtle: #eaecf0;
+            --border-default: #d0d5dd;
+            --border-strong: #98a2b3;
+            --text-primary: #101828;
+            --text-secondary: #475467;
+            --text-tertiary: #667085;
+            --text-quaternary: #98a2b3;
+            --accent: #1570ef;
+            --accent-hover: #175cd3;
+            --accent-subtle: rgba(21, 112, 239, 0.08);
+            --success: #12b76a;
+            --success-subtle: rgba(18, 183, 106, 0.08);
+            --warning: #f79009;
+            --warning-subtle: rgba(247, 144, 9, 0.08);
+            --danger: #f04438;
+            --danger-subtle: rgba(240, 68, 56, 0.08);
+            --info: #06aed4;
+            --info-subtle: rgba(6, 174, 212, 0.08);
+            --purple: #7a5af8;
+            --purple-subtle: rgba(122, 90, 248, 0.08);
+            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+            --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08);
+            --scrollbar-thumb: #d0d5dd;
+        }
+
+        [data-theme="dark"] {
+            --bg-canvas: #0a0e1a;
+            --bg-surface: #0f1524;
+            --bg-elevated: #171e2f;
+            --bg-hover: #1f2937;
+            --border-subtle: #1a2235;
+            --border-default: #2a3347;
+            --border-strong: #3d4859;
+            --text-primary: #f9fafb;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-quaternary: #475569;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-subtle: rgba(59, 130, 246, 0.1);
+            --success: #22c55e;
+            --success-subtle: rgba(34, 197, 94, 0.1);
+            --warning: #f59e0b;
+            --warning-subtle: rgba(245, 158, 11, 0.1);
+            --danger: #ef4444;
+            --danger-subtle: rgba(239, 68, 68, 0.1);
+            --info: #06b6d4;
+            --info-subtle: rgba(6, 182, 212, 0.1);
+            --purple: #a78bfa;
+            --purple-subtle: rgba(167, 139, 250, 0.1);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+            --scrollbar-thumb: #2a3347;
+        }
+
+        :root {
+            --sidebar-width: 236px;
+            --topbar-height: 56px;
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            background: var(--bg-canvas);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text-primary);
+            font-size: 13px;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+            font-feature-settings: 'tnum' 1, 'zero' 1;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+        html.theme-transitioning *,
+        html.theme-transitioning *::before,
+        html.theme-transitioning *::after {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+        }
+
+        /* APP LAYOUT */
+        .app {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 16px; height: var(--topbar-height);
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+
+        .brand-mark {
+            width: 30px; height: 30px; border-radius: var(--radius-md);
+            background: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 13px; flex-shrink: 0;
+        }
+
+        .brand-text { display: flex; flex-direction: column; overflow: hidden; }
+        .brand-name { font-size: 13px; font-weight: 700; line-height: 1.2; }
+        .brand-tag { font-size: 9px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase; }
+
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 8px; }
+        .nav-section { margin-top: 14px; }
+        .nav-section:first-child { margin-top: 0; }
+
+        .nav-section-title {
+            font-size: 10px; font-weight: 600; color: var(--text-quaternary);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            padding: 6px 12px 4px;
+        }
+
+        .nav-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 12px; border-radius: var(--radius-md);
+            color: var(--text-secondary); font-size: 13px;
+            font-weight: 500; text-decoration: none;
+            transition: all 0.12s ease;
+        }
+
+        .nav-link i { width: 16px; font-size: 13px; text-align: center; flex-shrink: 0; color: var(--text-quaternary); }
+        .nav-link:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-link:hover i { color: var(--text-secondary); }
+        .nav-link.active { background: var(--accent-subtle); color: var(--accent); font-weight: 600; }
+        .nav-link.active i { color: var(--accent); }
+
+        .nav-badge {
+            margin-left: auto;
+            font-size: 9px; font-weight: 700;
+            padding: 1px 6px; border-radius: 8px;
+            background: var(--danger-subtle); color: var(--danger);
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 18px; text-align: center;
+        }
+        .nav-badge.warning { background: var(--warning-subtle); color: var(--warning); }
+        .nav-badge.info { background: var(--info-subtle); color: var(--info); }
+        .nav-badge.neutral { background: var(--bg-elevated); color: var(--text-tertiary); }
+
+        .nav-link.danger { color: var(--danger); }
+        .nav-link.danger i { color: var(--danger); }
+        .nav-link.danger:hover { background: var(--danger-subtle); }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border-subtle);
+            padding: 10px; flex-shrink: 0;
+        }
+
+        .user-card {
+            display: flex; align-items: center; gap: 10px;
+            padding: 6px 8px; border-radius: var(--radius-md);
+        }
+
+        .user-avatar {
+            width: 30px; height: 30px; border-radius: var(--radius-md);
+            background: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0;
+        }
+
+        .user-meta { display: flex; flex-direction: column; overflow: hidden; }
+        .user-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-role { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+
+        /* MAIN AREA */
+        .main { display: flex; flex-direction: column; overflow: hidden; }
+
+        .topbar {
+            height: var(--topbar-height);
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex; align-items: center; gap: 16px;
+            padding: 0 20px; flex-shrink: 0;
+        }
+
+        .topbar-toggle {
+            display: none; background: transparent;
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            width: 30px; height: 30px;
+            border-radius: var(--radius-md);
+            align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        .breadcrumb-nav { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); }
+        .breadcrumb-nav .sep { color: var(--text-quaternary); font-size: 10px; }
+        .breadcrumb-nav .current { color: var(--text-primary); font-weight: 600; }
+
+        .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 20px;
+            background: var(--success-subtle);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: var(--success);
+            font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+        }
+        .status-pill .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+        .time-display {
+            font-size: 11px; color: var(--text-tertiary);
+            font-family: 'JetBrains Mono', monospace; padding: 0 4px;
+        }
+
+        .theme-toggle {
+            display: inline-flex; align-items: center;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 2px; gap: 2px;
+        }
+        .theme-btn {
+            width: 26px; height: 26px;
+            background: transparent; border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-tertiary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 11px;
+            transition: all 0.15s ease;
+        }
+        .theme-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+        [data-theme-pref="auto"] .theme-btn[data-theme-value="auto"],
+        [data-theme-pref="light"] .theme-btn[data-theme-value="light"],
+        [data-theme-pref="dark"] .theme-btn[data-theme-value="dark"] {
+            background: var(--bg-surface); color: var(--accent); box-shadow: var(--shadow-sm);
+        }
+
+        .icon-btn {
+            width: 32px; height: 32px;
+            background: transparent; border: 1px solid transparent;
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 13px;
+            position: relative; transition: all 0.12s ease;
+        }
+        .icon-btn:hover { background: var(--bg-hover); border-color: var(--border-subtle); color: var(--text-primary); }
+
+        /* PAGE */
+        .page {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 14px 18px;
+            gap: 12px;
+            min-height: 0;
+        }
+
+        /* SUMMARY ROW */
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .kpi-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 12px 14px;
+            display: flex; flex-direction: column;
+            transition: border-color 0.15s ease;
+            min-width: 0;
+        }
+        .kpi-card:hover { border-color: var(--border-default); }
+
+        .kpi-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .kpi-label {
+            font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
+
+        .kpi-icon {
+            width: 22px; height: 22px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px;
+            background: var(--accent-subtle); color: var(--accent);
+        }
+        .kpi-icon.purple { background: var(--purple-subtle); color: var(--purple); }
+        .kpi-icon.danger { background: var(--danger-subtle); color: var(--danger); }
+        .kpi-icon.warning { background: var(--warning-subtle); color: var(--warning); }
+
+        .kpi-value {
+            font-size: 22px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.02em; line-height: 1;
+        }
+        .kpi-value.danger { color: var(--danger); }
+        .kpi-value.warning { color: var(--warning); }
+
+        .kpi-footer {
+            margin-top: 6px; font-size: 10px; color: var(--text-tertiary);
+        }
+
+        /* FILTER BAR */
+        .filterbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 11px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            user-select: none;
+        }
+        .chip:hover { border-color: var(--border-default); background: var(--bg-hover); color: var(--text-primary); }
+        .chip .n {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 8px;
+            background: var(--bg-elevated);
+            color: var(--text-tertiary);
+        }
+        .chip.active { color: var(--text-primary); border-color: var(--accent); background: var(--accent-subtle); }
+        .chip.active .n { background: var(--accent); color: #fff; }
+        .chip.crit.active { border-color: var(--danger); background: var(--danger-subtle); }
+        .chip.crit.active .n { background: var(--danger); color: #fff; }
+        .chip.warn.active { border-color: var(--warning); background: var(--warning-subtle); }
+        .chip.warn.active .n { background: var(--warning); color: #fff; }
+        .chip.info.active { border-color: var(--info); background: var(--info-subtle); }
+        .chip.info.active .n { background: var(--info); color: #fff; }
+        .chip.ok.active { border-color: var(--success); background: var(--success-subtle); }
+        .chip.ok.active .n { background: var(--success); color: #fff; }
+
+        .search-box {
+            margin-left: auto;
+            position: relative;
+            min-width: 220px;
+            flex: 1;
+            max-width: 320px;
+        }
+
+        .search-box i {
+            position: absolute; left: 11px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-quaternary); font-size: 11px; pointer-events: none;
+        }
+
+        .search-box input {
+            width: 100%; height: 32px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 0 12px 0 32px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+        .search-box input::placeholder { color: var(--text-quaternary); }
+        .search-box input:hover { border-color: var(--border-default); }
+        .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+
+        /* PREDICTIONS GRID */
+        .predictions-container {
+            flex: 1;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+            gap: 8px;
+        }
+
+        .panel-title {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; font-weight: 600; color: var(--text-primary);
+        }
+        .panel-title i { color: var(--text-tertiary); font-size: 11px; }
+
+        .panel-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; font-weight: 600;
+            color: var(--text-tertiary);
+            background: var(--bg-elevated);
+            padding: 2px 6px; border-radius: 3px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .predictions-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            min-height: 0;
+        }
+
+        .predictions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 12px;
+        }
+
+        /* PREDICTION CARD */
+        .pred-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            transition: all 0.15s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            border-left-width: 3px;
+        }
+        .pred-card:hover { border-color: var(--border-default); }
+        .pred-card.sev-critical { border-left-color: var(--danger); }
+        .pred-card.sev-warning { border-left-color: var(--warning); }
+        .pred-card.sev-info { border-left-color: var(--info); }
+        .pred-card.sev-healthy { border-left-color: var(--success); }
+
+        .pred-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .pred-icon {
+            width: 34px; height: 34px;
+            border-radius: var(--radius-md);
+            background: var(--accent-subtle); color: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0;
+        }
+
+        .pred-info { flex: 1; min-width: 0; }
+
+        .pred-name {
+            font-size: 13px; font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            line-height: 1.3;
+        }
+
+        .pred-ip {
+            font-size: 10px;
+            color: var(--text-quaternary);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 2px;
+        }
+
+        .pred-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-top: 4px;
+        }
+        .pred-status-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+        .pred-status-badge.online { color: var(--success); background: var(--success-subtle); }
+        .pred-status-badge.warning { color: var(--warning); background: var(--warning-subtle); }
+        .pred-status-badge.critical { color: var(--danger); background: var(--danger-subtle); }
+        .pred-status-badge.offline { color: var(--text-tertiary); background: var(--bg-hover); }
+
+        .health-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .health-ring {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+        }
+        .health-ring svg { transform: rotate(-90deg); }
+        .health-ring-val {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .health-meta { flex: 1; min-width: 0; }
+        .health-meta .hl {
+            font-size: 9px;
+            color: var(--text-quaternary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+        }
+        .health-meta .hv {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .usage-bars {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .usage-bars .u {
+            width: 4px;
+            height: 20px;
+            border-radius: 2px;
+            background: var(--bg-canvas);
+            overflow: hidden;
+            position: relative;
+        }
+        .usage-bars .u i {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            border-radius: 2px;
+        }
+
+        .pred-list {
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            border-bottom: 1px solid var(--border-subtle);
+            flex: 1;
+        }
+
+        .pred-item {
+            display: flex;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: var(--radius-md);
+            background: var(--bg-canvas);
+            border-left-width: 3px;
+            border-left-style: solid;
+        }
+        .pred-item.critical { border-left-color: var(--danger); }
+        .pred-item.warning { border-left-color: var(--warning); }
+        .pred-item.info { border-left-color: var(--info); }
+
+        .pred-item-icon {
+            width: 22px; height: 22px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+        .pred-item.critical .pred-item-icon { background: var(--danger-subtle); color: var(--danger); }
+        .pred-item.warning .pred-item-icon { background: var(--warning-subtle); color: var(--warning); }
+        .pred-item.info .pred-item-icon { background: var(--info-subtle); color: var(--info); }
+
+        .pred-item-content { flex: 1; min-width: 0; }
+        .pred-item-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+        .pred-item-msg {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+        .pred-item-action {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 3px;
+            display: flex;
+            gap: 4px;
+            align-items: flex-start;
+        }
+        .pred-item-action i { font-size: 9px; margin-top: 2px; }
+
+        .pred-ok {
+            padding: 14px;
+            border-radius: var(--radius-md);
+            background: var(--success-subtle);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: var(--success);
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 12px;
+        }
+
+        .pred-more {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            text-align: center;
+            padding: 4px;
+            cursor: pointer;
+        }
+        .pred-more:hover { color: var(--accent); }
+
+        .pred-foot {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .pred-counts {
+            display: flex;
+            gap: 8px;
+            font-size: 10px;
+            color: var(--text-tertiary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .pred-counts b.critical { color: var(--danger); }
+        .pred-counts b.warning { color: var(--warning); }
+        .pred-counts b.info { color: var(--info); }
+
+        .pred-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            background: var(--accent-subtle);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: var(--radius-sm);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            font-family: inherit;
+        }
+        .pred-btn:hover { background: var(--accent); color: #fff; }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 300px;
+        }
+        .empty-state-icon {
+            width: 48px; height: 48px;
+            margin-bottom: 12px;
+            border-radius: var(--radius-lg);
+            background: var(--success-subtle);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--success);
+            font-size: 18px;
+        }
+        .empty-state-title {
+            font-size: 14px; font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .empty-state-desc {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        /* DROPDOWN */
+        .dropdown-menu {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            box-shadow: var(--shadow-md);
+            min-width: 220px;
+            margin-top: 6px;
+        }
+        .dropdown-item {
+            color: var(--text-secondary);
+            font-size: 12px; padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 500;
+        }
+        .dropdown-item i { width: 14px; font-size: 12px; color: var(--text-quaternary); }
+        .dropdown-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .dropdown-item.danger { color: var(--danger); }
+        .dropdown-item.danger i { color: var(--danger); }
+        .dropdown-item.danger:hover { background: var(--danger-subtle); }
+        .dropdown-divider { border-color: var(--border-subtle); margin: 4px 0; }
+
+        /* MODAL */
+        .modal-content {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+        }
+        .modal-header, .modal-footer { border-color: var(--border-subtle); }
+        [data-theme="dark"] .modal-header .btn-close { filter: invert(1); opacity: 0.6; }
+
+        .modal-body { max-height: 82vh; overflow-y: auto; }
+
+        .analysis-hero {
+            position: relative;
+            padding: 16px;
+            border-radius: var(--radius-lg);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-left: 4px solid var(--danger);
+        }
+        .analysis-hero.warning { border-left-color: var(--warning); }
+        .analysis-hero.info { border-left-color: var(--info); }
+        .analysis-hero.ok { border-left-color: var(--success); }
+
+        .risk-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 9px;
+            border-radius: 4px;
+            background: var(--danger-subtle);
+            color: var(--danger);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .analysis-hero.warning .risk-label { background: var(--warning-subtle); color: var(--warning); }
+        .analysis-hero.info .risk-label { background: var(--info-subtle); color: var(--info); }
+        .analysis-hero.ok .risk-label { background: var(--success-subtle); color: var(--success); }
+
+        .risk-title-big {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 8px;
+            color: var(--text-primary);
+        }
+
+        .analysis-chip {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+        }
+        .analysis-chip small {
+            color: var(--text-quaternary);
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+        }
+        .analysis-chip strong {
+            display: block;
+            margin-top: 3px;
+            font-size: 14px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .analysis-section {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 14px;
+            height: 100%;
+        }
+        .analysis-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+        .analysis-section-title i { color: var(--accent); margin-right: 6px; }
+
+        .trend-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 14px;
+        }
+        .trend-canvas { height: 240px; position: relative; }
+
+        .reason-row {
+            display: flex;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        .reason-row:last-child { border-bottom: 0; }
+        .reason-check {
+            width: 20px; height: 20px;
+            min-width: 20px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--success-subtle);
+            color: var(--success);
+            font-size: 9px;
+        }
+
+        .detail-pred {
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: var(--bg-canvas);
+            border-left-width: 3px;
+            border-left-style: solid;
+            position: relative;
+        }
+        .detail-pred.critical { border-left-color: var(--danger); }
+        .detail-pred.warning { border-left-color: var(--warning); }
+        .detail-pred.info { border-left-color: var(--info); }
+
+        .detail-pred-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .detail-pred-msg, .detail-pred-action {
+            color: var(--text-tertiary);
+            font-size: 11px;
+            margin-top: 3px;
+        }
+        .detail-pred-action { color: var(--text-secondary); }
+
+        .detail-pred .rank {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-quaternary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .analysis-metric {
+            padding: 12px;
+            border-radius: var(--radius-md);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+        }
+        .analysis-metric .m-label {
+            color: var(--text-tertiary);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+        }
+        .analysis-metric .m-value {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+        }
+
+        .progress {
+            height: 4px;
+            background: var(--bg-canvas);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .ring-lg {
+            width: 74px; height: 74px;
+            position: relative;
+            margin: 0 auto;
+        }
+        .ring-lg svg { transform: rotate(-90deg); }
+        #modal-health-circle { transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease; }
+        .ring-lg-val {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .confidence-badge {
+            margin-top: 8px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-tertiary);
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 3px 9px;
+            white-space: nowrap;
+            display: inline-block;
+        }
+        .confidence-badge.high { color: var(--success); background: var(--success-subtle); border-color: rgba(34,197,94,.2); }
+        .confidence-badge.moderate { color: var(--warning); background: var(--warning-subtle); border-color: rgba(245,158,11,.2); }
+        .confidence-badge.low { color: var(--text-tertiary); }
+
+        .tag-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .tag-row .tag {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: var(--bg-elevated);
+            color: var(--text-tertiary);
+            border: 1px solid var(--border-subtle);
+        }
+        .tag-row .tag.hot {
+            background: var(--danger-subtle);
+            color: var(--danger);
+            border-color: rgba(239,68,68,.25);
+        }
+
+        .severity-bar-wrap { margin-top: 12px; }
+        .severity-bar {
+            display: flex;
+            height: 6px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--bg-canvas);
+        }
+        .severity-bar .seg.critical { background: var(--danger); }
+        .severity-bar .seg.warning { background: var(--warning); }
+        .severity-bar .seg.info { background: var(--info); }
+        .severity-bar .seg.clear { background: var(--success); }
+
+        .severity-legend {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+            font-size: 9px;
+            color: var(--text-tertiary);
+            flex-wrap: wrap;
+        }
+        .severity-legend span { display: flex; align-items: center; gap: 5px; }
+        .severity-legend i {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .trend-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: var(--bg-canvas);
+            color: var(--text-tertiary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .trend-badge.up { color: var(--danger); background: var(--danger-subtle); }
+        .trend-badge.down { color: var(--success); background: var(--success-subtle); }
+        .trend-badge.flat { color: var(--text-tertiary); }
+
+        .outlook-msg {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1200px) {
+            .summary-row { grid-template-columns: repeat(2, 1fr); }
+            .predictions-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 992px) {
+            .app { grid-template-columns: 1fr; }
+            .sidebar {
+                position: fixed; top: 0; left: 0; bottom: 0;
+                width: var(--sidebar-width);
+                transform: translateX(-100%);
+                transition: transform 0.2s ease;
+                z-index: 1040;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .topbar-toggle { display: flex; }
+        }
+
+        @media (max-width: 640px) {
+            .page { padding: 12px; }
+            .topbar { padding: 0 12px; gap: 8px; }
+            .breadcrumb-nav { display: none; }
+            .time-display { display: none; }
+            .status-pill span:not(.dot) { display: none; }
+            .summary-row { grid-template-columns: 1fr; }
+            .search-box { max-width: 100%; }
+            .trend-canvas { height: 200px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     JSON DATA — Rendered by Jinja, ignored by VS Code
+     ═══════════════════════════════════════════════════════ -->
+<script type="application/json" id="prediction-data-raw">
+[
+    {% for item in predictions_data %}
+    {
+        "id": {{ item.computer.id|default(0)|int }},
+        "name": {{ item.computer.computer_name|default('Unknown')|tojson }},
+        "ip": {{ item.computer.ip_address|default('Unknown')|tojson }},
+        "status": {{ item.computer.status|default('offline')|tojson }},
+        "cpu": {{ item.computer.cpu_usage|default(0)|float }},
+        "ram": {{ item.computer.ram_usage|default(0)|float }},
+        "disk": {{ item.computer.disk_usage|default(0)|float }},
+        "health": {{ item.health_score|default(0)|float }},
+        "predictions": [
+            {% for pred in item.predictions %}
+            {
+                "type": {{ pred.type|default('info')|tojson }},
+                "icon": {{ pred.icon|default('fa-info-circle')|tojson }},
+                "title": {{ pred.title|default('System Issue')|tojson }},
+                "message": {{ pred.message|default('Potential issue detected.')|tojson }},
+                "action": {{ pred.action|default('Continue monitoring.')|tojson }},
+                "severity": {{ pred.severity|default(1)|int }}
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-mark"><i class="fas fa-microchip"></i></div>
+            <div class="brand-text">
+                <span class="brand-name">Nexus Core</span>
+                <span class="brand-tag">Maintenance</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Overview</div>
+                <a href="{{ url_for('index') }}" class="nav-link">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Monitoring</div>
+                <a href="{{ url_for('systems') }}" class="nav-link">
+                    <i class="fas fa-desktop"></i> Systems
+                </a>
+                <a href="{{ url_for('predictions') }}" class="nav-link active">
+                    <i class="fas fa-chart-line"></i> Predictions
+                    {% if total_issues and total_issues > 0 %}
+                    <span class="nav-badge warning">{{ total_issues }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('alerts') }}" class="nav-link">
+                    <i class="fas fa-bell"></i> Alerts
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Operations</div>
+                <a href="{{ url_for('maintenance') }}" class="nav-link">
+                    <i class="fas fa-tools"></i> Maintenance
+                </a>
+                <a href="{{ url_for('inventory') }}" class="nav-link">
+                    <i class="fas fa-boxes-stacked"></i> Inventory
+                </a>
+                <a href="{{ url_for('tickets') }}" class="nav-link">
+                    <i class="fas fa-ticket-alt"></i> Tickets
+                </a>
+                <a href="{{ url_for('qr_selection') }}" class="nav-link">
+                    <i class="fas fa-qrcode"></i> QR Codes
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Account</div>
+                <a href="{{ url_for('profile') }}" class="nav-link">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="{{ url_for('settings') }}" class="nav-link">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="{{ url_for('about') }}" class="nav-link">
+                    <i class="fas fa-info-circle"></i> About
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-link danger">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar">
+                    {{ (current_account.username[0]|upper) if current_account else 'A' }}
+                </div>
+                <div class="user-meta">
+                    <span class="user-name">{{ current_account.username if current_account else 'Admin' }}</span>
+                    <span class="user-role">{{ current_role|upper if current_role else 'USER' }}</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <button class="topbar-toggle" id="menu-toggle" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav class="breadcrumb-nav">
+                <span>Nexus Core</span>
+                <span class="sep">/</span>
+                <span class="current">Predictions</span>
+            </nav>
+
+            <div class="topbar-right">
+                <span class="status-pill">
+                    <span class="dot"></span>
+                    <span>LIVE</span>
+                </span>
+
+                <span class="time-display" id="last-update">--:--:--</span>
+
+                <div class="theme-toggle" role="group" aria-label="Theme">
+                    <button type="button" class="theme-btn" data-theme-value="light" title="Light mode">
+                        <i class="fas fa-sun"></i>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme-value="auto" title="System default">
+                        <i class="fas fa-circle-half-stroke"></i>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme-value="dark" title="Dark mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+
+                <div class="dropdown">
+                    <button class="icon-btn" data-bs-toggle="dropdown" aria-label="Account">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li style="padding: 8px 12px; font-size: 11px; color: var(--text-tertiary); pointer-events: none;">
+                            Signed in as <strong style="color: var(--text-primary);">{{ current_account.username if current_account else 'Admin' }}</strong>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <i class="fas fa-user"></i> Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('settings') }}">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item danger" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> Sign Out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- PAGE -->
+        <main class="page">
+
+            <!-- SUMMARY -->
+            <div class="summary-row">
+                <div class="kpi-card">
+                    <div class="kpi-head">
+                        <span class="kpi-label">Total Systems</span>
+                        <div class="kpi-icon"><i class="fas fa-server"></i></div>
+                    </div>
+                    <div class="kpi-value">{{ total_systems }}</div>
+                    <div class="kpi-footer">Being analyzed</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-head">
+                        <span class="kpi-label">Issues Found</span>
+                        <div class="kpi-icon danger"><i class="fas fa-exclamation-circle"></i></div>
+                    </div>
+                    <div class="kpi-value danger">{{ total_issues }}</div>
+                    <div class="kpi-footer">Detected problems</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-head">
+                        <span class="kpi-label">Critical</span>
+                        <div class="kpi-icon danger"><i class="fas fa-circle-exclamation"></i></div>
+                    </div>
+                    <div class="kpi-value danger">{{ total_critical }}</div>
+                    <div class="kpi-footer">Immediate action</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-head">
+                        <span class="kpi-label">Warnings</span>
+                        <div class="kpi-icon warning"><i class="fas fa-exclamation-triangle"></i></div>
+                    </div>
+                    <div class="kpi-value warning">{{ total_warnings }}</div>
+                    <div class="kpi-footer">Requires monitoring</div>
+                </div>
+            </div>
+
+            <!-- FILTER BAR -->
+            {% if predictions_data %}
+            <div class="filterbar">
+                <div class="chip active" data-filter="all">
+                    All <span class="n">{{ predictions_data|length }}</span>
+                </div>
+                <div class="chip crit" data-filter="critical">
+                    Critical <span class="n">{{ predictions_data|selectattr('critical_count', 'greaterthan', 0)|list|length }}</span>
+                </div>
+                <div class="chip warn" data-filter="warning">
+                    Warning <span class="n">{{ predictions_data|selectattr('warning_count', 'greaterthan', 0)|list|length }}</span>
+                </div>
+                <div class="chip info" data-filter="info">
+                    Info <span class="n">{{ predictions_data|selectattr('info_count', 'greaterthan', 0)|list|length }}</span>
+                </div>
+                <div class="chip ok" data-filter="healthy">
+                    Healthy <span class="n">{{ predictions_data|selectattr('total_predictions', 'equalto', 0)|list|length }}</span>
+                </div>
+
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="prediction-search" placeholder="Search system or IP...">
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- PREDICTIONS CONTAINER -->
+            <div class="predictions-container">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-robot"></i>
+                        <span>AI-Powered Predictions</span>
+                        <span class="panel-count" id="predictions-count">{{ predictions_data|length if predictions_data else 0 }}</span>
+                    </div>
+                    <button class="icon-btn" onclick="location.reload()" title="Refresh" style="width:28px;height:28px;">
+                        <i class="fas fa-sync"></i>
+                    </button>
+                </div>
+
+                <div class="predictions-scroll">
+                    <div class="predictions-grid" id="predictions-grid">
+                        {% if predictions_data %}
+                            {% for item in predictions_data %}
+                                {% set circumference = 119.4 %}
+                                {% set offset = circumference - (circumference * item.health_score / 100) %}
+                                {% if item.critical_count > 0 %}
+                                    {% set severity = 'critical' %}
+                                {% elif item.warning_count > 0 %}
+                                    {% set severity = 'warning' %}
+                                {% elif item.info_count > 0 %}
+                                    {% set severity = 'info' %}
+                                {% else %}
+                                    {% set severity = 'healthy' %}
+                                {% endif %}
+
+                                <div class="pred-card sev-{{ severity }} pred-col"
+                                     data-severity="{{ severity }}"
+                                     data-search="{{ (item.computer.computer_name ~ ' ' ~ item.computer.ip_address)|lower }}">
+
+                                    <div class="pred-head">
+                                        <div class="pred-icon"><i class="fas fa-desktop"></i></div>
+                                        <div class="pred-info">
+                                            <div class="pred-name">{{ item.computer.computer_name }}</div>
+                                            <div class="pred-ip">{{ item.computer.ip_address }}</div>
+                                            <span class="pred-status-badge {{ item.computer.status }}">
+                                                <span class="dot"></span>{{ item.computer.status|upper }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="health-row">
+                                        <div class="health-ring">
+                                            <svg width="44" height="44" viewBox="0 0 44 44">
+                                                <circle cx="22" cy="22" r="18" fill="none" stroke="var(--bg-canvas)" stroke-width="4"/>
+                                                <circle cx="22" cy="22" r="18" fill="none" stroke="{{ item.health_color }}" stroke-width="4" stroke-linecap="round"
+                                                    stroke-dasharray="{{ circumference }}" stroke-dashoffset="{{ offset }}"/>
+                                            </svg>
+                                            <div class="health-ring-val">{{ item.health_score }}%</div>
+                                        </div>
+                                        <div class="health-meta">
+                                            <div class="hl">Health Score</div>
+                                            <div class="hv" style="color: {{ item.health_color }};">
+                                                {% if item.health_score >= 80 %}Excellent
+                                                {% elif item.health_score >= 60 %}Fair
+                                                {% elif item.health_score >= 40 %}Degraded
+                                                {% else %}Poor{% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="usage-bars">
+                                            <div class="u" title="CPU {{ item.computer.cpu_usage }}%"><i style="height:{{ item.computer.cpu_usage }}%;background:var(--purple);"></i></div>
+                                            <div class="u" title="RAM {{ item.computer.ram_usage }}%"><i style="height:{{ item.computer.ram_usage }}%;background:var(--accent);"></i></div>
+                                            <div class="u" title="Disk {{ item.computer.disk_usage }}%"><i style="height:{{ item.computer.disk_usage }}%;background:var(--warning);"></i></div>
+                                        </div>
+                                    </div>
+
+                                    {% if item.predictions %}
+                                    <div class="pred-list">
+                                        {% for pred in item.predictions[:2] %}
+                                        <div class="pred-item {{ pred.type }}">
+                                            <div class="pred-item-icon"><i class="fas {{ pred.icon }}"></i></div>
+                                            <div class="pred-item-content">
+                                                <div class="pred-item-title">{{ pred.title }}</div>
+                                                <div class="pred-item-msg">{{ pred.message }}</div>
+                                                <div class="pred-item-action"><i class="fas fa-lightbulb"></i>{{ pred.action }}</div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                        {% if item.predictions|length > 2 %}
+                                        <div class="pred-more" onclick="openPredictionAnalysis({{ item.computer.id }})">
+                                            +{{ item.predictions|length - 2 }} more prediction(s)
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <div class="pred-ok">
+                                        <i class="fas fa-circle-check"></i>
+                                        <span>No active predictions — running optimally.</span>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="pred-foot">
+                                        <div class="pred-counts">
+                                            {% if item.critical_count > 0 %}<b class="critical">{{ item.critical_count }} critical</b>{% endif %}
+                                            {% if item.warning_count > 0 %}<b class="warning">{{ item.warning_count }} warning</b>{% endif %}
+                                            {% if item.info_count > 0 %}<b class="info">{{ item.info_count }} info</b>{% endif %}
+                                            {% if item.total_predictions == 0 %}<span>Just checked</span>{% endif %}
+                                        </div>
+                                        <button class="pred-btn" onclick="event.stopPropagation(); openPredictionAnalysis({{ item.computer.id }})">
+                                            Analysis <i class="fas fa-arrow-right"></i>
+                                        </button>
+                                    </div>
+
+                                </div>
+                            {% endfor %}
+
+                            <div id="no-match-state" style="display:none; grid-column: 1/-1;">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon" style="background: var(--bg-elevated); color: var(--text-quaternary);">
+                                        <i class="fas fa-magnifying-glass"></i>
+                                    </div>
+                                    <div class="empty-state-title">No systems match</div>
+                                    <div class="empty-state-desc">Try a different filter or search term.</div>
+                                </div>
+                            </div>
+
+                        {% else %}
+                            <div style="grid-column: 1/-1;">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="empty-state-title">All Systems Healthy</div>
+                                    <div class="empty-state-desc">No predictions or warnings at this time.</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="predictionAnalysisModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <div style="font-size:13px; font-weight:700;">
+                        <i class="fas fa-brain me-2" style="color: var(--accent);"></i>Prediction Analysis
+                    </div>
+                    <div id="modal-system-subtitle" style="font-size:10px; color: var(--text-tertiary); margin-top:3px;">System analysis</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="analysis-hero" id="analysis-hero">
+                    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                        <div style="flex:1; min-width:220px;">
+                            <div class="risk-label" id="modal-risk-label">
+                                <i class="fas fa-triangle-exclamation"></i>Risk Analysis
+                            </div>
+                            <div class="risk-title-big" id="modal-risk-title">Loading...</div>
+                            <div id="modal-risk-message" style="font-size:11px; color: var(--text-tertiary); margin-top:4px; max-width:520px;"></div>
+                            <div class="tag-row" id="modal-affected-tags"></div>
+                        </div>
+                        <div class="text-center">
+                            <div class="ring-lg">
+                                <svg width="74" height="74" viewBox="0 0 74 74">
+                                    <circle cx="37" cy="37" r="31" fill="none" stroke="var(--bg-canvas)" stroke-width="7"/>
+                                    <circle id="modal-health-circle" cx="37" cy="37" r="31" fill="none" stroke="#ef4444" stroke-width="7" stroke-linecap="round" stroke-dasharray="194.8" stroke-dashoffset="194.8"/>
+                                </svg>
+                                <div class="ring-lg-val" id="modal-health">--%</div>
+                            </div>
+                            <div class="confidence-badge" id="modal-confidence">Loading…</div>
+                        </div>
+                    </div>
+
+                    <div class="severity-bar-wrap">
+                        <div class="severity-bar" id="modal-severity-bar"></div>
+                        <div class="severity-legend" id="modal-severity-legend"></div>
+                    </div>
+
+                    <div class="row g-2 mt-3">
+                        <div class="col-4"><div class="analysis-chip"><small>Risk</small><strong id="modal-risk">--</strong></div></div>
+                        <div class="col-4"><div class="analysis-chip"><small>Issues</small><strong id="modal-issues">--</strong></div></div>
+                        <div class="col-4"><div class="analysis-chip"><small>Estimated</small><strong id="modal-estimated">N/A</strong></div></div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-3">
+                    <div class="col-md-4">
+                        <div class="analysis-metric">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="m-label">CPU Usage</div>
+                                <span class="trend-badge" id="modal-cpu-trend">—</span>
+                            </div>
+                            <div class="m-value" id="modal-cpu">--%</div>
+                            <div class="progress mt-2"><div id="modal-cpu-bar" class="progress-bar" style="background: var(--purple); width:0%;"></div></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="analysis-metric">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="m-label">RAM Usage</div>
+                                <span class="trend-badge" id="modal-ram-trend">—</span>
+                            </div>
+                            <div class="m-value" id="modal-ram">--%</div>
+                            <div class="progress mt-2"><div id="modal-ram-bar" class="progress-bar" style="background: var(--accent); width:0%;"></div></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="analysis-metric">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="m-label">Disk Usage</div>
+                                <span class="trend-badge" id="modal-disk-trend">—</span>
+                            </div>
+                            <div class="m-value" id="modal-disk">--%</div>
+                            <div class="progress mt-2"><div id="modal-disk-bar" class="progress-bar" style="background: var(--warning); width:0%;"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="trend-card mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <div class="analysis-section-title mb-0"><i class="fas fa-chart-area"></i>Resource Trend</div>
+                            <div style="font-size:10px; color: var(--text-tertiary); margin-top:3px;">Real history collected by monitoring agent</div>
+                        </div>
+                        <span id="modal-history-count" style="font-size:10px; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace;">0 readings</span>
+                    </div>
+                    <div class="trend-canvas">
+                        <canvas id="predictionTrendChart"></canvas>
+                        <div id="modal-chart-empty" style="display:none; text-align:center; color: var(--text-tertiary); padding-top:95px; font-size:11px;">
+                            No history data available yet.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-3">
+                    <div class="col-lg-5">
+                        <div class="analysis-section">
+                            <div class="analysis-section-title">
+                                <i class="fas fa-bolt"></i>Predicted Issues
+                                <span style="color: var(--text-tertiary); font-weight: 400;">· highest priority first</span>
+                            </div>
+                            <div id="modal-predictions"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="analysis-section">
+                            <div class="analysis-section-title"><i class="fas fa-lightbulb"></i>Why?</div>
+                            <div id="modal-reasons"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="analysis-section">
+                            <div class="analysis-section-title"><i class="fas fa-screwdriver-wrench"></i>Recommended Action</div>
+                            <div id="modal-actions"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-section mt-3">
+                    <div class="analysis-section-title"><i class="fas fa-clock"></i>Monitoring Outlook</div>
+                    <div class="d-flex align-items-center gap-2" style="font-size:10px; color: var(--text-tertiary);" id="modal-outlook-strip">
+                        <span style="color: var(--success);"><i class="fas fa-circle"></i> NOW</span>
+                        <div style="height:2px; flex:1; background: var(--border-subtle);"></div>
+                        <span style="color: var(--warning);">MONITOR</span>
+                        <div style="height:2px; flex:1; background: var(--border-subtle);"></div>
+                        <span style="color: var(--danger);">REVIEW</span>
+                    </div>
+                    <div class="outlook-msg" id="modal-outlook-msg"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// THEME MANAGER
+// ═══════════════════════════════════════════════════════
+(function () {
+    var STORAGE_KEY = 'nexus-theme';
+    var root = document.documentElement;
+
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function resolveTheme(pref) { return pref === 'auto' ? getSystemTheme() : pref; }
+
+    function applyTheme(pref, animate) {
+        var effective = resolveTheme(pref);
+        if (animate) {
+            root.classList.add('theme-transitioning');
+            setTimeout(function () { root.classList.remove('theme-transitioning'); }, 250);
+        }
+        root.setAttribute('data-theme', effective);
+        root.setAttribute('data-theme-pref', pref);
+        try { localStorage.setItem(STORAGE_KEY, pref); } catch (e) {}
+        if (typeof refreshChartTheme === 'function') setTimeout(refreshChartTheme, 50);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.theme-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { applyTheme(btn.dataset.themeValue, true); });
+        });
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+            if (root.getAttribute('data-theme-pref') === 'auto') applyTheme('auto', true);
+        });
+    });
+})();
+
+document.getElementById('menu-toggle').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('sidebar').classList.toggle('open');
+});
+
+// ═══════════════════════════════════════════════════════
+// LOAD PREDICTION DATA FROM JSON SCRIPT TAG
+// ═══════════════════════════════════════════════════════
+const predictionData = {};
+(function () {
+    try {
+        var raw = document.getElementById('prediction-data-raw').textContent;
+        var arr = JSON.parse(raw);
+        arr.forEach(function (item) {
+            predictionData[item.id] = item;
+        });
+        console.log('[Nexus Core] Loaded prediction data:', Object.keys(predictionData).length, 'systems');
+    } catch (e) {
+        console.error('[Nexus Core] Failed to parse prediction data:', e);
+    }
+})();
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let predictionChart = null;
+let activeFilter = 'all';
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+$(document).ready(function () {
+    updateTime();
+    setInterval(updateTime, 1000);
+    setInterval(function () { location.reload(); }, 30000);
+    initFilterBar();
+});
+
+function updateTime() {
+    var now = new Date();
+    $('#last-update').text(
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0') + ':' +
+        String(now.getSeconds()).padStart(2, '0')
+    );
+}
+
+// ═══════════════════════════════════════════════════════
+// FILTER + SEARCH
+// ═══════════════════════════════════════════════════════
+function initFilterBar() {
+    const chips = document.querySelectorAll('.filterbar .chip');
+    const searchInput = document.getElementById('prediction-search');
+
+    chips.forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            chips.forEach(function (c) { c.classList.remove('active'); });
+            this.classList.add('active');
+            activeFilter = this.dataset.filter;
+            applyFilters(activeFilter, searchInput ? searchInput.value : '');
+        });
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            applyFilters(activeFilter, this.value);
+        });
+    }
+}
+
+function applyFilters(filter, query) {
+    const cols = document.querySelectorAll('.pred-col');
+    const q = (query || '').trim().toLowerCase();
+    let visibleCount = 0;
+
+    cols.forEach(function (col) {
+        const sev = col.dataset.severity;
+        const haystack = col.dataset.search || '';
+        const matchesFilter = (filter === 'all') || (sev === filter);
+        const matchesSearch = !q || haystack.includes(q);
+        const show = matchesFilter && matchesSearch;
+        col.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+    });
+
+    const noMatch = document.getElementById('no-match-state');
+    if (noMatch) noMatch.style.display = visibleCount === 0 ? 'block' : 'none';
+
+    document.getElementById('predictions-count').textContent = visibleCount;
+}
+
+function esc(value) {
+    const d = document.createElement('div');
+    d.textContent = value == null ? '' : String(value);
+    return d.innerHTML;
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL ANALYSIS
+// ═══════════════════════════════════════════════════════
+const SEV_RANK = { critical: 0, warning: 1, info: 2 };
+const predictionModal = new bootstrap.Modal(document.getElementById('predictionAnalysisModal'));
+
+function openPredictionAnalysis(id) {
+    const data = predictionData[id];
+    if (!data) {
+        console.error('No prediction data for ID:', id);
+        return;
+    }
+
+    document.getElementById('modal-system-subtitle').textContent =
+        data.name + ' · ' + data.ip + ' · ' + String(data.status).toUpperCase();
+
+    const hasCritical = data.predictions.some(function (p) { return p.type === 'critical'; });
+    const hasWarning = data.predictions.some(function (p) { return p.type === 'warning'; });
+    const risk = hasCritical ? 'CRITICAL' : (hasWarning ? 'WARNING' : (data.predictions.length ? 'INFO' : 'LOW'));
+
+    const hero = document.getElementById('analysis-hero');
+    hero.classList.remove('warning', 'info', 'ok');
+    if (risk === 'WARNING') hero.classList.add('warning');
+    else if (risk === 'INFO') hero.classList.add('info');
+    else if (risk === 'LOW') hero.classList.add('ok');
+
+    document.getElementById('modal-risk-label').innerHTML =
+        '<i class="fas ' + (risk === 'CRITICAL' ? 'fa-circle-exclamation' : 'fa-triangle-exclamation') + '"></i>' + risk + ' RISK';
+    document.getElementById('modal-risk-title').textContent = data.predictions.length ? data.predictions[0].title : 'No active prediction';
+    document.getElementById('modal-risk-message').textContent = data.predictions.length ? data.predictions[0].message : 'No prediction issue is currently generated.';
+    document.getElementById('modal-risk').textContent = risk;
+    document.getElementById('modal-issues').textContent = data.predictions.length;
+
+    renderHealthRing(data.health, risk);
+    renderAffectedTags(data);
+    renderSeverityBar(data.predictions);
+    renderOutlook(risk);
+
+    document.getElementById('modal-estimated').textContent = 'N/A';
+    setModalMetric('cpu', data.cpu);
+    setModalMetric('ram', data.ram);
+    setModalMetric('disk', data.disk);
+    ['cpu', 'ram', 'disk'].forEach(function (k) {
+        const el = document.getElementById('modal-' + k + '-trend');
+        el.textContent = '—';
+        el.className = 'trend-badge';
+    });
+    document.getElementById('modal-confidence').textContent = 'Loading…';
+    document.getElementById('modal-confidence').className = 'confidence-badge';
+
+    renderModalPredictions(data.predictions);
+    renderReasons(data);
+    renderActions(data.predictions);
+
+    predictionModal.show();
+    loadPredictionHistory(id);
+}
+
+function setModalMetric(name, value) {
+    const n = Math.max(0, Math.min(100, Number(value) || 0));
+    document.getElementById('modal-' + name).textContent = n.toFixed(1) + '%';
+    document.getElementById('modal-' + name + '-bar').style.width = n + '%';
+}
+
+function renderHealthRing(health, risk) {
+    const n = Math.max(0, Math.min(100, Number(health) || 0));
+    const circumference = 194.8;
+    const offset = circumference - (circumference * n / 100);
+    const circle = document.getElementById('modal-health-circle');
+    const color = risk === 'CRITICAL' ? '#ef4444' : (risk === 'WARNING' ? '#f59e0b' : (risk === 'INFO' ? '#06b6d4' : '#22c55e'));
+    circle.style.stroke = color;
+    circle.style.strokeDashoffset = offset;
+    document.getElementById('modal-health').textContent = Math.round(n) + '%';
+    document.getElementById('modal-health').style.color = color;
+}
+
+function renderAffectedTags(data) {
+    const box = document.getElementById('modal-affected-tags');
+    const checks = [
+        { label: 'CPU', hot: data.cpu >= 70 },
+        { label: 'RAM', hot: data.ram >= 80 },
+        { label: 'Disk', hot: data.disk >= 85 },
+        { label: 'Offline', hot: data.status === 'offline' },
+        { label: 'Battery', hot: data.predictions.some(function (p) { return /battery/i.test(p.title); }) },
+        { label: 'Uptime', hot: data.predictions.some(function (p) { return /uptime/i.test(p.title); }) }
+    ].filter(function (c) { return c.hot; });
+
+    box.innerHTML = checks.length
+        ? checks.map(function (c) { return '<span class="tag hot">' + esc(c.label) + '</span>'; }).join('')
+        : '<span class="tag">No metric flagged</span>';
+}
+
+function renderSeverityBar(predictions) {
+    const bar = document.getElementById('modal-severity-bar');
+    const legend = document.getElementById('modal-severity-legend');
+    const counts = { critical: 0, warning: 0, info: 0 };
+    predictions.forEach(function (p) { if (counts[p.type] !== undefined) counts[p.type]++; });
+    const total = counts.critical + counts.warning + counts.info;
+
+    if (!total) {
+        bar.innerHTML = '<div class="seg clear" style="width:100%;"></div>';
+        legend.innerHTML = '<span><i style="background:#22c55e;"></i>No issues detected</span>';
+        return;
+    }
+    bar.innerHTML = ['critical', 'warning', 'info'].map(function (k) {
+        return counts[k] ? '<div class="seg ' + k + '" style="width:' + (counts[k] / total * 100).toFixed(1) + '%;"></div>' : '';
+    }).join('');
+    legend.innerHTML = ['critical', 'warning', 'info'].map(function (k) {
+        return counts[k] ? '<span><i style="background:' + (k === 'critical' ? '#ef4444' : k === 'warning' ? '#f59e0b' : '#06b6d4') + ';"></i>' + counts[k] + ' ' + k + '</span>' : '';
+    }).join('');
+}
+
+function renderOutlook(risk) {
+    const strip = document.getElementById('modal-outlook-strip');
+    const msg = document.getElementById('modal-outlook-msg');
+    const border = 'var(--border-subtle)';
+
+    if (risk === 'CRITICAL') {
+        strip.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-circle"></i> NOW · ACTIVE</span><div style="height:2px; flex:1; background: var(--danger);"></div><span style="color: var(--text-tertiary);">MONITOR</span><div style="height:2px; flex:1; background:' + border + ';"></div><span style="color: var(--text-tertiary);">REVIEW</span>';
+        msg.textContent = 'A critical prediction is active on this system right now — this is the highest monitoring priority in the queue.';
+    } else if (risk === 'WARNING') {
+        strip.innerHTML = '<span style="color: var(--success);"><i class="fas fa-circle"></i> NOW</span><div style="height:2px; flex:1; background: linear-gradient(90deg, var(--success), var(--warning));"></div><span style="color: var(--warning);">MONITOR · ACTIVE</span><div style="height:2px; flex:1; background:' + border + ';"></div><span style="color: var(--text-tertiary);">REVIEW</span>';
+        msg.textContent = 'Trending toward a threshold. Keep this system on the watchlist and re-check after the next few readings.';
+    } else if (risk === 'INFO') {
+        strip.innerHTML = '<span style="color: var(--success);"><i class="fas fa-circle"></i> NOW</span><div style="height:2px; flex:1; background:' + border + ';"></div><span style="color: var(--info);">INFORMATIONAL</span><div style="height:2px; flex:1; background:' + border + ';"></div><span style="color: var(--text-tertiary);">REVIEW</span>';
+        msg.textContent = 'Nothing urgent — the note below is for awareness only.';
+    } else {
+        strip.innerHTML = '<span style="color: var(--success);"><i class="fas fa-circle"></i> NOW · CLEAR</span><div style="height:2px; flex:1; background:' + border + ';"></div><span style="color: var(--text-tertiary);">MONITOR</span><div style="height:2px; flex:1; background:' + border + ';"></div><span style="color: var(--text-tertiary);">REVIEW</span>';
+        msg.textContent = 'No thresholds are currently crossed. Routine monitoring continues in the background.';
+    }
+}
+
+function renderModalPredictions(predictions) {
+    const box = document.getElementById('modal-predictions');
+    if (!predictions.length) {
+        box.innerHTML = '<div class="reason-row"><div class="reason-check"><i class="fas fa-check"></i></div><div>No active prediction issues.</div></div>';
+        return;
+    }
+    const sorted = predictions.slice().sort(function (a, b) {
+        return (SEV_RANK[a.type] === undefined ? 3 : SEV_RANK[a.type]) - (SEV_RANK[b.type] === undefined ? 3 : SEV_RANK[b.type]);
+    });
+    box.innerHTML = sorted.map(function (p, i) {
+        return '<div class="detail-pred ' + esc(p.type) + '">' +
+            '<span class="rank">#' + (i + 1) + '</span>' +
+            '<div class="detail-pred-title"><i class="fas ' + esc(p.icon) + '" style="margin-right:6px;"></i>' + esc(p.title) + '</div>' +
+            '<div class="detail-pred-msg">' + esc(p.message) + '</div>' +
+            '<div class="detail-pred-action"><i class="fas fa-arrow-right" style="margin-right:4px;"></i>' + esc(p.action) + '</div>' +
+        '</div>';
+    }).join('');
+}
+
+function renderReasons(data) {
+    const reasons = [];
+    if (data.cpu >= 70) reasons.push('CPU is at or above the configured warning threshold.');
+    if (data.ram >= 80) reasons.push('RAM is at or above the configured warning threshold.');
+    if (data.disk >= 85) reasons.push('Disk is at or above the configured warning threshold.');
+    if (data.status === 'offline') reasons.push('The system is currently marked offline.');
+    if (data.predictions.some(function (p) { return /battery/i.test(p.title); })) reasons.push('Battery condition triggered a rule.');
+    if (data.predictions.some(function (p) { return /uptime/i.test(p.title); })) reasons.push('Long uptime triggered a maintenance recommendation.');
+    if (!reasons.length) reasons.push('No major configured threshold was crossed.');
+
+    document.getElementById('modal-reasons').innerHTML = reasons.map(function (r) {
+        return '<div class="reason-row"><div class="reason-check"><i class="fas fa-check"></i></div><div>' + esc(r) + '</div></div>';
+    }).join('');
+}
+
+function renderActions(predictions) {
+    const actions = [];
+    predictions.forEach(function (p) {
+        if (p.action && actions.indexOf(p.action) === -1) actions.push(p.action);
+    });
+    document.getElementById('modal-actions').innerHTML = actions.length
+        ? actions.map(function (a, i) {
+            return '<div class="reason-row"><div class="reason-check" style="background: var(--accent-subtle); color: var(--accent);">' + String(i + 1).padStart(2, '0') + '</div><div>' + esc(a) + '</div></div>';
+        }).join('')
+        : '<div class="reason-row"><div class="reason-check"><i class="fas fa-check"></i></div><div>Continue normal monitoring.</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// TREND COMPUTATION
+// ═══════════════════════════════════════════════════════
+function computeTrend(values) {
+    if (!values || values.length < 2) return { dir: 'flat', pct: 0 };
+    const split = Math.max(1, Math.floor(values.length / 3));
+    const avg = function (arr) { return arr.reduce(function (a, b) { return a + b; }, 0) / arr.length; };
+    const a = avg(values.slice(0, split));
+    const b = avg(values.slice(-split));
+    const delta = b - a;
+    if (Math.abs(delta) < 2) return { dir: 'flat', pct: 0 };
+    return { dir: delta > 0 ? 'up' : 'down', pct: Math.abs(delta) };
+}
+
+function applyTrendBadge(key, values) {
+    const el = document.getElementById('modal-' + key + '-trend');
+    const t = computeTrend(values);
+    el.className = 'trend-badge ' + t.dir;
+    if (t.dir === 'flat') el.innerHTML = '<i class="fas fa-minus"></i> stable';
+    else if (t.dir === 'up') el.innerHTML = '<i class="fas fa-arrow-up"></i> +' + t.pct.toFixed(0) + '%';
+    else el.innerHTML = '<i class="fas fa-arrow-down"></i> -' + t.pct.toFixed(0) + '%';
+}
+
+function setConfidence(count) {
+    const el = document.getElementById('modal-confidence');
+    if (count >= 30) { el.textContent = 'High confidence · ' + count + ' readings'; el.className = 'confidence-badge high'; }
+    else if (count >= 10) { el.textContent = 'Moderate confidence · ' + count + ' readings'; el.className = 'confidence-badge moderate'; }
+    else if (count > 0) { el.textContent = 'Limited data · ' + count + ' readings'; el.className = 'confidence-badge low'; }
+    else { el.textContent = 'No history yet'; el.className = 'confidence-badge low'; }
+}
+
+// ═══════════════════════════════════════════════════════
+// CHART THEME
+// ═══════════════════════════════════════════════════════
+function getChartThemeColors() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+        grid: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(15,23,42,0.06)',
+        text: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(15,23,42,0.55)',
+        cpu: isDark ? '#a78bfa' : '#7c3aed',
+        ram: isDark ? '#60a5fa' : '#2563eb',
+        disk: isDark ? '#fbbf24' : '#d97706',
+        threshold: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(15,23,42,0.25)',
+        legend: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(15,23,42,0.6)'
+    };
+}
+
+function refreshChartTheme() {
+    if (!predictionChart) return;
+    var c = getChartThemeColors();
+    predictionChart.options.scales.x.grid.color = c.grid;
+    predictionChart.options.scales.y.grid.color = c.grid;
+    predictionChart.options.scales.x.ticks.color = c.text;
+    predictionChart.options.scales.y.ticks.color = c.text;
+    predictionChart.options.plugins.legend.labels.color = c.legend;
+    predictionChart.data.datasets[0].borderColor = c.cpu;
+    predictionChart.data.datasets[1].borderColor = c.ram;
+    predictionChart.data.datasets[2].borderColor = c.disk;
+    predictionChart.data.datasets[3].borderColor = c.threshold;
+    predictionChart.update('none');
+}
+
+// ═══════════════════════════════════════════════════════
+// LOAD HISTORY
+// ═══════════════════════════════════════════════════════
+async function loadPredictionHistory(id) {
+    try {
+        const response = await fetch('/api/history/' + id + '?limit=50');
+        const result = await response.json();
+
+        if (!result.success || !result.history || !result.history.length) {
+            if (predictionChart) predictionChart.destroy();
+            predictionChart = null;
+            document.getElementById('modal-chart-empty').style.display = 'block';
+            document.getElementById('modal-history-count').textContent = '0 readings';
+            setConfidence(0);
+            return;
+        }
+
+        document.getElementById('modal-chart-empty').style.display = 'none';
+        document.getElementById('modal-history-count').textContent = result.history.length + ' readings';
+        setConfidence(result.history.length);
+
+        const labels = result.history.map(function (h) {
+            const d = new Date(h.timestamp);
+            return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        });
+
+        const cpuSeries = result.history.map(function (h) { return Number(h.cpu) || 0; });
+        const ramSeries = result.history.map(function (h) { return Number(h.ram) || 0; });
+        const diskSeries = result.history.map(function (h) { return Number(h.disk) || 0; });
+
+        applyTrendBadge('cpu', cpuSeries);
+        applyTrendBadge('ram', ramSeries);
+        applyTrendBadge('disk', diskSeries);
+
+        var colors = getChartThemeColors();
+        const chartData = {
+            labels: labels,
+            datasets: [
+                { label: 'CPU', data: cpuSeries, borderColor: colors.cpu, backgroundColor: 'transparent', fill: false, tension: 0.35, borderWidth: 2, pointRadius: 2 },
+                { label: 'RAM', data: ramSeries, borderColor: colors.ram, backgroundColor: 'transparent', fill: false, tension: 0.35, borderWidth: 2, pointRadius: 2 },
+                { label: 'Disk', data: diskSeries, borderColor: colors.disk, backgroundColor: 'transparent', fill: false, tension: 0.35, borderWidth: 2, pointRadius: 2 },
+                { label: 'Warning threshold', data: labels.map(function () { return 80; }), borderColor: colors.threshold, borderWidth: 1, borderDash: [5, 4], pointRadius: 0, fill: false }
+            ]
+        };
+
+        const ctx = document.getElementById('predictionTrendChart').getContext('2d');
+        if (predictionChart) predictionChart.destroy();
+        predictionChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: colors.legend,
+                            boxWidth: 10,
+                            font: { size: 10 }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: colors.grid },
+                        ticks: { color: colors.text, font: { size: 9 }, maxTicksLimit: 8 }
+                    },
+                    y: {
+                        min: 0,
+                        max: 100,
+                        grid: { color: colors.grid },
+                        ticks: { color: colors.text, font: { size: 9 }, callback: function (v) { return v + '%'; } }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Prediction history error:', error);
+        document.getElementById('modal-chart-empty').style.display = 'block';
+        setConfidence(0);
+    }
+}
+</script>
+
+</body>
+</html>

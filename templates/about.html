@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About · Nexus Core</title>
+
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('nexus-theme') || 'dark';
+                var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var effective = saved === 'auto' ? (systemDark ? 'dark' : 'light') : saved;
+                document.documentElement.setAttribute('data-theme', effective);
+                document.documentElement.setAttribute('data-theme-pref', saved);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════
+           THEME TOKENS
+           ═══════════════════════════════════════════════════════ */
+        :root,
+        [data-theme="light"] {
+            --bg-canvas: #f7f8fa;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f2f4f7;
+            --bg-hover: #eaecf0;
+            --border-subtle: #eaecf0;
+            --border-default: #d0d5dd;
+            --text-primary: #101828;
+            --text-secondary: #475467;
+            --text-tertiary: #667085;
+            --text-quaternary: #98a2b3;
+            --accent: #1570ef;
+            --accent-hover: #175cd3;
+            --accent-subtle: rgba(21, 112, 239, 0.08);
+            --success: #12b76a;
+            --success-subtle: rgba(18, 183, 106, 0.08);
+            --warning: #f79009;
+            --warning-subtle: rgba(247, 144, 9, 0.08);
+            --danger: #f04438;
+            --danger-subtle: rgba(240, 68, 56, 0.08);
+            --info: #06aed4;
+            --info-subtle: rgba(6, 174, 212, 0.08);
+            --purple: #7a5af8;
+            --purple-subtle: rgba(122, 90, 248, 0.08);
+            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+            --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08);
+            --scrollbar-thumb: #d0d5dd;
+        }
+
+        [data-theme="dark"] {
+            --bg-canvas: #0a0e1a;
+            --bg-surface: #0f1524;
+            --bg-elevated: #171e2f;
+            --bg-hover: #1f2937;
+            --border-subtle: #1a2235;
+            --border-default: #2a3347;
+            --text-primary: #f9fafb;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-quaternary: #475569;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-subtle: rgba(59, 130, 246, 0.1);
+            --success: #22c55e;
+            --success-subtle: rgba(34, 197, 94, 0.1);
+            --warning: #f59e0b;
+            --warning-subtle: rgba(245, 158, 11, 0.1);
+            --danger: #ef4444;
+            --danger-subtle: rgba(239, 68, 68, 0.1);
+            --info: #06b6d4;
+            --info-subtle: rgba(6, 182, 212, 0.1);
+            --purple: #a78bfa;
+            --purple-subtle: rgba(167, 139, 250, 0.1);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+            --scrollbar-thumb: #2a3347;
+        }
+
+        :root {
+            --sidebar-width: 236px;
+            --topbar-height: 56px;
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            background: var(--bg-canvas);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text-primary);
+            font-size: 13px;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+        html.theme-transitioning *,
+        html.theme-transitioning *::before,
+        html.theme-transitioning *::after {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+        }
+
+        /* APP LAYOUT */
+        .app {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 16px; height: var(--topbar-height);
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+
+        .brand-mark {
+            width: 30px; height: 30px; border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 13px; flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(21, 112, 239, 0.25);
+        }
+
+        .brand-text { display: flex; flex-direction: column; overflow: hidden; }
+        .brand-name { font-size: 13px; font-weight: 700; line-height: 1.2; }
+        .brand-tag { font-size: 9px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase; }
+
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 8px; }
+        .nav-section { margin-top: 14px; }
+        .nav-section:first-child { margin-top: 0; }
+
+        .nav-section-title {
+            font-size: 10px; font-weight: 600; color: var(--text-quaternary);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            padding: 6px 12px 4px;
+        }
+
+        .nav-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 12px; border-radius: var(--radius-md);
+            color: var(--text-secondary); font-size: 13px;
+            font-weight: 500; text-decoration: none;
+            transition: all 0.12s ease;
+            position: relative;
+        }
+
+        .nav-link i { width: 16px; font-size: 13px; text-align: center; flex-shrink: 0; color: var(--text-quaternary); }
+        .nav-link:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-link:hover i { color: var(--text-secondary); }
+        .nav-link.active { background: var(--accent-subtle); color: var(--accent); font-weight: 600; }
+        .nav-link.active i { color: var(--accent); }
+
+        .nav-link.danger { color: var(--danger); }
+        .nav-link.danger i { color: var(--danger); }
+        .nav-link.danger:hover { background: var(--danger-subtle); }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border-subtle);
+            padding: 10px; flex-shrink: 0;
+        }
+
+        .user-card {
+            display: flex; align-items: center; gap: 10px;
+            padding: 6px 8px; border-radius: var(--radius-md);
+        }
+
+        .user-avatar-sm {
+            width: 30px; height: 30px; border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0;
+        }
+
+        .user-meta { display: flex; flex-direction: column; overflow: hidden; }
+        .user-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-role { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+
+        /* MAIN AREA */
+        .main { display: flex; flex-direction: column; overflow: hidden; }
+
+        .topbar {
+            height: var(--topbar-height);
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex; align-items: center; gap: 16px;
+            padding: 0 20px; flex-shrink: 0;
+        }
+
+        .topbar-toggle {
+            display: none; background: transparent;
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            width: 30px; height: 30px;
+            border-radius: var(--radius-md);
+            align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        .breadcrumb-nav { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); }
+        .breadcrumb-nav .sep { color: var(--text-quaternary); font-size: 10px; }
+        .breadcrumb-nav .current { color: var(--text-primary); font-weight: 600; }
+
+        .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 20px;
+            background: var(--success-subtle);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: var(--success);
+            font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+        }
+        .status-pill .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+        .theme-toggle {
+            display: inline-flex; align-items: center;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 2px; gap: 2px;
+        }
+        .theme-btn {
+            width: 26px; height: 26px;
+            background: transparent; border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-tertiary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 11px;
+            transition: all 0.15s ease;
+        }
+        .theme-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+        [data-theme-pref="auto"] .theme-btn[data-theme-value="auto"],
+        [data-theme-pref="light"] .theme-btn[data-theme-value="light"],
+        [data-theme-pref="dark"] .theme-btn[data-theme-value="dark"] {
+            background: var(--bg-surface); color: var(--accent); box-shadow: var(--shadow-sm);
+        }
+
+        .icon-btn {
+            width: 32px; height: 32px;
+            background: transparent; border: 1px solid transparent;
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 13px;
+            position: relative; transition: all 0.12s ease;
+        }
+        .icon-btn:hover { background: var(--bg-hover); border-color: var(--border-subtle); color: var(--text-primary); }
+
+        /* DROPDOWN */
+        .dropdown-menu {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            box-shadow: var(--shadow-md);
+            min-width: 220px;
+            margin-top: 6px;
+        }
+        .dropdown-item {
+            color: var(--text-secondary);
+            font-size: 12px; padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 500;
+        }
+        .dropdown-item i { width: 14px; font-size: 12px; color: var(--text-quaternary); }
+        .dropdown-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .dropdown-item.danger { color: var(--danger); }
+        .dropdown-item.danger i { color: var(--danger); }
+        .dropdown-item.danger:hover { background: var(--danger-subtle); }
+        .dropdown-divider { border-color: var(--border-subtle); margin: 4px 0; }
+        .dropdown-header {
+            font-size: 10px; font-weight: 600;
+            color: var(--text-quaternary);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            padding: 6px 10px 4px;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           PAGE CONTENT — COMPACT SINGLE SCREEN
+           ═══════════════════════════════════════════════════════ */
+        .page {
+            flex: 1;
+            overflow: hidden;
+            padding: 14px 18px;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-header {
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+            margin-bottom: 2px;
+        }
+
+        .page-desc {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        /* Hero banner */
+        .hero-banner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--purple), var(--info));
+        }
+
+        .hero-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 18px;
+            flex-shrink: 0;
+            box-shadow: 0 6px 18px rgba(21, 112, 239, 0.28);
+        }
+
+        .hero-content { flex: 1; min-width: 0; }
+
+        .hero-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+            letter-spacing: -0.01em;
+        }
+
+        .hero-sub {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .hero-sub .sep {
+            width: 3px; height: 3px;
+            background: var(--text-quaternary);
+            border-radius: 50%;
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            height: 20px;
+            padding: 0 9px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 600;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        [data-theme="light"] .badge.bg-accent {
+            background: rgba(21, 112, 239, 0.1) !important;
+            color: #1570ef !important;
+            border-color: rgba(21, 112, 239, 0.2);
+        }
+        [data-theme="dark"] .badge.bg-accent {
+            background: rgba(59, 130, 246, 0.12) !important;
+            color: #60a5fa !important;
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        [data-theme="light"] .badge.bg-purple {
+            background: rgba(122, 90, 248, 0.1) !important;
+            color: #7a5af8 !important;
+            border-color: rgba(122, 90, 248, 0.2);
+        }
+        [data-theme="dark"] .badge.bg-purple {
+            background: rgba(167, 139, 250, 0.12) !important;
+            color: #a78bfa !important;
+            border-color: rgba(167, 139, 250, 0.2);
+        }
+
+        [data-theme="light"] .badge.bg-success {
+            background: rgba(18, 183, 106, 0.1) !important;
+            color: #12b76a !important;
+            border-color: rgba(18, 183, 106, 0.2);
+        }
+        [data-theme="dark"] .badge.bg-success {
+            background: rgba(34, 197, 94, 0.12) !important;
+            color: #4ade80 !important;
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+
+        /* Stat grid */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .stat-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-box:hover {
+            border-color: var(--border-default);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-ico {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .stat-ico.blue { background: var(--accent-subtle); color: var(--accent); }
+        .stat-ico.green { background: var(--success-subtle); color: var(--success); }
+        .stat-ico.purple { background: var(--purple-subtle); color: var(--purple); }
+        .stat-ico.orange { background: var(--warning-subtle); color: var(--warning); }
+
+        .stat-val {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.1;
+        }
+
+        .stat-lbl {
+            font-size: 9px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+            margin-top: 1px;
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            margin-bottom: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:last-child { margin-bottom: 0; }
+
+        .card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: transparent;
+        }
+
+        .card-header i { color: var(--purple); font-size: 10px; margin-right: 5px; }
+
+        .card-body { padding: 10px 12px; }
+
+        /* Content text */
+        .content-text {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.55;
+        }
+
+        /* Feature list */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .feature-list li .fdot {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            background: var(--accent-subtle);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            flex-shrink: 0;
+        }
+
+        /* Tech stack */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .tech-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 8px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .tech-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-default);
+        }
+
+        .tech-card .tech-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .tech-card .tech-sub {
+            font-size: 9px;
+            color: var(--text-tertiary);
+        }
+
+        .tech-card.border-accent { border-top: 2px solid var(--accent); }
+        .tech-card.border-success { border-top: 2px solid var(--success); }
+        .tech-card.border-info { border-top: 2px solid var(--info); }
+        .tech-card.border-warning { border-top: 2px solid var(--warning); }
+
+        /* Threshold table */
+        .threshold-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 10px;
+        }
+
+        .threshold-table thead th {
+            text-align: left;
+            padding: 5px 8px;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-tertiary);
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .threshold-table tbody td {
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .threshold-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .threshold-table .metric-name {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .threshold-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: 600;
+        }
+
+        [data-theme="light"] .threshold-pill.warn {
+            background: rgba(247, 144, 9, 0.1);
+            color: #f79009;
+        }
+        [data-theme="dark"] .threshold-pill.warn {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+        }
+
+        [data-theme="light"] .threshold-pill.crit {
+            background: rgba(240, 68, 56, 0.1);
+            color: #f04438;
+        }
+        [data-theme="dark"] .threshold-pill.crit {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+        }
+
+        /* Specs list */
+        .spec-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .spec-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 10px;
+        }
+
+        .spec-row:last-child { border-bottom: none; }
+
+        .spec-key { color: var(--text-tertiary); }
+
+        .spec-val {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+        }
+
+        /* Button */
+        .btn {
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 7px 12px;
+            border-radius: var(--radius-md);
+            transition: all 0.12s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            border: none;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(21, 112, 239, 0.22);
+        }
+        .btn-primary:hover {
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(21, 112, 239, 0.32);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .app { grid-template-columns: 1fr; }
+            .sidebar {
+                position: fixed; top: 0; left: 0; bottom: 0;
+                width: var(--sidebar-width);
+                transform: translateX(-100%);
+                transition: transform 0.2s ease;
+                z-index: 1040;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .topbar-toggle { display: flex; }
+            .page { overflow-y: auto; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .tech-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 640px) {
+            .page { padding: 12px; }
+            .topbar { padding: 0 12px; gap: 8px; }
+            .breadcrumb-nav { display: none; }
+            .status-pill span:not(.dot) { display: none; }
+            .hero-banner { flex-direction: column; text-align: center; }
+            .hero-sub { justify-content: center; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-mark"><i class="fas fa-microchip"></i></div>
+            <div class="brand-text">
+                <span class="brand-name">Nexus Core</span>
+                <span class="brand-tag">About</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Overview</div>
+                <a href="{{ url_for('index') }}" class="nav-link">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Monitoring</div>
+                <a href="{{ url_for('systems') }}" class="nav-link">
+                    <i class="fas fa-desktop"></i> Systems
+                </a>
+                <a href="{{ url_for('predictions') }}" class="nav-link">
+                    <i class="fas fa-chart-line"></i> Predictions
+                </a>
+                <a href="{{ url_for('alerts') }}" class="nav-link">
+                    <i class="fas fa-bell"></i> Alerts
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Operations</div>
+                <a href="{{ url_for('maintenance') }}" class="nav-link">
+                    <i class="fas fa-tools"></i> Maintenance
+                </a>
+                <a href="{{ url_for('inventory') }}" class="nav-link">
+                    <i class="fas fa-boxes-stacked"></i> Inventory
+                </a>
+                <a href="{{ url_for('tickets') }}" class="nav-link">
+                    <i class="fas fa-ticket-alt"></i> Tickets
+                </a>
+                <a href="{{ url_for('qr_selection') }}" class="nav-link">
+                    <i class="fas fa-qrcode"></i> QR Codes
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Account</div>
+                <a href="{{ url_for('profile') }}" class="nav-link">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="{{ url_for('settings') }}" class="nav-link">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="{{ url_for('about') }}" class="nav-link active">
+                    <i class="fas fa-info-circle"></i> About
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-link danger">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar-sm">
+                    {{ (current_account.username[0]|upper) if current_account else 'A' }}
+                </div>
+                <div class="user-meta">
+                    <span class="user-name">{{ current_account.username if current_account else 'Admin' }}</span>
+                    <span class="user-role">{{ current_role|upper if current_role else 'USER' }}</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <button class="topbar-toggle" id="menu-toggle" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav class="breadcrumb-nav">
+                <span>Nexus Core</span>
+                <span class="sep">/</span>
+                <span class="current">About</span>
+            </nav>
+
+            <div class="topbar-right">
+                <span class="status-pill">
+                    <span class="dot"></span>
+                    <span>LIVE</span>
+                </span>
+
+                <div class="theme-toggle" role="group" aria-label="Theme">
+                    <button type="button" class="theme-btn" data-theme-value="light" title="Light mode">
+                        <i class="fas fa-sun"></i>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme-value="auto" title="System default">
+                        <i class="fas fa-circle-half-stroke"></i>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme-value="dark" title="Dark mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+
+                <div class="dropdown">
+                    <button class="icon-btn" data-bs-toggle="dropdown" aria-label="Account">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li class="dropdown-header">Signed in as</li>
+                        <li class="dropdown-header" style="color: var(--text-primary); text-transform: none; font-size: 12px; letter-spacing: 0;">
+                            {{ current_account.username if current_account else 'Admin' }}
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <i class="fas fa-user"></i> Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('settings') }}">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item danger" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> Sign Out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <main class="page">
+
+            <div class="page-header">
+                <h1 class="page-title">About</h1>
+                <p class="page-desc">Project overview, technology and details</p>
+            </div>
+
+            <!-- HERO -->
+            <div class="hero-banner">
+                <div class="hero-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="hero-content">
+                    <div class="hero-title">IoT-Ready Predictive Maintenance System</div>
+                    <div class="hero-sub">
+                        <span>Nexus Core</span>
+                        <span class="sep"></span>
+                        <span>Version 1.0.0</span>
+                        <span class="sep"></span>
+                        <span>College Project</span>
+                    </div>
+                </div>
+                <div class="hero-badges">
+                    <span class="badge bg-success"><i class="fas fa-circle" style="font-size: 5px;"></i> Live</span>
+                    <span class="badge bg-accent"><i class="fas fa-shield-alt"></i> Stable</span>
+                    <span class="badge bg-purple"><i class="fas fa-graduation-cap"></i> Academic</span>
+                </div>
+            </div>
+
+            <!-- STATS -->
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-ico blue"><i class="fas fa-th-large"></i></div>
+                    <div>
+                        <div class="stat-val">9</div>
+                        <div class="stat-lbl">Modules</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-ico green"><i class="fas fa-circle-check"></i></div>
+                    <div>
+                        <div class="stat-val">99.9%</div>
+                        <div class="stat-lbl">Uptime</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-ico purple"><i class="fas fa-bolt"></i></div>
+                    <div>
+                        <div class="stat-val">~5s</div>
+                        <div class="stat-lbl">Refresh</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-ico orange"><i class="fas fa-database"></i></div>
+                    <div>
+                        <div class="stat-val">Live</div>
+                        <div class="stat-lbl">Database</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAIN 2-COLUMN GRID -->
+            <div class="row g-2" style="flex: 1; min-height: 0;">
+
+                <!-- LEFT COLUMN -->
+                <div class="col-lg-8 d-flex flex-column">
+
+                    <!-- OVERVIEW -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div><i class="fas fa-microchip"></i>Overview</div>
+                            <span class="badge bg-accent"><i class="fas fa-star"></i> Core</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="content-text" style="margin-bottom: 10px;">
+                                A complete, beginner-friendly web application for monitoring multiple systems in a
+                                laboratory environment. The system collects metrics (CPU, RAM, Disk, etc.) from each
+                                system and displays them on a centralized dashboard with predictive maintenance alerts.
+                            </p>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px;">
+                                <ul class="feature-list">
+                                    <li><span class="fdot"><i class="fas fa-check"></i></span> Real-time Monitoring</li>
+                                    <li><span class="fdot"><i class="fas fa-check"></i></span> Professional Dashboard</li>
+                                    <li><span class="fdot"><i class="fas fa-check"></i></span> Predictive Maintenance</li>
+                                    <li><span class="fdot"><i class="fas fa-check"></i></span> Health Scoring</li>
+                                </ul>
+                                <ul class="feature-list">
+                                    <li><span class="fdot"><i class="fas fa-check"></i></span> Historical Tracking</li>
+                                    <li><span class="fdot"><i class="fas fa-check"></i></span> Interactive Charts</li>
+                                    <li><span class="fdot"><i class="fas fa-check"></i></span> QR Code Access</li>
+                                    <li><span class="fdot"><i class="fas fa-check"></i></span> Responsive Design</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TECH STACK -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div><i class="fas fa-layer-group"></i>Technology Stack</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="tech-grid">
+                                <div class="tech-card border-accent">
+                                    <div class="tech-label">Backend</div>
+                                    <div class="tech-sub">Python, Flask</div>
+                                </div>
+                                <div class="tech-card border-success">
+                                    <div class="tech-label">Database</div>
+                                    <div class="tech-sub">MySQL / SQLite</div>
+                                </div>
+                                <div class="tech-card border-info">
+                                    <div class="tech-label">Frontend</div>
+                                    <div class="tech-sub">HTML5, Bootstrap</div>
+                                </div>
+                                <div class="tech-card border-warning">
+                                    <div class="tech-label">Monitoring</div>
+                                    <div class="tech-sub">Agent-based</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN -->
+                <div class="col-lg-4 d-flex flex-column">
+
+                    <!-- THRESHOLDS -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div><i class="fas fa-chart-line"></i>Alert Thresholds</div>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table class="threshold-table">
+                                <thead>
+                                    <tr>
+                                        <th>Metric</th>
+                                        <th>Warn</th>
+                                        <th>Crit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="metric-name">CPU</td>
+                                        <td><span class="threshold-pill warn">&gt; 70%</span></td>
+                                        <td><span class="threshold-pill crit">&gt; 90%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="metric-name">RAM</td>
+                                        <td><span class="threshold-pill warn">&gt; 80%</span></td>
+                                        <td><span class="threshold-pill crit">&gt; 90%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="metric-name">Disk</td>
+                                        <td><span class="threshold-pill warn">&gt; 85%</span></td>
+                                        <td><span class="threshold-pill crit">&gt; 95%</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- PROJECT DETAILS -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div><i class="fas fa-file-code"></i>Project Details</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="spec-list">
+                                <div class="spec-row">
+                                    <span class="spec-key">Version</span>
+                                    <span class="spec-val">1.0.0</span>
+                                </div>
+                                <div class="spec-row">
+                                    <span class="spec-key">License</span>
+                                    <span class="spec-val">Academic</span>
+                                </div>
+                                <div class="spec-row">
+                                    <span class="spec-key">Category</span>
+                                    <span class="spec-val">IoT / ML</span>
+                                </div>
+                                <div class="spec-row">
+                                    <span class="spec-key">Status</span>
+                                    <span class="spec-val" style="color: var(--success);">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// THEME MANAGER
+(function () {
+    var STORAGE_KEY = 'nexus-theme';
+    var root = document.documentElement;
+
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function resolveTheme(pref) { return pref === 'auto' ? getSystemTheme() : pref; }
+
+    function applyTheme(pref, animate) {
+        var effective = resolveTheme(pref);
+        if (animate) {
+            root.classList.add('theme-transitioning');
+            setTimeout(function () { root.classList.remove('theme-transitioning'); }, 250);
+        }
+        root.setAttribute('data-theme', effective);
+        root.setAttribute('data-theme-pref', pref);
+        try { localStorage.setItem(STORAGE_KEY, pref); } catch (e) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.theme-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { applyTheme(btn.dataset.themeValue, true); });
+        });
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+            if (root.getAttribute('data-theme-pref') === 'auto') applyTheme('auto', true);
+        });
+    });
+})();
+
+// SIDEBAR TOGGLE
+document.getElementById('menu-toggle').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('sidebar').classList.toggle('open');
+});
+</script>
+
+</body>
+</html>

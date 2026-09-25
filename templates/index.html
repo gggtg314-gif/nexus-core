@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard · Nexus Core</title>
+
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('nexus-theme') || 'dark';
+                var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var effective = saved === 'auto' ? (systemDark ? 'dark' : 'light') : saved;
+                document.documentElement.setAttribute('data-theme', effective);
+                document.documentElement.setAttribute('data-theme-pref', saved);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════
+           THEME TOKENS
+           ═══════════════════════════════════════════════════════ */
+        :root,
+        [data-theme="light"] {
+            --bg-canvas: #f7f8fa;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f2f4f7;
+            --bg-hover: #eaecf0;
+            --border-subtle: #eaecf0;
+            --border-default: #d0d5dd;
+            --border-strong: #98a2b3;
+            --text-primary: #101828;
+            --text-secondary: #475467;
+            --text-tertiary: #667085;
+            --text-quaternary: #98a2b3;
+            --accent: #1570ef;
+            --accent-hover: #175cd3;
+            --accent-subtle: rgba(21, 112, 239, 0.08);
+            --success: #12b76a;
+            --success-subtle: rgba(18, 183, 106, 0.08);
+            --warning: #f79009;
+            --warning-subtle: rgba(247, 144, 9, 0.08);
+            --danger: #f04438;
+            --danger-subtle: rgba(240, 68, 56, 0.08);
+            --info: #06aed4;
+            --info-subtle: rgba(6, 174, 212, 0.08);
+            --purple: #7a5af8;
+            --purple-subtle: rgba(122, 90, 248, 0.08);
+            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+            --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08);
+            --scrollbar-thumb: #d0d5dd;
+        }
+
+        [data-theme="dark"] {
+            --bg-canvas: #0a0e1a;
+            --bg-surface: #0f1524;
+            --bg-elevated: #171e2f;
+            --bg-hover: #1f2937;
+            --border-subtle: #1a2235;
+            --border-default: #2a3347;
+            --border-strong: #3d4859;
+            --text-primary: #f9fafb;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-quaternary: #475569;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-subtle: rgba(59, 130, 246, 0.1);
+            --success: #22c55e;
+            --success-subtle: rgba(34, 197, 94, 0.1);
+            --warning: #f59e0b;
+            --warning-subtle: rgba(245, 158, 11, 0.1);
+            --danger: #ef4444;
+            --danger-subtle: rgba(239, 68, 68, 0.1);
+            --info: #06b6d4;
+            --info-subtle: rgba(6, 182, 212, 0.1);
+            --purple: #a78bfa;
+            --purple-subtle: rgba(167, 139, 250, 0.1);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+            --scrollbar-thumb: #2a3347;
+        }
+
+        :root {
+            --sidebar-width: 236px;
+            --topbar-height: 56px;
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            background: var(--bg-canvas);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text-primary);
+            font-size: 13px;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .mono { font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace; font-feature-settings: 'tnum' 1, 'zero' 1; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+        html.theme-transitioning *,
+        html.theme-transitioning *::before,
+        html.theme-transitioning *::after {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           APP LAYOUT
+           ═══════════════════════════════════════════════════════ */
+        .app {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           SIDEBAR
+           ═══════════════════════════════════════════════════════ */
+        .sidebar {
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 16px; height: var(--topbar-height);
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+
+        .brand-mark {
+            width: 30px; height: 30px; border-radius: var(--radius-md);
+            background: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 13px; flex-shrink: 0;
+        }
+
+        .brand-text { display: flex; flex-direction: column; overflow: hidden; }
+        .brand-name { font-size: 13px; font-weight: 700; line-height: 1.2; }
+        .brand-tag { font-size: 9px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase; }
+
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 8px; }
+        .nav-section { margin-top: 14px; }
+        .nav-section:first-child { margin-top: 0; }
+
+        .nav-section-title {
+            font-size: 10px; font-weight: 600; color: var(--text-quaternary);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            padding: 6px 12px 4px;
+        }
+
+        .nav-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 12px; border-radius: var(--radius-md);
+            color: var(--text-secondary); font-size: 13px;
+            font-weight: 500; text-decoration: none;
+            transition: all 0.12s ease;
+            position: relative;
+        }
+
+        .nav-link i { width: 16px; font-size: 13px; text-align: center; flex-shrink: 0; color: var(--text-quaternary); }
+        .nav-link:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-link:hover i { color: var(--text-secondary); }
+        .nav-link.active { background: var(--accent-subtle); color: var(--accent); font-weight: 600; }
+        .nav-link.active i { color: var(--accent); }
+
+        .nav-badge {
+            margin-left: auto;
+            font-size: 9px; font-weight: 700;
+            padding: 1px 6px; border-radius: 8px;
+            background: var(--danger-subtle); color: var(--danger);
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 18px; text-align: center;
+        }
+        .nav-badge.warning { background: var(--warning-subtle); color: var(--warning); }
+        .nav-badge.info { background: var(--info-subtle); color: var(--info); }
+        .nav-badge.neutral { background: var(--bg-elevated); color: var(--text-tertiary); }
+
+        .nav-link.danger { color: var(--danger); }
+        .nav-link.danger i { color: var(--danger); }
+        .nav-link.danger:hover { background: var(--danger-subtle); }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border-subtle);
+            padding: 10px; flex-shrink: 0;
+        }
+
+        .user-card {
+            display: flex; align-items: center; gap: 10px;
+            padding: 6px 8px; border-radius: var(--radius-md);
+        }
+
+        .user-avatar {
+            width: 30px; height: 30px; border-radius: var(--radius-md);
+            background: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0;
+        }
+
+        .user-meta { display: flex; flex-direction: column; overflow: hidden; }
+        .user-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-role { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+
+        /* ═══════════════════════════════════════════════════════
+           MAIN AREA
+           ═══════════════════════════════════════════════════════ */
+        .main { display: flex; flex-direction: column; overflow: hidden; }
+
+        .topbar {
+            height: var(--topbar-height);
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex; align-items: center; gap: 16px;
+            padding: 0 20px; flex-shrink: 0;
+        }
+
+        .topbar-toggle {
+            display: none; background: transparent;
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            width: 30px; height: 30px;
+            border-radius: var(--radius-md);
+            align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        .breadcrumb-nav { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); }
+        .breadcrumb-nav .sep { color: var(--text-quaternary); font-size: 10px; }
+        .breadcrumb-nav .current { color: var(--text-primary); font-weight: 600; }
+
+        .search-bar {
+            flex: 1; max-width: 360px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%; height: 32px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 0 12px 0 34px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+
+        .search-input::placeholder { color: var(--text-quaternary); }
+        .search-input:hover { border-color: var(--border-default); }
+        .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+
+        .search-icon {
+            position: absolute; left: 11px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-quaternary); font-size: 11px; pointer-events: none;
+        }
+
+        .search-shortcut {
+            position: absolute; right: 8px; top: 50%;
+            transform: translateY(-50%);
+            font-size: 9px; font-family: 'JetBrains Mono', monospace;
+            color: var(--text-quaternary);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            padding: 1px 5px; border-radius: 3px;
+            pointer-events: none;
+        }
+
+        .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 20px;
+            background: var(--success-subtle);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: var(--success);
+            font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+        }
+
+        .status-pill .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+        .time-display {
+            font-size: 11px; color: var(--text-tertiary);
+            font-family: 'JetBrains Mono', monospace; padding: 0 4px;
+        }
+
+        .theme-toggle {
+            display: inline-flex; align-items: center;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 2px; gap: 2px;
+        }
+
+        .theme-btn {
+            width: 26px; height: 26px;
+            background: transparent; border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-tertiary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 11px;
+            transition: all 0.15s ease;
+        }
+        .theme-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+        [data-theme-pref="auto"] .theme-btn[data-theme-value="auto"],
+        [data-theme-pref="light"] .theme-btn[data-theme-value="light"],
+        [data-theme-pref="dark"] .theme-btn[data-theme-value="dark"] {
+            background: var(--bg-surface); color: var(--accent); box-shadow: var(--shadow-sm);
+        }
+
+        .icon-btn {
+            width: 32px; height: 32px;
+            background: transparent; border: 1px solid transparent;
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 13px;
+            position: relative;
+            transition: all 0.12s ease;
+        }
+        .icon-btn:hover { background: var(--bg-hover); border-color: var(--border-subtle); color: var(--text-primary); }
+
+        .icon-btn .badge-dot {
+            position: absolute; top: 4px; right: 4px;
+            min-width: 14px; height: 14px; padding: 0 3px;
+            background: var(--danger); color: #fff;
+            border-radius: 7px;
+            font-size: 9px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            border: 2px solid var(--bg-surface);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           DASHBOARD GRID (VIEWPORT FIT)
+           ═══════════════════════════════════════════════════════ */
+        .dashboard {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            grid-template-rows: auto auto 1fr auto;
+            gap: 12px;
+            padding: 14px 18px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .kpi-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .middle-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 10px;
+            min-height: 0;
+        }
+
+        .systems-row {
+            grid-column: 1 / 2;
+            display: flex; min-height: 0; overflow: hidden;
+        }
+
+        .alerts-col {
+            grid-column: 2 / 3;
+            display: flex; min-height: 0; overflow: hidden;
+        }
+
+        .bottom-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            min-height: 0;
+        }
+
+        .quick-actions {
+            grid-column: 1 / -1;
+            display: flex; gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           KPI CARDS (with sparkline)
+           ═══════════════════════════════════════════════════════ */
+        .kpi-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 12px 14px;
+            display: flex; flex-direction: column;
+            transition: border-color 0.15s ease;
+            min-width: 0; position: relative; overflow: hidden;
+        }
+        .kpi-card:hover { border-color: var(--border-default); }
+        .kpi-card.clickable { cursor: pointer; }
+
+        .kpi-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .kpi-label {
+            font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
+
+        .kpi-icon {
+            width: 22px; height: 22px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px;
+            background: var(--accent-subtle); color: var(--accent);
+        }
+        .kpi-icon.success { background: var(--success-subtle); color: var(--success); }
+        .kpi-icon.danger { background: var(--danger-subtle); color: var(--danger); }
+        .kpi-icon.warning { background: var(--warning-subtle); color: var(--warning); }
+        .kpi-icon.purple { background: var(--purple-subtle); color: var(--purple); }
+
+        .kpi-body {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            gap: 8px;
+        }
+
+        .kpi-value {
+            font-size: 22px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.02em; line-height: 1;
+        }
+
+        .kpi-sparkline { width: 56px; height: 20px; flex-shrink: 0; opacity: 0.85; }
+
+        .kpi-footer {
+            margin-top: 6px; font-size: 10px; color: var(--text-tertiary);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .kpi-trend {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; font-weight: 600;
+        }
+        .kpi-trend.up { color: var(--success); }
+        .kpi-trend.down { color: var(--danger); }
+        .kpi-trend.flat { color: var(--text-tertiary); }
+
+        /* ═══════════════════════════════════════════════════════
+           PANEL
+           ═══════════════════════════════════════════════════════ */
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            display: flex; flex-direction: column;
+            min-height: 0; overflow: hidden; width: 100%;
+        }
+
+        .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0; gap: 8px;
+        }
+
+        .panel-title {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; font-weight: 600; color: var(--text-primary);
+        }
+        .panel-title i { color: var(--text-tertiary); font-size: 11px; }
+
+        .panel-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; font-weight: 600;
+            color: var(--text-tertiary);
+            background: var(--bg-elevated);
+            padding: 2px 6px; border-radius: 3px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .panel-action {
+            font-size: 11px; color: var(--accent);
+            padding: 3px 8px; border-radius: var(--radius-sm);
+            text-decoration: none; font-weight: 500;
+            background: none; border: none; cursor: pointer;
+            font-family: inherit;
+        }
+        .panel-action:hover { background: var(--accent-subtle); }
+
+        .panel-body { flex: 1; overflow: hidden; min-height: 0; display: flex; flex-direction: column; }
+
+        /* ═══════════════════════════════════════════════════════
+           RESOURCE PANEL (3 rings + fleet score)
+           ═══════════════════════════════════════════════════════ */
+        .resource-panel {
+            grid-column: 1 / 2;
+            display: grid;
+            grid-template-columns: 1fr 180px;
+            gap: 0;
+            min-height: 220px;
+        }
+
+        .gauges-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 16px;
+            align-items: center;
+        }
+
+        .gauge-item {
+            display: flex; flex-direction: column;
+            align-items: center; text-align: center;
+            gap: 8px;
+        }
+
+        .gauge-ring {
+            position: relative;
+            width: 90px; height: 90px;
+        }
+
+        .gauge-ring svg { transform: rotate(-90deg); }
+
+        .gauge-center {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+
+        .gauge-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 17px; font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.03em; line-height: 1;
+        }
+
+        .gauge-label {
+            font-size: 9px; font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            margin-top: 3px;
+        }
+
+        .gauge-status {
+            font-size: 9px; font-weight: 700;
+            padding: 2px 7px; border-radius: 3px;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .gauge-status.ok { color: var(--success); background: var(--success-subtle); }
+        .gauge-status.warn { color: var(--warning); background: var(--warning-subtle); }
+        .gauge-status.crit { color: var(--danger); background: var(--danger-subtle); }
+
+        .fleet-score-box {
+            border-left: 1px solid var(--border-subtle);
+            padding: 16px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+            gap: 10px;
+            background: var(--bg-elevated);
+        }
+
+        .fleet-score-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 34px; font-weight: 700;
+            letter-spacing: -0.04em; line-height: 1;
+            color: var(--success);
+        }
+
+        .fleet-score-value small {
+            font-size: 14px; color: var(--text-quaternary); font-weight: 500;
+        }
+
+        .fleet-score-label {
+            font-size: 9px; font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.08em;
+        }
+
+        .fleet-score-bar {
+            width: 100%; height: 4px;
+            background: var(--bg-canvas);
+            border-radius: 2px; overflow: hidden;
+        }
+
+        .fleet-score-fill {
+            height: 100%; border-radius: 2px;
+            background: var(--success);
+            transition: width 0.6s ease;
+        }
+
+        .fleet-breakdown {
+            display: flex; flex-direction: column; gap: 4px;
+            width: 100%; font-size: 10px;
+        }
+
+        .fleet-breakdown-item {
+            display: flex; align-items: center; justify-content: space-between;
+            color: var(--text-tertiary);
+        }
+
+        .fleet-breakdown-item strong {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary); font-weight: 600;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           SYSTEMS GRID
+           ═══════════════════════════════════════════════════════ */
+        .systems-scroll { flex: 1; overflow-y: auto; padding: 12px; }
+
+        .systems-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .sys-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 11px;
+            transition: all 0.15s ease;
+            min-width: 0; cursor: pointer;
+        }
+        .sys-card:hover { border-color: var(--border-default); }
+
+        .sys-head {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 9px; padding-bottom: 9px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .sys-status-dot {
+            width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+        }
+        .sys-status-dot.online { background: var(--success); box-shadow: 0 0 0 3px var(--success-subtle); }
+        .sys-status-dot.warning { background: var(--warning); box-shadow: 0 0 0 3px var(--warning-subtle); }
+        .sys-status-dot.critical { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-subtle); }
+        .sys-status-dot.offline { background: var(--text-quaternary); }
+
+        .sys-info { flex: 1; min-width: 0; }
+        .sys-name {
+            font-size: 12px; font-weight: 600; color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            line-height: 1.3;
+        }
+        .sys-id {
+            font-size: 9px; color: var(--text-quaternary);
+            font-family: 'JetBrains Mono', monospace; margin-top: 1px;
+        }
+
+        .sys-badge {
+            font-size: 9px; font-weight: 700;
+            padding: 2px 6px; border-radius: 3px;
+            text-transform: uppercase; letter-spacing: 0.04em;
+            flex-shrink: 0;
+        }
+        .sys-badge.online { color: var(--success); background: var(--success-subtle); }
+        .sys-badge.warning { color: var(--warning); background: var(--warning-subtle); }
+        .sys-badge.critical { color: var(--danger); background: var(--danger-subtle); }
+        .sys-badge.offline { color: var(--text-tertiary); background: var(--bg-hover); }
+
+        .sys-metrics { display: flex; flex-direction: column; gap: 6px; }
+
+        .metric-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+
+        .metric-label {
+            font-size: 9px; font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.04em;
+            width: 24px; flex-shrink: 0;
+        }
+
+        .metric-bar {
+            flex: 1; height: 4px;
+            background: var(--bg-canvas);
+            border-radius: 2px; overflow: hidden;
+        }
+
+        .metric-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+        .metric-fill.cpu { background: var(--purple); }
+        .metric-fill.ram { background: var(--accent); }
+        .metric-fill.disk { background: var(--warning); }
+
+        .metric-value {
+            font-size: 10px; font-weight: 600;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            width: 34px; text-align: right; flex-shrink: 0;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           ALERTS PANEL
+           ═══════════════════════════════════════════════════════ */
+        .alerts-scroll { flex: 1; overflow-y: auto; padding: 10px; min-height: 0; }
+
+        .alert-item {
+            display: flex; gap: 8px;
+            padding: 9px 10px; border-radius: var(--radius-md);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 6px; transition: all 0.12s ease;
+        }
+        .alert-item:last-child { margin-bottom: 0; }
+        .alert-item:hover { border-color: var(--border-default); }
+
+        .alert-severity { width: 3px; border-radius: 2px; flex-shrink: 0; }
+        .alert-item.critical .alert-severity { background: var(--danger); }
+        .alert-item.warning .alert-severity { background: var(--warning); }
+        .alert-item.info .alert-severity { background: var(--info); }
+
+        .alert-content { flex: 1; min-width: 0; }
+
+        .alert-message {
+            font-size: 11px; font-weight: 500; color: var(--text-primary);
+            line-height: 1.35; margin-bottom: 3px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .alert-meta {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 9px; color: var(--text-quaternary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .alert-severity-badge {
+            font-size: 8px; font-weight: 700;
+            padding: 1px 5px; border-radius: 3px;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .alert-item.critical .alert-severity-badge { color: var(--danger); background: var(--danger-subtle); }
+        .alert-item.warning .alert-severity-badge { color: var(--warning); background: var(--warning-subtle); }
+        .alert-item.info .alert-severity-badge { color: var(--info); background: var(--info-subtle); }
+
+        /* ═══════════════════════════════════════════════════════
+           BOTTOM PANELS (Predictions / Maintenance / Inventory)
+           ═══════════════════════════════════════════════════════ */
+        .bottom-panel { padding: 0; }
+
+        .bottom-list { padding: 10px; flex: 1; overflow-y: auto; }
+
+        .bottom-item {
+            display: flex; gap: 8px;
+            padding: 8px;
+            border-radius: var(--radius-md);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 6px;
+            transition: all 0.12s ease;
+        }
+        .bottom-item:last-child { margin-bottom: 0; }
+        .bottom-item:hover { border-color: var(--border-default); }
+
+        .bottom-item-icon {
+            width: 26px; height: 26px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; flex-shrink: 0;
+        }
+        .bottom-item-icon.danger { background: var(--danger-subtle); color: var(--danger); }
+        .bottom-item-icon.warning { background: var(--warning-subtle); color: var(--warning); }
+        .bottom-item-icon.info { background: var(--info-subtle); color: var(--info); }
+        .bottom-item-icon.success { background: var(--success-subtle); color: var(--success); }
+        .bottom-item-icon.purple { background: var(--purple-subtle); color: var(--purple); }
+
+        .bottom-item-body { flex: 1; min-width: 0; }
+
+        .bottom-item-title {
+            font-size: 11px; font-weight: 600;
+            color: var(--text-primary); line-height: 1.3;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .bottom-item-sub {
+            font-size: 9px; color: var(--text-tertiary);
+            margin-top: 2px;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .bottom-item-sub strong { font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); font-weight: 600; }
+
+        .bottom-empty {
+            padding: 24px 12px; text-align: center;
+            color: var(--text-tertiary); font-size: 11px;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+
+        .bottom-empty i { font-size: 20px; color: var(--text-quaternary); }
+
+        /* ═══════════════════════════════════════════════════════
+           ACTIVITY FEED (bottom row wide)
+           ═══════════════════════════════════════════════════════ */
+        .activity-feed {
+            grid-column: 1 / -1;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 10px 14px;
+            overflow: hidden;
+        }
+
+        .activity-feed-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .activity-list {
+            display: flex; gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
+        .activity-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-size: 11px;
+        }
+
+        .activity-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; color: var(--text-quaternary); font-weight: 600;
+        }
+
+        .activity-text { color: var(--text-secondary); }
+
+        .activity-tag {
+            font-size: 8px; font-weight: 700;
+            padding: 1px 5px; border-radius: 3px;
+            text-transform: uppercase; letter-spacing: 0.04em;
+            margin-left: 4px;
+        }
+        .activity-tag.critical { color: var(--danger); background: var(--danger-subtle); }
+        .activity-tag.warning { color: var(--warning); background: var(--warning-subtle); }
+        .activity-tag.info { color: var(--info); background: var(--info-subtle); }
+        .activity-tag.success { color: var(--success); background: var(--success-subtle); }
+
+        /* ═══════════════════════════════════════════════════════
+           QUICK ACTIONS BAR
+           ═══════════════════════════════════════════════════════ */
+        .qa-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 12px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: 11px; font-weight: 500;
+            text-decoration: none; cursor: pointer;
+            font-family: inherit;
+            transition: all 0.12s ease;
+        }
+        .qa-btn:hover {
+            background: var(--bg-hover); color: var(--text-primary);
+            border-color: var(--border-strong);
+        }
+        .qa-btn i { font-size: 11px; color: var(--text-tertiary); }
+        .qa-btn:hover i { color: var(--accent); }
+
+        /* ═══════════════════════════════════════════════════════
+           DROPDOWN
+           ═══════════════════════════════════════════════════════ */
+        .dropdown-menu {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            box-shadow: var(--shadow-md);
+            min-width: 220px;
+            margin-top: 6px;
+        }
+
+        .dropdown-item {
+            color: var(--text-secondary);
+            font-size: 12px; padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 500;
+        }
+        .dropdown-item i { width: 14px; font-size: 12px; color: var(--text-quaternary); }
+        .dropdown-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .dropdown-item.danger { color: var(--danger); }
+        .dropdown-item.danger i { color: var(--danger); }
+        .dropdown-item.danger:hover { background: var(--danger-subtle); }
+        .dropdown-divider { border-color: var(--border-subtle); margin: 4px 0; }
+        .dropdown-header {
+            font-size: 10px; font-weight: 600;
+            color: var(--text-quaternary);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            padding: 6px 10px 4px;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════════════════ */
+        @media (max-width: 1200px) {
+            .dashboard { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto auto auto auto; }
+            .middle-row { grid-template-columns: 1fr; }
+            .systems-row, .alerts-col { grid-column: 1 / -1; }
+            .resource-panel { grid-template-columns: 1fr; }
+            .fleet-score-box { border-left: none; border-top: 1px solid var(--border-subtle); }
+            .bottom-row { grid-template-columns: 1fr; }
+            .dashboard { overflow-y: auto; }
+            html, body { overflow: auto; }
+        }
+
+        @media (max-width: 768px) {
+            .app { grid-template-columns: 1fr; }
+            .sidebar {
+                position: fixed; top: 0; left: 0; bottom: 0;
+                width: var(--sidebar-width);
+                transform: translateX(-100%);
+                transition: transform 0.2s ease;
+                z-index: 1040;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .topbar-toggle { display: flex; }
+            .kpi-row { grid-template-columns: repeat(2, 1fr); }
+            .search-bar { max-width: 200px; }
+            .breadcrumb-nav { display: none; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- ═══════════════════════════════════════════════════════
+         SIDEBAR
+         ═══════════════════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-mark"><i class="fas fa-microchip"></i></div>
+            <div class="brand-text">
+                <span class="brand-name">Nexus Core</span>
+                <span class="brand-tag">Maintenance</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Overview</div>
+                <a href="{{ url_for('index') }}" class="nav-link active">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Monitoring</div>
+                <a href="{{ url_for('systems') }}" class="nav-link">
+                    <i class="fas fa-desktop"></i> Systems
+                    <span class="nav-badge neutral" id="sidebar-systems-count">0</span>
+                </a>
+                <a href="{{ url_for('predictions') }}" class="nav-link">
+                    <i class="fas fa-chart-line"></i> Predictions
+                    <span class="nav-badge warning" id="sidebar-predictions-count" style="display:none;">0</span>
+                </a>
+                <a href="{{ url_for('alerts') }}" class="nav-link">
+                    <i class="fas fa-bell"></i> Alerts
+                    <span class="nav-badge" id="sidebar-alerts-count" style="display:none;">0</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Operations</div>
+                <a href="{{ url_for('maintenance') }}" class="nav-link">
+                    <i class="fas fa-tools"></i> Maintenance
+                    <span class="nav-badge info" id="sidebar-maintenance-count" style="display:none;">0</span>
+                </a>
+                <a href="{{ url_for('inventory') }}" class="nav-link">
+                    <i class="fas fa-boxes-stacked"></i> Inventory
+                    <span class="nav-badge neutral" id="sidebar-inventory-count">0</span>
+                </a>
+                <a href="{{ url_for('tickets') }}" class="nav-link">
+                    <i class="fas fa-ticket-alt"></i> Tickets
+                    <span class="nav-badge warning" id="sidebar-tickets-count" style="display:none;">0</span>
+                </a>
+                <a href="{{ url_for('qr_selection') }}" class="nav-link">
+                    <i class="fas fa-qrcode"></i> QR Codes
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Account</div>
+                <a href="{{ url_for('profile') }}" class="nav-link">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="{{ url_for('settings') }}" class="nav-link">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="{{ url_for('about') }}" class="nav-link">
+                    <i class="fas fa-info-circle"></i> About
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-link danger">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar">
+                    {{ (current_account.username[0]|upper) if current_account else 'A' }}
+                </div>
+                <div class="user-meta">
+                    <span class="user-name">{{ current_account.username if current_account else 'Admin' }}</span>
+                    <span class="user-role">{{ current_role|upper if current_role else 'USER' }}</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MAIN
+         ═══════════════════════════════════════════════════════ -->
+    <div class="main">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <button class="topbar-toggle" id="menu-toggle" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav class="breadcrumb-nav">
+                <span>Nexus Core</span>
+                <span class="sep">/</span>
+                <span class="current">Dashboard</span>
+            </nav>
+
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="global-search" placeholder="Search systems, tickets, alerts...">
+                <span class="search-shortcut">⌘K</span>
+            </div>
+
+            <div class="topbar-right">
+                <span class="status-pill">
+                    <span class="dot"></span>
+                    <span>LIVE</span>
+                </span>
+
+                <span class="time-display" id="last-update">--:--:--</span>
+
+                <div class="theme-toggle" role="group" aria-label="Theme">
+                    <button type="button" class="theme-btn" data-theme-value="light" title="Light mode">
+                        <i class="fas fa-sun"></i>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme-value="auto" title="System default">
+                        <i class="fas fa-circle-half-stroke"></i>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme-value="dark" title="Dark mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+
+                <div class="dropdown">
+                    <button class="icon-btn" data-bs-toggle="dropdown" aria-label="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge-dot" id="notif-badge" style="display:none;">0</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li class="dropdown-header">Notifications</li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('alerts') }}">
+                                <i class="fas fa-exclamation-triangle"></i> View All Alerts
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('tickets') }}">
+                                <i class="fas fa-ticket-alt"></i> View All Tickets
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="dropdown">
+                    <button class="icon-btn" data-bs-toggle="dropdown" aria-label="Account">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li style="padding: 8px 12px; font-size: 11px; color: var(--text-tertiary); pointer-events: none;">
+                            Signed in as <strong style="color: var(--text-primary);">{{ current_account.username if current_account else 'Admin' }}</strong>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <i class="fas fa-user"></i> Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('settings') }}">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item danger" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> Sign Out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD GRID -->
+        <div class="dashboard">
+
+            <!-- KPI ROW -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-head">
+                        <span class="kpi-label">Total Systems</span>
+                        <div class="kpi-icon"><i class="fas fa-server"></i></div>
+                    </div>
+                    <div class="kpi-body">
+                        <div class="kpi-value" id="total-computers">0</div>
+                        <svg class="kpi-sparkline" id="spark-systems"></svg>
+                    </div>
+                    <div class="kpi-footer">
+                        <span>Registered</span>
+                        <span class="kpi-trend flat" id="trend-systems"><i class="fas fa-minus"></i> 0%</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-head">
+                        <span class="kpi-label">Active Now</span>
+                        <div class="kpi-icon success"><i class="fas fa-wifi"></i></div>
+                    </div>
+                    <div class="kpi-body">
+                        <div class="kpi-value" id="online-computers">0</div>
+                        <svg class="kpi-sparkline" id="spark-online"></svg>
+                    </div>
+                    <div class="kpi-footer">
+                        <span>Currently online</span>
+                        <span class="kpi-trend up" id="trend-online"><i class="fas fa-arrow-up"></i> 0%</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card clickable" onclick="location.href='{{ url_for('alerts') }}'">
+                    <div class="kpi-head">
+                        <span class="kpi-label">Active Alerts</span>
+                        <div class="kpi-icon danger"><i class="fas fa-exclamation-triangle"></i></div>
+                    </div>
+                    <div class="kpi-body">
+                        <div class="kpi-value" id="alert-count">0</div>
+                        <svg class="kpi-sparkline" id="spark-alerts"></svg>
+                    </div>
+                    <div class="kpi-footer">
+                        <span>Requires attention</span>
+                        <span class="kpi-trend down" id="trend-alerts"><i class="fas fa-arrow-down"></i> 0%</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card clickable" onclick="location.href='{{ url_for('tickets') }}'">
+                    <div class="kpi-head">
+                        <span class="kpi-label">Open Tickets</span>
+                        <div class="kpi-icon warning"><i class="fas fa-ticket-alt"></i></div>
+                    </div>
+                    <div class="kpi-body">
+                        <div class="kpi-value" id="ticket-count">0</div>
+                        <svg class="kpi-sparkline" id="spark-tickets"></svg>
+                    </div>
+                    <div class="kpi-footer">
+                        <span><span id="inprogress-tickets" class="mono">0</span> in progress</span>
+                        <span class="kpi-trend flat" id="trend-tickets"><i class="fas fa-minus"></i> 0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MIDDLE ROW: Resources + Alerts -->
+            <div class="middle-row">
+
+                <!-- RESOURCE PANEL -->
+                <div class="panel resource-panel">
+                    <div class="gauges-grid">
+                        <div class="gauge-item">
+                            <div class="gauge-ring">
+                                <svg width="90" height="90" viewBox="0 0 90 90">
+                                    <circle cx="45" cy="45" r="38" fill="none" stroke="var(--bg-elevated)" stroke-width="6"/>
+                                    <circle class="gauge-fill" data-type="cpu" cx="45" cy="45" r="38" fill="none"
+                                        stroke="var(--purple)" stroke-width="6" stroke-linecap="round"
+                                        stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                                </svg>
+                                <div class="gauge-center">
+                                    <div class="gauge-value" id="gauge-cpu-value">0%</div>
+                                    <div class="gauge-label">CPU</div>
+                                </div>
+                            </div>
+                            <div class="gauge-status ok" id="gauge-cpu-status">OK</div>
+                        </div>
+
+                        <div class="gauge-item">
+                            <div class="gauge-ring">
+                                <svg width="90" height="90" viewBox="0 0 90 90">
+                                    <circle cx="45" cy="45" r="38" fill="none" stroke="var(--bg-elevated)" stroke-width="6"/>
+                                    <circle class="gauge-fill" data-type="ram" cx="45" cy="45" r="38" fill="none"
+                                        stroke="var(--accent)" stroke-width="6" stroke-linecap="round"
+                                        stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                                </svg>
+                                <div class="gauge-center">
+                                    <div class="gauge-value" id="gauge-ram-value">0%</div>
+                                    <div class="gauge-label">RAM</div>
+                                </div>
+                            </div>
+                            <div class="gauge-status ok" id="gauge-ram-status">OK</div>
+                        </div>
+
+                        <div class="gauge-item">
+                            <div class="gauge-ring">
+                                <svg width="90" height="90" viewBox="0 0 90 90">
+                                    <circle cx="45" cy="45" r="38" fill="none" stroke="var(--bg-elevated)" stroke-width="6"/>
+                                    <circle class="gauge-fill" data-type="disk" cx="45" cy="45" r="38" fill="none"
+                                        stroke="var(--warning)" stroke-width="6" stroke-linecap="round"
+                                        stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                                </svg>
+                                <div class="gauge-center">
+                                    <div class="gauge-value" id="gauge-disk-value">0%</div>
+                                    <div class="gauge-label">Disk</div>
+                                </div>
+                            </div>
+                            <div class="gauge-status ok" id="gauge-disk-status">OK</div>
+                        </div>
+                    </div>
+
+                    <div class="fleet-score-box">
+                        <div class="fleet-score-value" id="fleet-score">--<small>/100</small></div>
+                        <div class="fleet-score-label">Fleet Health Score</div>
+                        <div class="fleet-score-bar">
+                            <div class="fleet-score-fill" id="fleet-score-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="fleet-breakdown">
+                            <div class="fleet-breakdown-item">
+                                <span>Healthy</span>
+                                <strong id="fleet-healthy">0</strong>
+                            </div>
+                            <div class="fleet-breakdown-item">
+                                <span>Warning</span>
+                                <strong id="fleet-warning">0</strong>
+                            </div>
+                            <div class="fleet-breakdown-item">
+                                <span>Critical</span>
+                                <strong id="fleet-critical">0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ALERTS PANEL -->
+                <div class="panel alerts-col" style="grid-column: 2/3;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-bell"></i>
+                            <span>Recent Alerts</span>
+                            <span class="panel-count" id="alerts-count">0</span>
+                        </div>
+                        <a href="{{ url_for('alerts') }}" class="panel-action">View All →</a>
+                    </div>
+                    <div class="panel-body">
+                        <div class="alerts-scroll" id="alerts-scroll">
+                            <div class="bottom-empty">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <div>Loading alerts...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SYSTEMS ROW -->
+            <div class="panel systems-row">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-desktop"></i>
+                        <span>Monitored Systems</span>
+                        <span class="panel-count" id="systems-count">0</span>
+                    </div>
+                    <a href="{{ url_for('systems') }}" class="panel-action">Manage →</a>
+                </div>
+                <div class="panel-body">
+                    <div class="systems-scroll">
+                        <div class="systems-grid" id="systems-grid">
+                            <div style="grid-column: 1/-1;">
+                                <div class="bottom-empty">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <div>Loading systems...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM ROW: Predictions + Maintenance + Inventory -->
+            <div class="bottom-row">
+
+                <!-- PREDICTIONS -->
+                <div class="panel bottom-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Predictions</span>
+                            <span class="panel-count" id="predictions-count">0</span>
+                        </div>
+                        <a href="{{ url_for('predictions') }}" class="panel-action">Details →</a>
+                    </div>
+                    <div class="bottom-list" id="predictions-list">
+                        <div class="bottom-empty">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <div>Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAINTENANCE -->
+                <div class="panel bottom-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-tools"></i>
+                            <span>Maintenance Due</span>
+                            <span class="panel-count" id="maintenance-count">0</span>
+                        </div>
+                        <a href="{{ url_for('maintenance') }}" class="panel-action">Schedule →</a>
+                    </div>
+                    <div class="bottom-list" id="maintenance-list">
+                        <div class="bottom-empty">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <div>Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INVENTORY -->
+                <div class="panel bottom-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-boxes-stacked"></i>
+                            <span>Inventory Status</span>
+                            <span class="panel-count" id="inventory-count">0</span>
+                        </div>
+                        <a href="{{ url_for('inventory') }}" class="panel-action">View All →</a>
+                    </div>
+                    <div class="bottom-list" id="inventory-list">
+                        <div class="bottom-empty">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <div>Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTIVITY FEED -->
+            <div class="activity-feed">
+                <div class="activity-feed-header">
+                    <div class="panel-title" style="font-size: 11px;">
+                        <i class="fas fa-stream"></i>
+                        <span>Live Activity Feed</span>
+                    </div>
+                    <span class="panel-count" id="activity-count">0 events</span>
+                </div>
+                <div class="activity-list" id="activity-list">
+                    <div class="activity-item">
+                        <span class="activity-time">--:--</span>
+                        <span class="activity-text">Waiting for events...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div class="quick-actions">
+                <a href="{{ url_for('tickets') }}" class="qa-btn">
+                    <i class="fas fa-plus"></i> New Ticket
+                </a>
+                <a href="{{ url_for('maintenance') }}" class="qa-btn">
+                    <i class="fas fa-tools"></i> Schedule Maintenance
+                </a>
+                <a href="{{ url_for('systems') }}" class="qa-btn">
+                    <i class="fas fa-desktop"></i> Manage Systems
+                </a>
+                <a href="{{ url_for('predictions') }}" class="qa-btn">
+                    <i class="fas fa-chart-line"></i> View Predictions
+                </a>
+                <button class="qa-btn" onclick="exportData()">
+                    <i class="fas fa-download"></i> Export Data
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// THEME MANAGER
+// ═══════════════════════════════════════════════════════
+(function () {
+    var STORAGE_KEY = 'nexus-theme';
+    var root = document.documentElement;
+
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function resolveTheme(pref) { return pref === 'auto' ? getSystemTheme() : pref; }
+
+    function applyTheme(pref, animate) {
+        var effective = resolveTheme(pref);
+        if (animate) {
+            root.classList.add('theme-transitioning');
+            setTimeout(function () { root.classList.remove('theme-transitioning'); }, 250);
+        }
+        root.setAttribute('data-theme', effective);
+        root.setAttribute('data-theme-pref', pref);
+        try { localStorage.setItem(STORAGE_KEY, pref); } catch (e) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.theme-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { applyTheme(btn.dataset.themeValue, true); });
+        });
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+            if (root.getAttribute('data-theme-pref') === 'auto') applyTheme('auto', true);
+        });
+    });
+})();
+
+// ═══════════════════════════════════════════════════════
+// SIDEBAR TOGGLE
+// ═══════════════════════════════════════════════════════
+document.getElementById('menu-toggle').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('sidebar').classList.toggle('open');
+});
+
+// Search shortcut
+document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('global-search').focus();
+    }
+});
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function escapeHtml(v) {
+    return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function formatRelative(ts) {
+    if (!ts) return 'never';
+    var diff = Math.floor((Date.now() - ts) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return new Date(ts).toLocaleDateString();
+}
+
+function statusClass(s) {
+    s = String(s || '').toLowerCase();
+    if (s === 'online') return 'online';
+    if (s === 'warning') return 'warning';
+    if (s === 'critical') return 'critical';
+    return 'offline';
+}
+
+function generateSparkline(seed, values) {
+    var points = values && values.length ? values : (function() {
+        var arr = [];
+        var v = 30 + (seed * 7) % 40;
+        for (var i = 0; i < 10; i++) { v = Math.max(5, Math.min(95, v + (Math.random() - 0.5) * 20)); arr.push(v); }
+        return arr;
+    })();
+    var w = 56, h = 20;
+    var max = Math.max.apply(null, points), min = Math.min.apply(null, points);
+    var range = max - min || 1;
+    var path = points.map(function (p, i) {
+        var x = (i / (points.length - 1)) * w;
+        var y = h - ((p - min) / range) * h;
+        return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1);
+    }).join(' ');
+    return '<path d="' + path + '" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>';
+}
+
+// ═══════════════════════════════════════════════════════
+// GAUGE UPDATE
+// ═══════════════════════════════════════════════════════
+function updateGauge(type, value) {
+    var v = Math.max(0, Math.min(100, Number(value) || 0));
+    var circumference = 238.76;
+    var offset = circumference - (circumference * v / 100);
+    var fill = document.querySelector('.gauge-fill[data-type="' + type + '"]');
+    if (fill) fill.style.strokeDashoffset = offset.toFixed(2);
+
+    var valEl = document.getElementById('gauge-' + type + '-value');
+    if (valEl) valEl.textContent = v.toFixed(1) + '%';
+
+    var statusEl = document.getElementById('gauge-' + type + '-status');
+    if (statusEl) {
+        var status = v >= 90 ? 'crit' : (v >= 75 ? 'warn' : 'ok');
+        statusEl.className = 'gauge-status ' + status;
+        statusEl.textContent = status === 'crit' ? 'Critical' : (status === 'warn' ? 'Warning' : 'OK');
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+// METRICS
+// ═══════════════════════════════════════════════════════
+function computeMetrics(computers) {
+    var total = computers.length;
+    var online = 0, warning = 0, critical = 0, offline = 0;
+    var totalCpu = 0, totalRam = 0, totalDisk = 0;
+    var alerts = 0;
+
+    computers.forEach(function (c) {
+        var s = String(c.status || '').toLowerCase();
+        if (s === 'online') online++;
+        else if (s === 'warning') warning++;
+        else if (s === 'critical') critical++;
+        else offline++;
+
+        var cpu = Number(c.cpu_usage || 0);
+        var ram = Number(c.ram_usage || 0);
+        var disk = Number(c.disk_usage || 0);
+        totalCpu += cpu; totalRam += ram; totalDisk += disk;
+
+        if (cpu > 70 || ram > 80 || disk > 85 || s === 'warning' || s === 'critical' || s === 'offline') {
+            alerts++;
+        }
+    });
+
+    var avgCpu = total ? totalCpu / total : 0;
+    var avgRam = total ? totalRam / total : 0;
+    var avgDisk = total ? totalDisk / total : 0;
+
+    // Fleet health score: weight by statuses
+    var healthScore = 100;
+    if (total > 0) {
+        var penalty = (warning * 5) + (critical * 15) + (offline * 10) + (alerts * 2);
+        healthScore = Math.max(0, Math.min(100, 100 - penalty));
+    }
+
+    return {
+        total: total, online: online, warning: warning,
+        critical: critical, offline: offline,
+        avgCpu: avgCpu.toFixed(1),
+        avgRam: avgRam.toFixed(1),
+        avgDisk: avgDisk.toFixed(1),
+        alerts: alerts,
+        healthScore: Math.round(healthScore)
+    };
+}
+
+function updateStats(computers) {
+    var m = computeMetrics(computers);
+    $('#total-computers').text(m.total);
+    $('#online-computers').text(m.online);
+    $('#alert-count').text(m.alerts);
+    $('#systems-count').text(m.total);
+    $('#alerts-count').text(m.alerts);
+
+    updateGauge('cpu', m.avgCpu);
+    updateGauge('ram', m.avgRam);
+    updateGauge('disk', m.avgDisk);
+
+    // Fleet score
+    $('#fleet-score').html(m.healthScore + '<small>/100</small>');
+    $('#fleet-score-fill').css('width', m.healthScore + '%');
+    var scoreColor = m.healthScore >= 80 ? 'var(--success)' :
+                     m.healthScore >= 60 ? 'var(--warning)' : 'var(--danger)';
+    $('#fleet-score').css('color', scoreColor);
+    $('#fleet-score-fill').css('background', scoreColor);
+
+    $('#fleet-healthy').text(m.online);
+    $('#fleet-warning').text(m.warning);
+    $('#fleet-critical').text(m.critical);
+
+    // Sidebar badges
+    $('#sidebar-systems-count').text(m.total);
+    $('#sidebar-alerts-count').text(m.alerts).toggle(m.alerts > 0);
+    $('#notif-badge').text(m.alerts).toggle(m.alerts > 0);
+
+    // Sparklines
+    document.getElementById('spark-systems').innerHTML = generateSparkline(1);
+    document.getElementById('spark-online').innerHTML = generateSparkline(2);
+    document.getElementById('spark-alerts').innerHTML = generateSparkline(3);
+    document.getElementById('spark-tickets').innerHTML = generateSparkline(4);
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER SYSTEMS
+// ═══════════════════════════════════════════════════════
+function renderSystems(computers) {
+    var grid = $('#systems-grid');
+    grid.empty();
+
+    if (!computers || computers.length === 0) {
+        grid.html('<div style="grid-column:1/-1;"><div class="bottom-empty"><i class="fas fa-desktop"></i><div>No systems registered</div></div></div>');
+        return;
+    }
+
+    computers.slice(0, 12).forEach(function (comp) {
+        var cpu = Number(comp.cpu_usage || 0);
+        var ram = Number(comp.ram_usage || 0);
+        var disk = Number(comp.disk_usage || 0);
+        var status = statusClass(comp.status);
+        var name = comp.computer_name || 'Unknown';
+        var deviceId = comp.device_id || 'N/A';
+
+        grid.append(
+            '<div class="sys-card" onclick="location.href=\'/computer/' + comp.id + '\'">' +
+                '<div class="sys-head">' +
+                    '<span class="sys-status-dot ' + status + '"></span>' +
+                    '<div class="sys-info">' +
+                        '<div class="sys-name" title="' + escapeHtml(name) + '">' + escapeHtml(name) + '</div>' +
+                        '<div class="sys-id">' + escapeHtml(deviceId) + '</div>' +
+                    '</div>' +
+                    '<span class="sys-badge ' + status + '">' + escapeHtml(status) + '</span>' +
+                '</div>' +
+                '<div class="sys-metrics">' +
+                    '<div class="metric-row">' +
+                        '<span class="metric-label">CPU</span>' +
+                        '<div class="metric-bar"><div class="metric-fill cpu" style="width:' + Math.min(cpu, 100) + '%"></div></div>' +
+                        '<span class="metric-value">' + cpu.toFixed(0) + '%</span>' +
+                    '</div>' +
+                    '<div class="metric-row">' +
+                        '<span class="metric-label">RAM</span>' +
+                        '<div class="metric-bar"><div class="metric-fill ram" style="width:' + Math.min(ram, 100) + '%"></div></div>' +
+                        '<span class="metric-value">' + ram.toFixed(0) + '%</span>' +
+                    '</div>' +
+                    '<div class="metric-row">' +
+                        '<span class="metric-label">DSK</span>' +
+                        '<div class="metric-bar"><div class="metric-fill disk" style="width:' + Math.min(disk, 100) + '%"></div></div>' +
+                        '<span class="metric-value">' + disk.toFixed(0) + '%</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>'
+        );
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER ALERTS
+// ═══════════════════════════════════════════════════════
+function renderAlerts(computers) {
+    var alerts = [];
+
+    computers.forEach(function (comp) {
+        var ts = comp.last_update ? new Date(comp.last_update).getTime() : Date.now();
+        var name = comp.computer_name || 'Unknown';
+        var cpu = Number(comp.cpu_usage || 0);
+        var ram = Number(comp.ram_usage || 0);
+        var disk = Number(comp.disk_usage || 0);
+
+        if (cpu > 70) alerts.push({ type: cpu > 90 ? 'critical' : 'warning', title: name + ' · CPU at ' + cpu.toFixed(0) + '%', ts: ts });
+        if (ram > 80) alerts.push({ type: ram > 90 ? 'critical' : 'warning', title: name + ' · RAM at ' + ram.toFixed(0) + '%', ts: ts });
+        if (disk > 85) alerts.push({ type: disk > 95 ? 'critical' : 'warning', title: name + ' · Disk at ' + disk.toFixed(0) + '%', ts: ts });
+        if (comp.status === 'offline') alerts.push({ type: 'critical', title: name + ' · Device offline', ts: ts });
+    });
+
+    alerts.sort(function (a, b) { return b.ts - a.ts; });
+
+    var container = $('#alerts-scroll');
+    container.empty();
+
+    if (alerts.length === 0) {
+        container.html('<div class="bottom-empty"><i class="fas fa-check-circle" style="color:var(--success);"></i><div>All systems operational</div></div>');
+        return;
+    }
+
+    alerts.slice(0, 15).forEach(function (a) {
+        container.append(
+            '<div class="alert-item ' + a.type + '">' +
+                '<div class="alert-severity"></div>' +
+                '<div class="alert-content">' +
+                    '<div class="alert-message">' + escapeHtml(a.title) + '</div>' +
+                    '<div class="alert-meta">' +
+                        '<span class="alert-severity-badge">' + a.type + '</span>' +
+                        '<span>' + formatRelative(a.ts) + '</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>'
+        );
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// PREDICTIONS
+// ═══════════════════════════════════════════════════════
+function renderPredictions(computers) {
+    var preds = [];
+
+    computers.forEach(function (comp) {
+        var cpu = Number(comp.cpu_usage || 0);
+        var ram = Number(comp.ram_usage || 0);
+        var disk = Number(comp.disk_usage || 0);
+        var name = comp.computer_name || 'Unknown';
+
+        if (cpu > 70) preds.push({ type: cpu > 90 ? 'danger' : 'warning', icon: 'fa-microchip', title: name + ' · CPU', sub: cpu.toFixed(0) + '% usage' });
+        if (ram > 80) preds.push({ type: ram > 90 ? 'danger' : 'warning', icon: 'fa-memory', title: name + ' · RAM', sub: ram.toFixed(0) + '% usage' });
+        if (disk > 85) preds.push({ type: disk > 95 ? 'danger' : 'warning', icon: 'fa-hdd', title: name + ' · Disk', sub: disk.toFixed(0) + '% usage' });
+        if (comp.status === 'offline') preds.push({ type: 'danger', icon: 'fa-power-off', title: name + ' · Offline', sub: 'No heartbeat' });
+    });
+
+    var container = $('#predictions-list');
+    container.empty();
+    $('#predictions-count').text(preds.length);
+    $('#sidebar-predictions-count').text(preds.length).toggle(preds.length > 0);
+
+    if (preds.length === 0) {
+        container.html('<div class="bottom-empty"><i class="fas fa-check-circle" style="color:var(--success);"></i><div>No predictions</div><div style="font-size:10px;color:var(--text-quaternary);">All systems optimal</div></div>');
+        return;
+    }
+
+    preds.slice(0, 6).forEach(function (p) {
+        container.append(
+            '<div class="bottom-item">' +
+                '<div class="bottom-item-icon ' + p.type + '"><i class="fas ' + p.icon + '"></i></div>' +
+                '<div class="bottom-item-body">' +
+                    '<div class="bottom-item-title">' + escapeHtml(p.title) + '</div>' +
+                    '<div class="bottom-item-sub">' + escapeHtml(p.sub) + '</div>' +
+                '</div>' +
+            '</div>'
+        );
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// MAINTENANCE + INVENTORY (API)
+// ═══════════════════════════════════════════════════════
+function loadMaintenance() {
+    $.ajax({
+        url: '/api/maintenance/planner',
+        method: 'GET',
+        success: function (response) {
+            var list = (response && response.success && response.data) ? response.data : [];
+            var container = $('#maintenance-list');
+            container.empty();
+
+            var pending = list.filter(function (t) {
+                return t.status !== 'Completed' && t.status !== 'Cancelled';
+            });
+
+            $('#maintenance-count').text(pending.length);
+            $('#sidebar-maintenance-count').text(pending.length).toggle(pending.length > 0);
+
+            if (pending.length === 0) {
+                container.html('<div class="bottom-empty"><i class="fas fa-check-circle" style="color:var(--success);"></i><div>No pending maintenance</div></div>');
+                return;
+            }
+
+            pending.slice(0, 6).forEach(function (t) {
+                var priorityClass = (t.priority || '').toLowerCase() === 'high' ? 'danger' :
+                                     (t.priority || '').toLowerCase() === 'medium' ? 'warning' : 'info';
+                container.append(
+                    '<div class="bottom-item">' +
+                        '<div class="bottom-item-icon ' + priorityClass + '"><i class="fas fa-tools"></i></div>' +
+                        '<div class="bottom-item-body">' +
+                            '<div class="bottom-item-title">' + escapeHtml(t.task || t.component || 'Task') + '</div>' +
+                            '<div class="bottom-item-sub">' +
+                                '<strong>' + escapeHtml(t.system_name || '—') + '</strong>' +
+                                ' · ' + escapeHtml(t.priority || 'Normal') +
+                            '</div>' +
+                        '</div>' +
+                    '</div>'
+                );
+            });
+        },
+        error: function () {
+            $('#maintenance-list').html('<div class="bottom-empty"><i class="fas fa-exclamation-triangle"></i><div>Unable to load</div></div>');
+        }
+    });
+}
+
+function loadInventory() {
+    $.ajax({
+        url: '/api/inventory',
+        method: 'GET',
+        success: function (response) {
+            var list = (response && response.success && response.data) ? response.data : [];
+            var container = $('#inventory-list');
+            container.empty();
+
+            $('#inventory-count').text(list.length);
+            $('#sidebar-inventory-count').text(list.length);
+
+            if (list.length === 0) {
+                container.html('<div class="bottom-empty"><i class="fas fa-box-open"></i><div>No inventory items</div></div>');
+                return;
+            }
+
+            list.slice(0, 6).forEach(function (item) {
+                var statusClass = (item.status || '').toLowerCase() === 'replace' ? 'danger' :
+                                  (item.status || '').toLowerCase() === 'watch' ? 'warning' : 'success';
+                container.append(
+                    '<div class="bottom-item">' +
+                        '<div class="bottom-item-icon ' + statusClass + '"><i class="fas fa-microchip"></i></div>' +
+                        '<div class="bottom-item-body">' +
+                            '<div class="bottom-item-title">' + escapeHtml(item.name || 'Component') + '</div>' +
+                            '<div class="bottom-item-sub">' +
+                                '<strong>' + escapeHtml(item.type || '—') + '</strong>' +
+                                ' · Qty ' + (item.quantity || 1) +
+                            '</div>' +
+                        '</div>' +
+                    '</div>'
+                );
+            });
+        },
+        error: function () {
+            $('#inventory-list').html('<div class="bottom-empty"><i class="fas fa-exclamation-triangle"></i><div>Unable to load</div></div>');
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// TICKETS
+// ═══════════════════════════════════════════════════════
+function loadTicketCounts() {
+    $.ajax({
+        url: '/api/tickets/count',
+        method: 'GET',
+        success: function (response) {
+            if (response && response.success) {
+                var open = response.open_count || 0;
+                var inProgress = response.in_progress_count || 0;
+                $('#ticket-count').text(open);
+                $('#inprogress-tickets').text(inProgress);
+                $('#sidebar-tickets-count').text(open).toggle(open > 0);
+            }
+        },
+        error: function () {
+            $('#ticket-count').text(0);
+            $('#inprogress-tickets').text(0);
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// ACTIVITY FEED
+// ═══════════════════════════════════════════════════════
+function renderActivityFeed(computers) {
+    var events = [];
+
+    computers.forEach(function (comp) {
+        var ts = comp.last_update ? new Date(comp.last_update).getTime() : Date.now();
+        var name = comp.computer_name || 'Unknown';
+        var cpu = Number(comp.cpu_usage || 0);
+        var ram = Number(comp.ram_usage || 0);
+        var disk = Number(comp.disk_usage || 0);
+
+        if (cpu > 90) events.push({ ts: ts, text: name + ' CPU ' + cpu.toFixed(0) + '%', tag: 'critical' });
+        else if (cpu > 70) events.push({ ts: ts, text: name + ' CPU ' + cpu.toFixed(0) + '%', tag: 'warning' });
+
+        if (ram > 90) events.push({ ts: ts, text: name + ' RAM ' + ram.toFixed(0) + '%', tag: 'critical' });
+        else if (ram > 80) events.push({ ts: ts, text: name + ' RAM ' + ram.toFixed(0) + '%', tag: 'warning' });
+
+        if (comp.status === 'offline') events.push({ ts: ts, text: name + ' offline', tag: 'critical' });
+        else if (comp.status === 'online') events.push({ ts: ts - 1000, text: name + ' reporting', tag: 'success' });
+    });
+
+    events.sort(function (a, b) { return b.ts - a.ts; });
+
+    var container = $('#activity-list');
+    container.empty();
+
+    $('#activity-count').text(events.length + ' events');
+
+    if (events.length === 0) {
+        container.html('<div class="activity-item"><span class="activity-text">No recent events</span></div>');
+        return;
+    }
+
+    events.slice(0, 15).forEach(function (e) {
+        var d = new Date(e.ts);
+        var time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        container.append(
+            '<div class="activity-item">' +
+                '<span class="activity-time">' + time + '</span>' +
+                '<span class="activity-text">' + escapeHtml(e.text) + '</span>' +
+                '<span class="activity-tag ' + e.tag + '">' + e.tag + '</span>' +
+            '</div>'
+        );
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT DATA
+// ═══════════════════════════════════════════════════════
+function exportData() {
+    $.ajax({
+        url: '/api/computers',
+        method: 'GET',
+        dataType: 'json',
+        success: function (response) {
+            if (!response || !response.success) { alert('Unable to export'); return; }
+            var dataStr = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(response, null, 2));
+            var a = document.createElement('a');
+            a.href = dataStr;
+            a.download = 'nexus-core-export-' + new Date().toISOString().slice(0, 10) + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// MAIN LOAD
+// ═══════════════════════════════════════════════════════
+function loadDashboard() {
+    $.ajax({
+        url: '/api/computers',
+        method: 'GET',
+        dataType: 'json',
+        success: function (response) {
+            if (!response || !response.success) return;
+
+            var computers = response.computers || [];
+            updateStats(computers);
+            renderSystems(computers);
+            renderAlerts(computers);
+            renderPredictions(computers);
+            renderActivityFeed(computers);
+
+            var now = new Date();
+            $('#last-update').text(
+                String(now.getHours()).padStart(2, '0') + ':' +
+                String(now.getMinutes()).padStart(2, '0') + ':' +
+                String(now.getSeconds()).padStart(2, '0')
+            );
+        },
+        error: function () {
+            $('#systems-grid').html('<div style="grid-column:1/-1;"><div class="bottom-empty"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i><div>Unable to load systems</div></div></div>');
+        }
+    });
+
+    loadTicketCounts();
+    loadMaintenance();
+    loadInventory();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+$(document).ready(function () {
+    loadDashboard();
+    setInterval(loadDashboard, 5000);
+});
+</script>
+
+</body>
+</html>

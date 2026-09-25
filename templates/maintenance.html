@@ -1,0 +1,6187 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Maintenance · Nexus Core</title>
+
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('nexus-theme') || 'dark';
+                var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var effective = saved === 'auto'
+                    ? (systemDark ? 'dark' : 'light')
+                    : saved;
+
+                document.documentElement.setAttribute(
+                    'data-theme',
+                    effective
+                );
+
+                document.documentElement.setAttribute(
+                    'data-theme-pref',
+                    saved
+                );
+
+            } catch (e) {
+                document.documentElement.setAttribute(
+                    'data-theme',
+                    'dark'
+                );
+            }
+        })();
+    </script>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        /* =========================================================
+           THEME TOKENS
+           ========================================================= */
+
+        :root,
+        [data-theme="light"] {
+
+            --bg-canvas: #f7f8fa;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f2f4f7;
+            --bg-hover: #eaecf0;
+
+            --border-subtle: #eaecf0;
+            --border-default: #d0d5dd;
+            --border-strong: #98a2b3;
+
+            --text-primary: #101828;
+            --text-secondary: #475467;
+            --text-tertiary: #667085;
+            --text-quaternary: #98a2b3;
+
+            --accent: #1570ef;
+            --accent-hover: #175cd3;
+            --accent-subtle: rgba(21, 112, 239, 0.08);
+
+            --success: #12b76a;
+            --success-subtle: rgba(18, 183, 106, 0.08);
+
+            --warning: #f79009;
+            --warning-subtle: rgba(247, 144, 9, 0.08);
+
+            --danger: #f04438;
+            --danger-subtle: rgba(240, 68, 56, 0.08);
+
+            --info: #06aed4;
+            --info-subtle: rgba(6, 174, 212, 0.08);
+
+            --purple: #7a5af8;
+            --purple-subtle: rgba(122, 90, 248, 0.08);
+
+            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+            --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08);
+
+            --scrollbar-thumb: #d0d5dd;
+        }
+
+
+        [data-theme="dark"] {
+
+            --bg-canvas: #0a0e1a;
+            --bg-surface: #0f1524;
+            --bg-elevated: #171e2f;
+            --bg-hover: #1f2937;
+
+            --border-subtle: #1a2235;
+            --border-default: #2a3347;
+            --border-strong: #3d4859;
+
+            --text-primary: #f9fafb;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-quaternary: #475569;
+
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-subtle: rgba(59, 130, 246, 0.1);
+
+            --success: #22c55e;
+            --success-subtle: rgba(34, 197, 94, 0.1);
+
+            --warning: #f59e0b;
+            --warning-subtle: rgba(245, 158, 11, 0.1);
+
+            --danger: #ef4444;
+            --danger-subtle: rgba(239, 68, 68, 0.1);
+
+            --info: #06b6d4;
+            --info-subtle: rgba(6, 182, 212, 0.1);
+
+            --purple: #a78bfa;
+            --purple-subtle: rgba(167, 139, 250, 0.1);
+
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+
+            --scrollbar-thumb: #2a3347;
+        }
+
+
+        :root {
+            --sidebar-width: 236px;
+            --topbar-height: 56px;
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+        }
+
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+
+        body {
+            background: var(--bg-canvas);
+            font-family: 'Inter',
+                -apple-system,
+                BlinkMacSystemFont,
+                'Segoe UI',
+                sans-serif;
+
+            color: var(--text-primary);
+            font-size: 13px;
+            line-height: 1.4;
+
+            -webkit-font-smoothing: antialiased;
+        }
+
+
+        .mono {
+            font-family: 'JetBrains Mono',
+                'SF Mono',
+                Consolas,
+                monospace;
+
+            font-feature-settings:
+                'tnum' 1,
+                'zero' 1;
+        }
+
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px;
+        }
+
+
+        html.theme-transitioning *,
+        html.theme-transitioning *::before,
+        html.theme-transitioning *::after {
+
+            transition:
+                background-color 0.2s ease,
+                border-color 0.2s ease,
+                color 0.2s ease !important;
+        }
+
+
+        /* =========================================================
+           BOOTSTRAP TABLE
+           ========================================================= */
+
+        .table {
+
+            --bs-table-bg: transparent !important;
+            --bs-table-color: var(--text-secondary) !important;
+            --bs-table-border-color: var(--border-subtle) !important;
+
+            --bs-table-striped-bg: var(--bg-elevated) !important;
+            --bs-table-striped-color: var(--text-secondary) !important;
+
+            --bs-table-hover-bg: var(--bg-hover) !important;
+            --bs-table-hover-color: var(--text-primary) !important;
+
+            color: var(--text-secondary) !important;
+            border-color: var(--border-subtle) !important;
+        }
+
+
+        .table > :not(caption) > * > * {
+
+            background-color: transparent !important;
+            color: inherit !important;
+            border-color: var(--border-subtle) !important;
+            box-shadow: none !important;
+        }
+
+
+        .table tbody tr {
+            background-color: var(--bg-surface) !important;
+        }
+
+
+        .table tbody tr:hover {
+            background-color: var(--bg-hover) !important;
+        }
+
+
+        .table tbody tr:hover > * {
+
+            background-color: var(--bg-hover) !important;
+            color: var(--text-primary) !important;
+        }
+
+
+        /* =========================================================
+           APP
+           ========================================================= */
+
+        .app {
+
+            display: grid;
+
+            grid-template-columns:
+                var(--sidebar-width) 1fr;
+
+            height: 100vh;
+
+            overflow: hidden;
+        }
+
+
+        /* =========================================================
+           SIDEBAR
+           ========================================================= */
+
+        .sidebar {
+
+            background: var(--bg-surface);
+
+            border-right:
+                1px solid var(--border-subtle);
+
+            display: flex;
+            flex-direction: column;
+
+            overflow: hidden;
+        }
+
+
+        .sidebar-brand {
+
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            padding: 0 16px;
+
+            height: var(--topbar-height);
+
+            border-bottom:
+                1px solid var(--border-subtle);
+
+            flex-shrink: 0;
+        }
+
+
+        .brand-mark {
+
+            width: 30px;
+            height: 30px;
+
+            border-radius: var(--radius-md);
+
+            background: var(--accent);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #fff;
+
+            font-size: 13px;
+
+            flex-shrink: 0;
+        }
+
+
+        .brand-text {
+
+            display: flex;
+            flex-direction: column;
+
+            overflow: hidden;
+        }
+
+
+        .brand-name {
+
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+
+        .brand-tag {
+
+            font-size: 9px;
+            font-weight: 600;
+
+            color: var(--text-tertiary);
+
+            letter-spacing: 0.06em;
+
+            text-transform: uppercase;
+        }
+
+
+        .sidebar-nav {
+
+            flex: 1;
+
+            overflow-y: auto;
+
+            padding: 12px 8px;
+        }
+
+
+        .nav-section {
+            margin-top: 14px;
+        }
+
+
+        .nav-section:first-child {
+            margin-top: 0;
+        }
+
+
+        .nav-section-title {
+
+            font-size: 10px;
+            font-weight: 600;
+
+            color: var(--text-quaternary);
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.08em;
+
+            padding: 6px 12px 4px;
+        }
+
+
+        .nav-link {
+
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            padding: 7px 12px;
+
+            border-radius: var(--radius-md);
+
+            color: var(--text-secondary);
+
+            font-size: 13px;
+            font-weight: 500;
+
+            text-decoration: none;
+
+            transition: all 0.12s ease;
+
+            position: relative;
+        }
+
+
+        .nav-link i {
+
+            width: 16px;
+
+            font-size: 13px;
+
+            text-align: center;
+
+            flex-shrink: 0;
+
+            color: var(--text-quaternary);
+        }
+
+
+        .nav-link:hover {
+
+            background: var(--bg-hover);
+
+            color: var(--text-primary);
+        }
+
+
+        .nav-link:hover i {
+            color: var(--text-secondary);
+        }
+
+
+        .nav-link.active {
+
+            background: var(--accent-subtle);
+
+            color: var(--accent);
+
+            font-weight: 600;
+        }
+
+
+        .nav-link.active i {
+            color: var(--accent);
+        }
+
+
+        .nav-link.danger {
+            color: var(--danger);
+        }
+
+
+        .nav-link.danger i {
+            color: var(--danger);
+        }
+
+
+        .nav-link.danger:hover {
+            background: var(--danger-subtle);
+        }
+
+
+        .sidebar-footer {
+
+            border-top:
+                1px solid var(--border-subtle);
+
+            padding: 10px;
+
+            flex-shrink: 0;
+        }
+
+
+        .user-card {
+
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            padding: 6px 8px;
+
+            border-radius: var(--radius-md);
+        }
+
+
+        .user-avatar {
+
+            width: 30px;
+            height: 30px;
+
+            border-radius: var(--radius-md);
+
+            background: var(--accent);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #fff;
+
+            font-size: 11px;
+            font-weight: 700;
+
+            flex-shrink: 0;
+        }
+
+
+        .user-meta {
+
+            display: flex;
+            flex-direction: column;
+
+            overflow: hidden;
+        }
+
+
+        .user-name {
+
+            font-size: 12px;
+            font-weight: 600;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+        }
+
+
+        .user-role {
+
+            font-size: 9px;
+
+            color: var(--text-tertiary);
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.04em;
+        }
+
+
+        /* =========================================================
+           MAIN
+           ========================================================= */
+
+        .main {
+
+            display: flex;
+            flex-direction: column;
+
+            overflow: hidden;
+        }
+
+
+        .topbar {
+
+            height: var(--topbar-height);
+
+            background: var(--bg-surface);
+
+            border-bottom:
+                1px solid var(--border-subtle);
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 16px;
+
+            padding: 0 20px;
+
+            flex-shrink: 0;
+        }
+
+
+        .topbar-toggle {
+
+            display: none;
+
+            background: transparent;
+
+            border:
+                1px solid var(--border-default);
+
+            color: var(--text-secondary);
+
+            width: 30px;
+            height: 30px;
+
+            border-radius: var(--radius-md);
+
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+        }
+
+
+        .breadcrumb-nav {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 6px;
+
+            font-size: 13px;
+
+            color: var(--text-tertiary);
+        }
+
+
+        .breadcrumb-nav .sep {
+
+            color: var(--text-quaternary);
+
+            font-size: 10px;
+        }
+
+
+        .breadcrumb-nav .current {
+
+            color: var(--text-primary);
+
+            font-weight: 600;
+        }
+
+
+        .topbar-right {
+
+            margin-left: auto;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 6px;
+        }
+
+
+        .status-pill {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 6px;
+
+            padding: 4px 10px;
+
+            border-radius: 20px;
+
+            background: var(--success-subtle);
+
+            border:
+                1px solid rgba(34, 197, 94, 0.2);
+
+            color: var(--success);
+
+            font-size: 10px;
+
+            font-weight: 600;
+
+            letter-spacing: 0.04em;
+        }
+
+
+        .status-pill .dot {
+
+            width: 6px;
+            height: 6px;
+
+            border-radius: 50%;
+
+            background: var(--success);
+
+            animation:
+                pulse 2s ease-in-out infinite;
+        }
+
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.35;
+            }
+        }
+
+
+        .theme-toggle {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            background: var(--bg-canvas);
+
+            border:
+                1px solid var(--border-subtle);
+
+            border-radius: var(--radius-md);
+
+            padding: 2px;
+
+            gap: 2px;
+        }
+
+
+        .theme-btn {
+
+            width: 26px;
+            height: 26px;
+
+            background: transparent;
+
+            border: none;
+
+            border-radius: var(--radius-sm);
+
+            color: var(--text-tertiary);
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+
+            font-size: 11px;
+
+            transition: all 0.15s ease;
+        }
+
+
+        .theme-btn:hover {
+
+            color: var(--text-primary);
+
+            background: var(--bg-hover);
+        }
+
+
+        [data-theme-pref="auto"]
+        .theme-btn[data-theme-value="auto"],
+
+        [data-theme-pref="light"]
+        .theme-btn[data-theme-value="light"],
+
+        [data-theme-pref="dark"]
+        .theme-btn[data-theme-value="dark"] {
+
+            background: var(--bg-surface);
+
+            color: var(--accent);
+
+            box-shadow: var(--shadow-sm);
+        }
+
+
+        .icon-btn {
+
+            width: 32px;
+            height: 32px;
+
+            background: transparent;
+
+            border:
+                1px solid transparent;
+
+            color: var(--text-secondary);
+
+            border-radius: var(--radius-md);
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+
+            font-size: 13px;
+
+            position: relative;
+
+            transition: all 0.12s ease;
+        }
+
+
+        .icon-btn:hover {
+
+            background: var(--bg-hover);
+
+            border-color: var(--border-subtle);
+
+            color: var(--text-primary);
+        }
+
+
+        /* =========================================================
+           DROPDOWN
+           ========================================================= */
+
+        .dropdown-menu {
+
+            background: var(--bg-surface);
+
+            border:
+                1px solid var(--border-default);
+
+            border-radius: var(--radius-md);
+
+            padding: 4px;
+
+            box-shadow: var(--shadow-md);
+
+            min-width: 220px;
+
+            margin-top: 6px;
+        }
+
+
+        .dropdown-item {
+
+            color: var(--text-secondary);
+
+            font-size: 12px;
+
+            padding: 6px 10px;
+
+            border-radius: var(--radius-sm);
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            font-weight: 500;
+        }
+
+
+        .dropdown-item i {
+
+            width: 14px;
+
+            font-size: 12px;
+
+            color: var(--text-quaternary);
+        }
+
+
+        .dropdown-item:hover {
+
+            background: var(--bg-hover);
+
+            color: var(--text-primary);
+        }
+
+
+        .dropdown-item.danger {
+            color: var(--danger);
+        }
+
+
+        .dropdown-item.danger i {
+            color: var(--danger);
+        }
+
+
+        .dropdown-item.danger:hover {
+            background: var(--danger-subtle);
+        }
+
+
+        .dropdown-divider {
+            border-color: var(--border-subtle);
+            margin: 4px 0;
+        }
+
+
+        .dropdown-header {
+
+            font-size: 10px;
+
+            font-weight: 600;
+
+            color: var(--text-quaternary);
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.06em;
+
+            padding: 6px 10px 4px;
+        }
+
+
+        /* =========================================================
+           PAGE
+           ========================================================= */
+
+        .page {
+
+            flex: 1;
+
+            overflow-y: auto;
+
+            padding: 14px 18px;
+
+            min-height: 0;
+        }
+
+
+        .page-header {
+            margin-bottom: 16px;
+        }
+
+
+        .page-title {
+
+            font-size: 18px;
+
+            font-weight: 700;
+
+            color: var(--text-primary);
+
+            letter-spacing: -0.02em;
+
+            margin-bottom: 2px;
+        }
+
+
+        .page-desc {
+
+            font-size: 12px;
+
+            color: var(--text-tertiary);
+        }
+
+
+        /* =========================================================
+           CARDS
+           ========================================================= */
+
+        .card {
+
+            background: var(--bg-surface);
+
+            border:
+                1px solid var(--border-subtle);
+
+            border-radius: var(--radius-lg);
+
+            margin-bottom: 12px;
+
+            overflow: hidden;
+        }
+
+
+        .card-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 10px 14px;
+
+            border-bottom:
+                1px solid var(--border-subtle);
+
+            flex-shrink: 0;
+
+            gap: 8px;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            color: var(--text-primary);
+
+            background: transparent;
+        }
+
+
+        .card-header i {
+
+            color: var(--text-tertiary);
+
+            font-size: 11px;
+        }
+
+
+        .card-body {
+            padding: 14px;
+        }
+
+
+        /* =========================================================
+           BADGES
+           ========================================================= */
+
+        .badge {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-width: 72px;
+
+            height: 24px;
+
+            padding: 0 10px;
+
+            border-radius: 999px;
+
+            font-family: 'Inter', sans-serif;
+
+            font-size: 10px;
+
+            font-weight: 600;
+
+            line-height: 1;
+
+            letter-spacing: 0.02em;
+
+            border: 1px solid transparent;
+
+            white-space: nowrap;
+        }
+
+
+        [data-theme="light"] .badge.bg-primary {
+
+            background:
+                rgba(21, 112, 239, 0.12) !important;
+
+            color:
+                #1570ef !important;
+
+            border-color:
+                rgba(21, 112, 239, 0.25);
+        }
+
+
+        [data-theme="light"] .badge.bg-danger {
+
+            background:
+                rgba(240, 68, 56, 0.12) !important;
+
+            color:
+                #f04438 !important;
+
+            border-color:
+                rgba(240, 68, 56, 0.25);
+        }
+
+
+        [data-theme="light"] .badge.bg-success {
+
+            background:
+                rgba(18, 183, 106, 0.12) !important;
+
+            color:
+                #12b76a !important;
+
+            border-color:
+                rgba(18, 183, 106, 0.25);
+        }
+
+
+        [data-theme="light"] .badge.bg-warning {
+
+            background:
+                rgba(247, 144, 9, 0.12) !important;
+
+            color:
+                #f79009 !important;
+
+            border-color:
+                rgba(247, 144, 9, 0.25);
+        }
+
+
+        [data-theme="light"] .badge.bg-info {
+
+            background:
+                rgba(6, 174, 212, 0.12) !important;
+
+            color:
+                #06aed4 !important;
+
+            border-color:
+                rgba(6, 174, 212, 0.25);
+        }
+
+
+        [data-theme="light"] .badge.bg-secondary {
+
+            background:
+                rgba(100, 116, 139, 0.12) !important;
+
+            color:
+                #64748b !important;
+
+            border-color:
+                rgba(100, 116, 139, 0.25);
+        }
+
+
+        [data-theme="dark"] .badge.bg-primary {
+
+            background:
+                rgba(59, 130, 246, 0.12) !important;
+
+            color:
+                #60a5fa !important;
+
+            border-color:
+                rgba(59, 130, 246, 0.25);
+        }
+
+
+        [data-theme="dark"] .badge.bg-danger {
+
+            background:
+                rgba(239, 68, 68, 0.12) !important;
+
+            color:
+                #f87171 !important;
+
+            border-color:
+                rgba(239, 68, 68, 0.25);
+        }
+
+
+        [data-theme="dark"] .badge.bg-success {
+
+            background:
+                rgba(34, 197, 94, 0.12) !important;
+
+            color:
+                #4ade80 !important;
+
+            border-color:
+                rgba(34, 197, 94, 0.25);
+        }
+
+
+        [data-theme="dark"] .badge.bg-warning {
+
+            background:
+                rgba(245, 158, 11, 0.12) !important;
+
+            color:
+                #fbbf24 !important;
+
+            border-color:
+                rgba(245, 158, 11, 0.25);
+        }
+
+
+        [data-theme="dark"] .badge.bg-info {
+
+            background:
+                rgba(6, 182, 212, 0.12) !important;
+
+            color:
+                #22d3ee !important;
+
+            border-color:
+                rgba(6, 182, 212, 0.25);
+        }
+
+
+        [data-theme="dark"] .badge.bg-secondary {
+
+            background:
+                rgba(100, 116, 139, 0.12) !important;
+
+            color:
+                #94a3b8 !important;
+
+            border-color:
+                rgba(100, 116, 139, 0.25);
+        }
+
+
+        .badge.text-dark {
+            color: #000 !important;
+        }
+
+
+        /* =========================================================
+           MAINTENANCE CARDS
+           ========================================================= */
+
+        .maintenance-card {
+
+            background: var(--bg-elevated);
+
+            border:
+                1px solid var(--border-subtle);
+
+            border-radius: var(--radius-md);
+
+            padding: 12px;
+
+            transition: all 0.15s ease;
+
+            height: 100%;
+        }
+
+
+        .maintenance-card:hover {
+
+            border-color:
+                var(--border-default);
+        }
+
+
+        .maintenance-card .computer-name {
+
+            font-weight: 600;
+
+            color: var(--text-primary);
+
+            font-size: 13px;
+        }
+
+
+        .maintenance-card .computer-ip {
+
+            color: var(--text-quaternary);
+
+            font-size: 10px;
+
+            font-family:
+                'JetBrains Mono',
+                monospace;
+        }
+
+
+        .priority-badge {
+
+            font-size: 9px;
+
+            font-weight: 700;
+
+            padding: 2px 7px;
+
+            border-radius: 4px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.04em;
+        }
+
+
+        .priority-badge.urgent {
+
+            background:
+                var(--danger-subtle);
+
+            color:
+                var(--danger);
+        }
+
+
+        .priority-badge.warning {
+
+            background:
+                var(--warning-subtle);
+
+            color:
+                var(--warning);
+        }
+
+
+        .priority-badge.normal {
+
+            background:
+                var(--success-subtle);
+
+            color:
+                var(--success);
+        }
+
+
+        .task-item {
+
+            display: flex;
+
+            align-items: flex-start;
+
+            gap: 10px;
+
+            padding: 8px 0;
+
+            border-bottom:
+                1px solid var(--border-subtle);
+        }
+
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+
+        .task-icon {
+
+            width: 28px;
+            height: 28px;
+
+            border-radius:
+                var(--radius-md);
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            font-size: 11px;
+        }
+
+
+        .task-icon.urgent {
+
+            background:
+                var(--danger-subtle);
+
+            color:
+                var(--danger);
+        }
+
+
+        .task-icon.warning {
+
+            background:
+                var(--warning-subtle);
+
+            color:
+                var(--warning);
+        }
+
+
+        .task-icon.normal {
+
+            background:
+                var(--success-subtle);
+
+            color:
+                var(--success);
+        }
+
+
+        .task-title {
+
+            color:
+                var(--text-primary);
+
+            font-weight: 600;
+
+            font-size: 12px;
+        }
+
+
+        .task-desc {
+
+            color:
+                var(--text-tertiary);
+
+            font-size: 10px;
+
+            margin-top: 2px;
+        }
+
+
+        .no-maintenance {
+
+            text-align: center;
+
+            padding: 40px 20px;
+
+            color:
+                var(--text-tertiary);
+        }
+
+
+        .no-maintenance i {
+
+            font-size: 40px;
+
+            margin-bottom: 12px;
+
+            color:
+                var(--success);
+
+            opacity: 0.4;
+        }
+
+
+        .no-maintenance h5 {
+
+            color:
+                var(--text-secondary);
+
+            font-weight: 600;
+
+            font-size: 14px;
+        }
+
+
+        /* =========================================================
+           TABLE
+           ========================================================= */
+
+        .maintenance-table {
+
+            margin-bottom: 0;
+
+            vertical-align: middle;
+
+            color:
+                var(--text-secondary);
+
+            width: 100%;
+        }
+
+
+        .maintenance-table th {
+
+            white-space: nowrap;
+
+            font-size: 10px;
+
+            font-weight: 600;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.06em;
+
+            color:
+                var(--text-tertiary);
+
+            padding: 8px 12px;
+
+            border-bottom:
+                1px solid var(--border-subtle);
+
+            background:
+                var(--bg-elevated);
+        }
+
+
+        .maintenance-table td {
+
+            vertical-align: middle;
+
+            white-space: nowrap;
+
+            font-size: 11px;
+
+            padding: 8px 12px;
+
+            border-bottom:
+                1px solid var(--border-subtle);
+
+            color:
+                var(--text-secondary);
+
+            background:
+                var(--bg-surface);
+        }
+
+
+        .maintenance-table tbody tr:hover td {
+
+            background:
+                var(--bg-hover);
+        }
+
+
+        .maintenance-action-btn {
+
+            width: 30px;
+            height: 28px;
+
+            padding: 0;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+        }
+
+
+        .maintenance-summary {
+
+            height: 100%;
+
+            padding: 8px 0;
+        }
+
+
+        .maintenance-summary-label {
+
+            font-size: 10px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.06em;
+
+            font-weight: 600;
+
+            color:
+                var(--text-tertiary);
+        }
+
+
+        .maintenance-summary-value {
+
+            margin: 4px 0 0;
+
+            font-size: 18px;
+
+            font-weight: 700;
+
+            font-family:
+                'JetBrains Mono',
+                monospace;
+
+            color:
+                var(--text-primary);
+        }
+
+
+        .timeline-item {
+            height: 100%;
+        }
+
+
+        .timeline-item .task-item {
+
+            height: 100%;
+
+            border-bottom: none;
+        }
+
+
+        /* =========================================================
+           FORM
+           ========================================================= */
+
+        .form-label {
+
+            font-size: 11px;
+
+            font-weight: 500;
+
+            color:
+                var(--text-secondary);
+
+            margin-bottom: 4px;
+        }
+
+
+        .form-control,
+        .form-select {
+
+            background:
+                var(--bg-canvas);
+
+            border:
+                1px solid var(--border-default);
+
+            color:
+                var(--text-primary);
+
+            border-radius:
+                var(--radius-md);
+
+            font-size: 12px;
+
+            padding: 7px 10px;
+
+            font-family: inherit;
+        }
+
+
+        .form-control:focus,
+        .form-select:focus {
+
+            background:
+                var(--bg-canvas);
+
+            border-color:
+                var(--accent);
+
+            color:
+                var(--text-primary);
+
+            box-shadow:
+                0 0 0 3px var(--accent-subtle);
+
+            outline: none;
+        }
+
+
+        .form-control::placeholder {
+            color:
+                var(--text-quaternary);
+        }
+
+
+        .form-select option {
+
+            background:
+                var(--bg-surface);
+
+            color:
+                var(--text-primary);
+        }
+
+
+        .input-group-text {
+
+            background:
+                var(--bg-elevated);
+
+            border:
+                1px solid var(--border-default);
+
+            color:
+                var(--text-tertiary);
+        }
+
+
+        /* =========================================================
+           BUTTONS
+           ========================================================= */
+
+        .btn {
+
+            font-family: inherit;
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+            padding: 6px 14px;
+
+            border-radius:
+                var(--radius-md);
+
+            transition:
+                all 0.12s ease;
+        }
+
+
+        .btn-primary {
+
+            background:
+                var(--accent);
+
+            border:
+                1px solid var(--accent);
+
+            color: #fff;
+        }
+
+
+        .btn-primary:hover {
+
+            background:
+                var(--accent-hover);
+
+            border-color:
+                var(--accent-hover);
+        }
+
+
+        .btn-outline-primary {
+
+            background: transparent;
+
+            border:
+                1px solid var(--accent);
+
+            color:
+                var(--accent);
+        }
+
+
+        .btn-outline-primary:hover {
+
+            background:
+                var(--accent-subtle);
+
+            color:
+                var(--accent);
+        }
+
+
+        .btn-outline-danger {
+
+            background: transparent;
+
+            border:
+                1px solid var(--danger);
+
+            color:
+                var(--danger);
+        }
+
+
+        .btn-outline-danger:hover {
+
+            background:
+                var(--danger-subtle);
+        }
+
+
+        .btn-secondary {
+
+            background:
+                var(--bg-elevated);
+
+            border:
+                1px solid var(--border-default);
+
+            color:
+                var(--text-secondary);
+        }
+
+
+        .btn-sm {
+
+            padding: 4px 10px;
+
+            font-size: 11px;
+        }
+
+
+        /* =========================================================
+           MODAL
+           ========================================================= */
+
+        .modal-content {
+
+            background:
+                var(--bg-surface);
+
+            color:
+                var(--text-primary);
+
+            border:
+                1px solid var(--border-subtle);
+
+            border-radius:
+                var(--radius-lg);
+        }
+
+
+        .modal-header,
+        .modal-footer {
+
+            border-color:
+                var(--border-subtle);
+        }
+
+
+        .modal-header {
+            padding: 14px 18px;
+        }
+
+
+        .modal-body {
+            padding: 18px;
+        }
+
+
+        .modal-title {
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            color:
+                var(--text-primary);
+        }
+
+
+        .modal-title i {
+
+            color:
+                var(--accent);
+
+            margin-right: 6px;
+        }
+
+
+        [data-theme="dark"]
+        .modal-header .btn-close {
+
+            filter: invert(1);
+
+            opacity: 0.6;
+        }
+
+
+        /* =========================================================
+           RESPONSIVE
+           ========================================================= */
+
+        @media (max-width: 992px) {
+
+            .app {
+                grid-template-columns: 1fr;
+            }
+
+
+            .sidebar {
+
+                position: fixed;
+
+                top: 0;
+                left: 0;
+                bottom: 0;
+
+                width:
+                    var(--sidebar-width);
+
+                transform:
+                    translateX(-100%);
+
+                transition:
+                    transform 0.2s ease;
+
+                z-index: 1040;
+            }
+
+
+            .sidebar.open {
+
+                transform:
+                    translateX(0);
+            }
+
+
+            .topbar-toggle {
+                display: flex;
+            }
+        }
+
+
+        @media (max-width: 640px) {
+
+            .page {
+                padding: 12px;
+            }
+
+
+            .topbar {
+
+                padding: 0 12px;
+
+                gap: 8px;
+            }
+
+
+            .breadcrumb-nav {
+                display: none;
+            }
+
+
+            .status-pill span:not(.dot) {
+                display: none;
+            }
+
+
+            .maintenance-table th,
+            .maintenance-table td {
+
+                font-size: 10px;
+
+                padding: 6px 8px;
+            }
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+<div class="app">
+
+    <!-- =========================================================
+         SIDEBAR
+         ========================================================= -->
+
+    <aside class="sidebar" id="sidebar">
+
+        <div class="sidebar-brand">
+
+            <div class="brand-mark">
+                <i class="fas fa-microchip"></i>
+            </div>
+
+            <div class="brand-text">
+
+                <span class="brand-name">
+                    Nexus Core
+                </span>
+
+                <span class="brand-tag">
+                    Maintenance
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-section">
+
+                <div class="nav-section-title">
+                    Overview
+                </div>
+
+                <a
+                    href="{{ url_for('index') }}"
+                    class="nav-link"
+                >
+                    <i class="fas fa-th-large"></i>
+                    Dashboard
+                </a>
+
+            </div>
+
+
+            <div class="nav-section">
+
+                <div class="nav-section-title">
+                    Monitoring
+                </div>
+
+                <a
+                    href="{{ url_for('systems') }}"
+                    class="nav-link"
+                >
+                    <i class="fas fa-desktop"></i>
+                    Systems
+                </a>
+
+                <a
+                    href="{{ url_for('predictions') }}"
+                    class="nav-link"
+                >
+                    <i class="fas fa-chart-line"></i>
+                    Predictions
+                </a>
+
+                <a
+                    href="{{ url_for('alerts') }}"
+                    class="nav-link"
+                >
+                    <i class="fas fa-bell"></i>
+                    Alerts
+                </a>
+
+            </div>
+
+
+            <div class="nav-section">
+
+                <div class="nav-section-title">
+                    Operations
+                </div>
+
+                <a
+                    href="{{ url_for('maintenance') }}"
+                    class="nav-link active"
+                >
+                    <i class="fas fa-tools"></i>
+                    Maintenance
+                </a>
+
+                <a
+                    href="{{ url_for('inventory') }}"
+                    class="nav-link"
+                >
+                    <i class="fas fa-boxes-stacked"></i>
+                    Inventory
+                </a>
+
+                <a
+                    href="{{ url_for('tickets') }}"
+                    class="nav-link"
+                >
+                    <i class="fas fa-ticket-alt"></i>
+                    Tickets
+                </a>
+
+                <a
+                    href="{{ url_for('qr_selection') }}"
+                    class="nav-link"
+                >
+                    <i class="fas fa-qrcode"></i>
+                    QR Codes
+                </a>
+
+            </div>
+
+
+            <div class="nav-section">
+
+                <div class="nav-section-title">
+                    Account
+                </div>
+
+                <a
+                    href="{{ url_for('profile') }}"
+                    class="nav-link"
+                >
+                    <i class="fas fa-user"></i>
+                    Profile
+                </a>
+
+                <a
+                    href="{{ url_for('settings') }}"
+                    class="nav-link"
+                >
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+
+                <a
+                    href="{{ url_for('about') }}"
+                    class="nav-link"
+                >
+                    <i class="fas fa-info-circle"></i>
+                    About
+                </a>
+
+                <a
+                    href="{{ url_for('logout') }}"
+                    class="nav-link danger"
+                >
+                    <i class="fas fa-sign-out-alt"></i>
+                    Sign Out
+                </a>
+
+            </div>
+
+        </nav>
+
+
+        <div class="sidebar-footer">
+
+            <div class="user-card">
+
+                <div class="user-avatar">
+
+                    {{
+                        (current_account.username[0]|upper)
+                        if current_account
+                        else 'A'
+                    }}
+
+                </div>
+
+                <div class="user-meta">
+
+                    <span class="user-name">
+                        {{
+                            current_account.username
+                            if current_account
+                            else 'Admin'
+                        }}
+                    </span>
+
+                    <span class="user-role">
+
+                        {{
+                            current_role|upper
+                            if current_role
+                            else 'USER'
+                        }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================================================
+         MAIN
+         ========================================================= -->
+
+    <div class="main">
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <button
+                class="topbar-toggle"
+                id="menu-toggle"
+                aria-label="Toggle sidebar"
+            >
+                <i class="fas fa-bars"></i>
+            </button>
+
+
+            <nav class="breadcrumb-nav">
+
+                <span>
+                    Nexus Core
+                </span>
+
+                <span class="sep">
+                    /
+                </span>
+
+                <span class="current">
+                    Maintenance
+                </span>
+
+            </nav>
+
+
+            <div class="topbar-right">
+
+                <span class="status-pill">
+
+                    <span class="dot"></span>
+
+                    <span>
+                        LIVE
+                    </span>
+
+                </span>
+
+
+                <div
+                    class="theme-toggle"
+                    role="group"
+                    aria-label="Theme"
+                >
+
+                    <button
+                        type="button"
+                        class="theme-btn"
+                        data-theme-value="light"
+                        title="Light mode"
+                    >
+                        <i class="fas fa-sun"></i>
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="theme-btn"
+                        data-theme-value="auto"
+                        title="System default"
+                    >
+                        <i class="fas fa-circle-half-stroke"></i>
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="theme-btn"
+                        data-theme-value="dark"
+                        title="Dark mode"
+                    >
+                        <i class="fas fa-moon"></i>
+                    </button>
+
+                </div>
+
+
+                <div class="dropdown">
+
+                    <button
+                        class="icon-btn"
+                        data-bs-toggle="dropdown"
+                        aria-label="Account"
+                    >
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+
+                        <li class="dropdown-header">
+                            Signed in as
+                        </li>
+
+                        <li
+                            class="dropdown-header"
+                            style="
+                                color: var(--text-primary);
+                                text-transform: none;
+                                font-size: 12px;
+                                letter-spacing: 0;
+                            "
+                        >
+                            {{
+                                current_account.username
+                                if current_account
+                                else 'Admin'
+                            }}
+                        </li>
+
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <li>
+
+                            <a
+                                class="dropdown-item"
+                                href="{{ url_for('profile') }}"
+                            >
+                                <i class="fas fa-user"></i>
+                                Profile
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                class="dropdown-item"
+                                href="{{ url_for('settings') }}"
+                            >
+                                <i class="fas fa-cog"></i>
+                                Settings
+                            </a>
+
+                        </li>
+
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <li>
+
+                            <a
+                                class="dropdown-item danger"
+                                href="{{ url_for('logout') }}"
+                            >
+                                <i class="fas fa-sign-out-alt"></i>
+                                Sign Out
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+             PAGE
+             ===================================================== -->
+
+        <main class="page">
+
+
+            <!-- PAGE HEADER -->
+
+            <div class="page-header">
+
+                <h1 class="page-title">
+                    Maintenance
+                </h1>
+
+                <p class="page-desc">
+                    Predictive maintenance and component health
+                </p>
+
+            </div>
+
+
+            <!-- =================================================
+                 1. MAINTENANCE RECOMMENDATIONS
+                 ================================================= -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <i class="fas fa-clipboard-list"></i>
+
+                        Maintenance Recommendations
+
+                        <span class="badge bg-warning ms-2">
+
+                            {{ maintenance_list|length }}
+
+                            Systems
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    {% if maintenance_list %}
+
+                    <div class="row g-3">
+
+                        {% for item in maintenance_list %}
+
+                        <div class="col-md-6 col-xl-4">
+
+                            <div class="maintenance-card">
+
+                                <div
+                                    class="d-flex justify-content-between align-items-start mb-3"
+                                >
+
+                                    <div>
+
+                                        <div class="computer-name">
+
+                                            <i
+                                                class="fas fa-desktop me-2"
+                                                style="color: var(--accent);"
+                                            ></i>
+
+                                            {{
+                                                item.computer.computer_name
+                                            }}
+
+                                        </div>
+
+
+                                        <div class="computer-ip">
+
+                                            <i
+                                                class="fas fa-network-wired me-1"
+                                            ></i>
+
+                                            {{
+                                                item.computer.ip_address
+                                            }}
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <span
+                                        class="priority-badge {{ item.priority }}"
+                                    >
+                                        {{
+                                            item.priority|upper
+                                        }}
+                                    </span>
+
+                                </div>
+
+
+                                <div>
+
+                                    {% for task in item.tasks %}
+
+                                    <div class="task-item">
+
+                                        <div
+                                            class="task-icon {{ task.type }}"
+                                        >
+                                            <i
+                                                class="fas {{ task.icon }}"
+                                            ></i>
+                                        </div>
+
+                                        <div>
+
+                                            <div class="task-title">
+                                                {{
+                                                    task.title
+                                                }}
+                                            </div>
+
+                                            <div class="task-desc">
+                                                {{
+                                                    task.description
+                                                }}
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    {% endfor %}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="no-maintenance">
+
+                        <i class="fas fa-check-circle"></i>
+
+                        <h5>
+                            All Systems Healthy
+                        </h5>
+
+                        <p>
+                            No maintenance tasks required at this time.
+                        </p>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 2. MAINTENANCE PLANNER
+                 ================================================= -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <i class="fas fa-calendar-check"></i>
+
+                        Maintenance Planner
+
+                    </div>
+
+
+                    <div>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger me-1"
+                            onclick="clearPlanner()"
+                        >
+                            <i class="fas fa-trash me-1"></i>
+                            Clear All
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#scheduleModal"
+                        >
+                            <i class="fas fa-plus me-1"></i>
+                            Schedule
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="row g-2 mb-3">
+
+                        <div class="col-md-3">
+
+                            <select
+                                id="plannerSystemFilter"
+                                class="form-select"
+                            >
+
+                                <option value="all">
+                                    All Systems
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-3">
+
+                            <select
+                                id="plannerPriorityFilter"
+                                class="form-select"
+                            >
+
+                                <option value="all">
+                                    All Priority
+                                </option>
+
+                                <option value="High">
+                                    High
+                                </option>
+
+                                <option value="Medium">
+                                    Medium
+                                </option>
+
+                                <option value="Low">
+                                    Low
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+
+                                    <i class="fas fa-search"></i>
+
+                                </span>
+
+                                <input
+                                    type="text"
+                                    id="plannerSearch"
+                                    class="form-control"
+                                    placeholder="Search component or task..."
+                                >
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-responsive">
+
+                        <table class="table maintenance-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>PC ID</th>
+                                    <th>COMPONENT</th>
+                                    <th>SYSTEM</th>
+                                    <th>TASK</th>
+                                    <th>DATE</th>
+                                    <th>PRIORITY</th>
+                                    <th>STATUS</th>
+                                    <th>ACTION</th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="plannerBody"></tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 3. COST & REPLACEMENT
+                 ================================================= -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <i class="fas fa-coins"></i>
+
+                        Cost & Replacement
+
+                    </div>
+
+
+                    <div>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger me-1"
+                            onclick="clearCosts()"
+                        >
+
+                            <i class="fas fa-trash me-1"></i>
+
+                            Clear All
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#costModal"
+                        >
+
+                            <i class="fas fa-plus me-1"></i>
+
+                            Add Cost
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="row mb-3">
+
+                        <div class="col-md-4">
+
+                            <div class="maintenance-summary">
+
+                                <div class="maintenance-summary-label">
+                                    Total Estimated Cost
+                                </div>
+
+                                <h3
+                                    id="totalCost"
+                                    class="maintenance-summary-value"
+                                >
+                                    ₹0
+                                </h3>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <div class="maintenance-summary">
+
+                                <div class="maintenance-summary-label">
+                                    Replacements
+                                </div>
+
+                                <h3
+                                    id="replacementCount"
+                                    class="maintenance-summary-value"
+                                >
+                                    0
+                                </h3>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <div class="maintenance-summary">
+
+                                <div class="maintenance-summary-label">
+                                    Next Replacement
+                                </div>
+
+                                <h6
+                                    id="nextReplacementName"
+                                    class="mt-1 mb-0"
+                                    style="
+                                        color: var(--text-primary);
+                                        font-size: 13px;
+                                    "
+                                >
+                                    No Replacement Scheduled
+                                </h6>
+
+                                <small
+                                    id="nextReplacementTime"
+                                    style="
+                                        color: var(--text-tertiary);
+                                        font-size: 11px;
+                                    "
+                                >
+                                    No upcoming replacement
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-responsive">
+
+                        <table class="table maintenance-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>PC ID</th>
+                                    <th>COMPONENT</th>
+                                    <th>SYSTEM</th>
+                                    <th>CONDITION</th>
+                                    <th>ACTION</th>
+                                    <th>EST. COST</th>
+                                    <th>STATUS</th>
+                                    <th>ACTION</th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="costBody"></tbody>
+
+
+                            <tfoot>
+
+                                <tr>
+
+                                    <th
+                                        colspan="5"
+                                        class="text-end"
+                                        style="
+                                            color: var(--text-tertiary);
+                                            font-size: 11px;
+                                        "
+                                    >
+                                        TOTAL
+                                    </th>
+
+                                    <th
+                                        id="tableTotal"
+                                        style="
+                                            color: var(--text-primary);
+                                            font-family: 'JetBrains Mono', monospace;
+                                            font-size: 12px;
+                                        "
+                                    >
+                                        ₹0
+                                    </th>
+
+                                    <th colspan="2"></th>
+
+                                </tr>
+
+                            </tfoot>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 4. REPLACEMENT TIMELINE
+                 ================================================= -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <i class="fas fa-clock"></i>
+
+                        Replacement Timeline
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div
+                        class="row g-3"
+                        id="replacementTimeline"
+                    >
+
+                        <div class="col-12">
+
+                            <div class="no-maintenance py-4">
+
+                                <i
+                                    class="fas fa-clock"
+                                    style="font-size: 32px;"
+                                ></i>
+
+                                <p class="mb-0">
+                                    No replacement timeline available.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     SCHEDULE MODAL
+     ============================================================ -->
+
+<div
+    class="modal fade"
+    id="scheduleModal"
+    tabindex="-1"
+    aria-hidden="true"
+>
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+
+                    <i class="fas fa-calendar-plus"></i>
+
+                    Schedule Maintenance
+
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                ></button>
+
+            </div>
+
+
+            <form id="scheduleForm">
+
+                <div class="modal-body">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                PC ID
+                            </label>
+
+                            <input
+                                type="number"
+                                id="schedulePcId"
+                                class="form-control"
+                                min="1"
+                                step="1"
+                                placeholder="Example: 1"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                System
+                            </label>
+
+                            <select
+                                id="scheduleSystem"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="">
+                                    Select System
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Component
+                            </label>
+
+                            <select
+                                id="scheduleComponent"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="">
+                                    Select Component
+                                </option>
+
+                                <option value="CPU">
+                                    CPU
+                                </option>
+
+                                <option value="GPU">
+                                    GPU
+                                </option>
+
+                                <option value="RAM">
+                                    RAM
+                                </option>
+
+                                <option value="SSD">
+                                    SSD
+                                </option>
+
+                                <option value="HDD">
+                                    HDD
+                                </option>
+
+                                <option value="CPU Cooler">
+                                    CPU Cooler
+                                </option>
+
+                                <option value="PSU">
+                                    PSU
+                                </option>
+
+                                <option value="Motherboard">
+                                    Motherboard
+                                </option>
+
+                                <option value="Case Fan">
+                                    Case Fan
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Maintenance Type
+                            </label>
+
+                            <select
+                                id="scheduleType"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="">
+                                    Select Type
+                                </option>
+
+                                <option value="Cleaning">
+                                    Cleaning
+                                </option>
+
+                                <option value="Health Check">
+                                    Health Check
+                                </option>
+
+                                <option value="Diagnostic">
+                                    Diagnostic
+                                </option>
+
+                                <option value="Inspection">
+                                    Inspection
+                                </option>
+
+                                <option value="Replacement">
+                                    Replacement
+                                </option>
+
+                                <option value="Upgrade">
+                                    Upgrade
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="scheduleDate"
+                                class="form-control"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Priority
+                            </label>
+
+                            <select
+                                id="schedulePriority"
+                                class="form-select"
+                            >
+
+                                <option value="High">
+                                    High
+                                </option>
+
+                                <option
+                                    value="Medium"
+                                    selected
+                                >
+                                    Medium
+                                </option>
+
+                                <option value="Low">
+                                    Low
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Status
+                            </label>
+
+                            <select
+                                id="scheduleStatus"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="Scheduled">
+                                    Scheduled
+                                </option>
+
+                                <option value="Planned">
+                                    Planned
+                                </option>
+
+                                <option value="Urgent">
+                                    Urgent
+                                </option>
+
+                                <option value="In Progress">
+                                    In Progress
+                                </option>
+
+                                <option value="Completed">
+                                    Completed
+                                </option>
+
+                                <option value="Cancelled">
+                                    Cancelled
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Notes
+                            </label>
+
+                            <input
+                                type="text"
+                                id="scheduleNotes"
+                                class="form-control"
+                                placeholder="Optional notes"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+
+                        <i class="fas fa-calendar-check me-1"></i>
+
+                        Schedule Task
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     ADD COST MODAL
+     ============================================================ -->
+
+<div
+    class="modal fade"
+    id="costModal"
+    tabindex="-1"
+    aria-hidden="true"
+>
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+
+                    <i class="fas fa-coins"></i>
+
+                    Add Component Cost
+
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                ></button>
+
+            </div>
+
+
+            <form id="costForm">
+
+                <div class="modal-body">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                PC ID
+                            </label>
+
+                            <input
+                                type="number"
+                                id="costPcId"
+                                class="form-control"
+                                min="1"
+                                step="1"
+                                placeholder="Example: 1"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                System
+                            </label>
+
+                            <select
+                                id="costSystem"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="">
+                                    Select System
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Component
+                            </label>
+
+                            <input
+                                type="text"
+                                id="costComponent"
+                                class="form-control"
+                                placeholder="Example: GPU RTX 4060"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Condition
+                            </label>
+
+                            <select
+                                id="costCondition"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="">
+                                    Select Condition
+                                </option>
+
+                                <option value="Healthy">
+                                    Healthy
+                                </option>
+
+                                <option value="Aging">
+                                    Aging
+                                </option>
+
+                                <option value="Limited">
+                                    Limited
+                                </option>
+
+                                <option value="Degraded">
+                                    Degraded
+                                </option>
+
+                                <option value="Critical">
+                                    Critical
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Action
+                            </label>
+
+                            <select
+                                id="costAction"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="">
+                                    Select Action
+                                </option>
+
+                                <option value="Monitor">
+                                    Monitor
+                                </option>
+
+                                <option value="Upgrade">
+                                    Upgrade
+                                </option>
+
+                                <option value="Replacement">
+                                    Replacement
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Estimated Cost
+                            </label>
+
+                            <input
+                                type="number"
+                                id="costAmount"
+                                class="form-control"
+                                min="1"
+                                step="0.01"
+                                placeholder="4500"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Replacement Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="replacementDate"
+                                class="form-control"
+                            >
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Status
+                            </label>
+
+                            <select
+                                id="costStatus"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="Planned">
+                                    Planned
+                                </option>
+
+                                <option value="Urgent">
+                                    Urgent
+                                </option>
+
+                                <option value="Monitor">
+                                    Monitor
+                                </option>
+
+                                <option value="In Progress">
+                                    In Progress
+                                </option>
+
+                                <option value="Completed">
+                                    Completed
+                                </option>
+
+                                <option value="Cancelled">
+                                    Cancelled
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+
+                        <i class="fas fa-plus me-1"></i>
+
+                        Add Component
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     LIBRARIES
+     ============================================================ -->
+
+<script
+    src="https://code.jquery.com/jquery-3.6.0.min.js"
+></script>
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+></script>
+
+
+<!-- ============================================================
+     MAINTENANCE JAVASCRIPT
+     ============================================================ -->
+
+<script>
+
+(function () {
+
+    'use strict';
+
+
+    /* =========================================================
+       THEME MANAGER
+       ========================================================= */
+
+    const STORAGE_KEY = 'nexus-theme';
+
+    const root = document.documentElement;
+
+
+    function getSystemTheme() {
+
+        return window.matchMedia(
+            '(prefers-color-scheme: dark)'
+        ).matches
+            ? 'dark'
+            : 'light';
+    }
+
+
+    function resolveTheme(pref) {
+
+        return pref === 'auto'
+            ? getSystemTheme()
+            : pref;
+    }
+
+
+    function applyTheme(pref, animate) {
+
+        const effective =
+            resolveTheme(pref);
+
+
+        if (animate) {
+
+            root.classList.add(
+                'theme-transitioning'
+            );
+
+
+            setTimeout(function () {
+
+                root.classList.remove(
+                    'theme-transitioning'
+                );
+
+            }, 250);
+        }
+
+
+        root.setAttribute(
+            'data-theme',
+            effective
+        );
+
+
+        root.setAttribute(
+            'data-theme-pref',
+            pref
+        );
+
+
+        try {
+
+            localStorage.setItem(
+                STORAGE_KEY,
+                pref
+            );
+
+        } catch (e) {}
+
+    }
+
+
+    document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+
+            document
+                .querySelectorAll('.theme-btn')
+                .forEach(function (btn) {
+
+                    btn.addEventListener(
+                        'click',
+                        function () {
+
+                            applyTheme(
+                                btn.dataset.themeValue,
+                                true
+                            );
+
+                        }
+                    );
+
+                });
+
+
+            window
+                .matchMedia(
+                    '(prefers-color-scheme: dark)'
+                )
+                .addEventListener(
+                    'change',
+                    function () {
+
+                        if (
+                            root.getAttribute(
+                                'data-theme-pref'
+                            ) === 'auto'
+                        ) {
+
+                            applyTheme(
+                                'auto',
+                                true
+                            );
+
+                        }
+
+                    }
+                );
+
+        }
+    );
+
+
+    /* =========================================================
+       SIDEBAR TOGGLE
+       ========================================================= */
+
+    document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+
+            const menu =
+                document.getElementById(
+                    'menu-toggle'
+                );
+
+            const sidebar =
+                document.getElementById(
+                    'sidebar'
+                );
+
+
+            if (
+                menu &&
+                sidebar
+            ) {
+
+                menu.addEventListener(
+                    'click',
+                    function (event) {
+
+                        event.preventDefault();
+
+                        sidebar.classList.toggle(
+                            'open'
+                        );
+
+                    }
+                );
+
+            }
+
+        }
+    );
+
+
+    /* =========================================================
+       UTILITY FUNCTIONS
+       ========================================================= */
+
+    function escapeHTML(value) {
+
+        return String(value ?? '')
+            .replace(
+                /&/g,
+                '&amp;'
+            )
+            .replace(
+                /</g,
+                '&lt;'
+            )
+            .replace(
+                />/g,
+                '&gt;'
+            )
+            .replace(
+                /"/g,
+                '&quot;'
+            )
+            .replace(
+                /'/g,
+                '&#039;'
+            );
+    }
+
+
+    function formatCurrency(amount) {
+
+        return '₹' +
+            Number(amount || 0)
+                .toLocaleString('en-IN');
+    }
+
+
+    function formatDate(dateString) {
+
+        if (!dateString) {
+            return '';
+        }
+
+
+        const date =
+            new Date(
+                dateString + 'T00:00:00'
+            );
+
+
+        if (
+            isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return dateString;
+        }
+
+
+        return date.toLocaleDateString(
+            'en-GB',
+            {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            }
+        );
+    }
+
+
+    function getStatusClass(status) {
+
+        const value =
+            String(status || '')
+                .toLowerCase();
+
+
+        if (value === 'completed') {
+            return 'bg-success';
+        }
+
+
+        if (value === 'urgent') {
+            return 'bg-danger';
+        }
+
+
+        if (value === 'cancelled') {
+            return 'bg-secondary';
+        }
+
+
+        if (value === 'monitor') {
+            return 'bg-warning';
+        }
+
+
+        if (value === 'in progress') {
+            return 'bg-info';
+        }
+
+
+        if (value === 'planned') {
+            return 'bg-primary';
+        }
+
+
+        return 'bg-primary';
+    }
+
+
+    /* =========================================================
+       IMPORTANT:
+       ADD SYSTEM TO ALL SYSTEM DROPDOWNS
+       ========================================================= */
+
+    function addSystemToFilter(system) {
+
+        if (
+            system === null ||
+            system === undefined
+        ) {
+            return;
+        }
+
+
+        const systemValue =
+            String(system).trim();
+
+
+        if (!systemValue) {
+            return;
+        }
+
+
+        const filters = [
+
+            document.getElementById(
+                'plannerSystemFilter'
+            ),
+
+            document.getElementById(
+                'scheduleSystem'
+            ),
+
+            document.getElementById(
+                'costSystem'
+            )
+
+        ];
+
+
+        filters.forEach(
+            function (filter) {
+
+                if (!filter) {
+                    return;
+                }
+
+
+                /*
+                 * Check if system already exists.
+                 */
+
+                const exists =
+                    Array
+                        .from(filter.options)
+                        .some(
+                            function (option) {
+
+                                return String(
+                                    option.value
+                                )
+                                .trim()
+                                .toLowerCase()
+                                ===
+                                systemValue
+                                    .toLowerCase();
+
+                            }
+                        );
+
+
+                /*
+                 * Add only if not already present.
+                 */
+
+                if (!exists) {
+
+                    const option =
+                        document.createElement(
+                            'option'
+                        );
+
+
+                    option.value =
+                        systemValue;
+
+
+                    option.textContent =
+                        systemValue;
+
+
+                    filter.appendChild(
+                        option
+                    );
+                }
+
+            }
+        );
+    }
+
+
+    /* =========================================================
+       NEW:
+       LOAD REAL SYSTEMS FROM /api/computers
+       ========================================================= */
+
+    async function loadMaintenanceSystems() {
+
+        try {
+
+            console.log(
+                'Nexus Core: Loading systems...'
+            );
+
+
+            const response =
+                await fetch(
+                    '/api/computers',
+                    {
+                        method: 'GET',
+
+                        credentials:
+                            'same-origin',
+
+                        headers: {
+                            'Accept':
+                                'application/json'
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    'Unable to load systems. HTTP ' +
+                    response.status
+                );
+            }
+
+
+            const result =
+                await response.json();
+
+
+            console.log(
+                'Nexus Core: /api/computers response:',
+                result
+            );
+
+
+            if (!result.success) {
+
+                throw new Error(
+                    result.error ||
+                    'Unable to load systems'
+                );
+            }
+
+
+            const computers =
+                Array.isArray(
+                    result.computers
+                )
+                    ? result.computers
+                    : [];
+
+
+            console.log(
+                'Nexus Core: Total computers:',
+                computers.length
+            );
+
+
+            /*
+             * Loop through actual Computer table
+             * records.
+             */
+
+            computers.forEach(
+                function (computer) {
+
+                    /*
+                     * Main field:
+                     * computer_name
+                     *
+                     * Fallback:
+                     * system_name
+                     * name
+                     */
+
+                    const systemName =
+                        computer.computer_name ||
+                        computer.system_name ||
+                        computer.name;
+
+
+                    if (systemName) {
+
+                        console.log(
+                            'Nexus Core: Adding system:',
+                            systemName
+                        );
+
+
+                        addSystemToFilter(
+                            systemName
+                        );
+                    }
+
+                }
+            );
+
+
+            /*
+             * If no systems found,
+             * keep dropdowns usable.
+             */
+
+            if (
+                computers.length === 0
+            ) {
+
+                console.log(
+                    'Nexus Core: No computers found.'
+                );
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                'Nexus Core: System loading error:',
+                error
+            );
+
+        }
+    }
+
+
+    /* =========================================================
+       CREATE PLANNER ROW
+       ========================================================= */
+
+    function createPlannerRow(item) {
+
+        const priority =
+            item.priority || 'Medium';
+
+
+        const status =
+            item.status || 'Scheduled';
+
+
+        const statusClass =
+            getStatusClass(status);
+
+
+        const notesHTML =
+            item.notes
+
+                ? '<small class="d-block" style="color: var(--text-tertiary); font-size: 10px; margin-top: 2px;">' +
+                    escapeHTML(item.notes) +
+                  '</small>'
+
+                : '';
+
+
+        return (
+
+            '<tr data-id="' +
+                escapeHTML(item.id) +
+
+                '" data-system="' +
+                escapeHTML(item.system_name) +
+
+                '" data-priority="' +
+                escapeHTML(priority) +
+            '">' +
+
+
+                '<td>' +
+                    (
+                        item.computer_id
+                            ? escapeHTML(
+                                item.computer_id
+                              )
+                            : '—'
+                    ) +
+                '</td>' +
+
+
+                '<td>' +
+                    escapeHTML(
+                        item.component
+                    ) +
+                '</td>' +
+
+
+                '<td>' +
+                    escapeHTML(
+                        item.system_name
+                    ) +
+                '</td>' +
+
+
+                '<td>' +
+                    escapeHTML(
+                        item.task
+                    ) +
+                    notesHTML +
+                '</td>' +
+
+
+                '<td>' +
+                    formatDate(
+                        item.scheduled_date
+                    ) +
+                '</td>' +
+
+
+                '<td>' +
+                    escapeHTML(
+                        priority
+                    ) +
+                '</td>' +
+
+
+                '<td>' +
+
+                    '<span class="badge ' +
+                        statusClass +
+                    '">' +
+
+                        escapeHTML(
+                            status
+                        ) +
+
+                    '</span>' +
+
+                '</td>' +
+
+
+                '<td>' +
+
+                    '<button ' +
+
+                        'type="button" ' +
+
+                        'class="btn btn-sm btn-outline-danger maintenance-action-btn" ' +
+
+                        'onclick="deletePlannerRow(this)" ' +
+
+                        'title="Delete"' +
+
+                    '>' +
+
+                        '<i class="fas fa-trash"></i>' +
+
+                    '</button>' +
+
+                '</td>' +
+
+
+            '</tr>'
+
+        );
+    }
+
+
+    /* =========================================================
+       CREATE COST ROW
+       ========================================================= */
+
+    function createCostRow(item) {
+
+        const condition =
+            item.notes ||
+            'Not specified';
+
+
+        const action =
+            item.task ||
+            'Monitor';
+
+
+        const status =
+            item.status ||
+            'Planned';
+
+
+        const statusClass =
+            getStatusClass(status);
+
+
+        return (
+
+            '<tr data-id="' +
+                escapeHTML(item.id) +
+            '">' +
+
+
+                '<td>' +
+                    (
+                        item.computer_id
+                            ? escapeHTML(
+                                item.computer_id
+                              )
+                            : '—'
+                    ) +
+                '</td>' +
+
+
+                '<td>' +
+                    escapeHTML(
+                        item.component
+                    ) +
+                '</td>' +
+
+
+                '<td>' +
+                    escapeHTML(
+                        item.system_name
+                    ) +
+                '</td>' +
+
+
+                '<td>' +
+                    escapeHTML(
+                        condition
+                    ) +
+                '</td>' +
+
+
+                '<td>' +
+                    escapeHTML(
+                        action
+                    ) +
+                '</td>' +
+
+
+                '<td data-cost="' +
+                    Number(
+                        item.estimated_cost || 0
+                    ) +
+                '">' +
+
+                    formatCurrency(
+                        item.estimated_cost
+                    ) +
+
+                '</td>' +
+
+
+                '<td>' +
+
+                    '<span class="badge ' +
+                        statusClass +
+                    '">' +
+
+                        escapeHTML(
+                            status
+                        ) +
+
+                    '</span>' +
+
+                '</td>' +
+
+
+                '<td>' +
+
+                    '<button ' +
+
+                        'type="button" ' +
+
+                        'class="btn btn-sm btn-outline-danger maintenance-action-btn" ' +
+
+                        'onclick="deleteCostRow(this)" ' +
+
+                        'title="Delete"' +
+
+                    '>' +
+
+                        '<i class="fas fa-trash"></i>' +
+
+                    '</button>' +
+
+                '</td>' +
+
+
+            '</tr>'
+
+        );
+    }
+
+
+    /* =========================================================
+       UPDATE COST TOTAL
+       ========================================================= */
+
+    function updateCostTotal() {
+
+        let total = 0;
+
+        let count = 0;
+
+
+        document
+            .querySelectorAll(
+                '#costBody tr[data-id]'
+            )
+            .forEach(
+                function (row) {
+
+                    const costCell =
+                        row.querySelector(
+                            '[data-cost]'
+                        );
+
+
+                    if (!costCell) {
+                        return;
+                    }
+
+
+                    const cost =
+                        Number(
+                            costCell.getAttribute(
+                                'data-cost'
+                            )
+                        ) || 0;
+
+
+                    total += cost;
+
+                    count++;
+                }
+            );
+
+
+        const totalCost =
+            document.getElementById(
+                'totalCost'
+            );
+
+
+        const tableTotal =
+            document.getElementById(
+                'tableTotal'
+            );
+
+
+        const replacementCount =
+            document.getElementById(
+                'replacementCount'
+            );
+
+
+        if (totalCost) {
+
+            totalCost.textContent =
+                formatCurrency(total);
+        }
+
+
+        if (tableTotal) {
+
+            tableTotal.textContent =
+                formatCurrency(total);
+        }
+
+
+        if (replacementCount) {
+
+            replacementCount.textContent =
+                count;
+        }
+
+    }
+
+
+    /* =========================================================
+       NEXT REPLACEMENT
+       ========================================================= */
+
+    function updateNextReplacement(data) {
+
+        const nameElement =
+            document.getElementById(
+                'nextReplacementName'
+            );
+
+
+        const timeElement =
+            document.getElementById(
+                'nextReplacementTime'
+            );
+
+
+        if (
+            !nameElement ||
+            !timeElement
+        ) {
+            return;
+        }
+
+
+        const replacements =
+            (data || [])
+
+                .filter(
+                    function (item) {
+
+                        return item.replacement_date;
+                    }
+                )
+
+                .sort(
+                    function (a, b) {
+
+                        return String(
+                            a.replacement_date
+                        )
+                        .localeCompare(
+                            String(
+                                b.replacement_date
+                            )
+                        );
+                    }
+                );
+
+
+        if (
+            replacements.length === 0
+        ) {
+
+            nameElement.textContent =
+                'No Replacement Scheduled';
+
+
+            timeElement.textContent =
+                'No upcoming replacement';
+
+
+            return;
+        }
+
+
+        const next =
+            replacements[0];
+
+
+        nameElement.textContent =
+            next.component ||
+            'Component';
+
+
+        const replacementDate =
+            new Date(
+                next.replacement_date +
+                'T00:00:00'
+            );
+
+
+        const today =
+            new Date();
+
+
+        today.setHours(
+            0,
+            0,
+            0,
+            0
+        );
+
+
+        const difference =
+            Math.ceil(
+                (
+                    replacementDate -
+                    today
+                ) /
+                (
+                    1000 *
+                    60 *
+                    60 *
+                    24
+                )
+            );
+
+
+        if (difference < 0) {
+
+            timeElement.textContent =
+                'Overdue';
+
+        } else if (difference === 0) {
+
+            timeElement.textContent =
+                'Today';
+
+        } else if (difference === 1) {
+
+            timeElement.textContent =
+                'Tomorrow';
+
+        } else {
+
+            timeElement.textContent =
+                'Within ' +
+                difference +
+                ' Days';
+        }
+
+    }
+
+
+    /* =========================================================
+       REPLACEMENT TIMELINE
+       ========================================================= */
+
+    function updateTimeline(data) {
+
+        const timeline =
+            document.getElementById(
+                'replacementTimeline'
+            );
+
+
+        if (!timeline) {
+            return;
+        }
+
+
+        const items =
+            (data || [])
+
+                .filter(
+                    function (item) {
+
+                        return item.replacement_date;
+                    }
+                )
+
+                .sort(
+                    function (a, b) {
+
+                        return String(
+                            a.replacement_date
+                        )
+                        .localeCompare(
+                            String(
+                                b.replacement_date
+                            )
+                        );
+                    }
+                );
+
+
+        if (
+            items.length === 0
+        ) {
+
+            timeline.innerHTML =
+
+                '<div class="col-12">' +
+
+                    '<div class="no-maintenance py-4">' +
+
+                        '<i class="fas fa-clock" style="font-size: 32px;"></i>' +
+
+                        '<p class="mb-0">' +
+
+                            'No replacement timeline available.' +
+
+                        '</p>' +
+
+                    '</div>' +
+
+                '</div>';
+
+            return;
+        }
+
+
+        const today =
+            new Date();
+
+
+        today.setHours(
+            0,
+            0,
+            0,
+            0
+        );
+
+
+        const timelineItems =
+            items.slice(0, 4);
+
+
+        timeline.innerHTML =
+            timelineItems
+
+                .map(
+                    function (item) {
+
+                        const date =
+                            new Date(
+                                item.replacement_date +
+                                'T00:00:00'
+                            );
+
+
+                        const days =
+                            Math.ceil(
+                                (
+                                    date -
+                                    today
+                                ) /
+                                (
+                                    1000 *
+                                    60 *
+                                    60 *
+                                    24
+                                )
+                            );
+
+
+                        let label =
+                            days < 0
+                                ? 'OVERDUE'
+                                : days === 0
+                                    ? 'TODAY'
+                                    : days + ' DAYS';
+
+
+                        let type =
+                            'normal';
+
+
+                        let icon =
+                            'fa-clock';
+
+
+                        if (
+                            item.status &&
+                            item.status
+                                .toLowerCase() ===
+                            'urgent'
+                        ) {
+
+                            type =
+                                'urgent';
+
+                            icon =
+                                'fa-triangle-exclamation';
+
+                        } else if (
+                            item.notes &&
+                            item.notes
+                                .toLowerCase() ===
+                            'critical'
+                        ) {
+
+                            type =
+                                'urgent';
+
+                            icon =
+                                'fa-triangle-exclamation';
+
+                        } else if (
+                            days <= 30
+                        ) {
+
+                            type =
+                                'warning';
+
+                            icon =
+                                'fa-clock';
+
+                        } else {
+
+                            type =
+                                'normal';
+
+                            icon =
+                                'fa-calendar-check';
+                        }
+
+
+                        return (
+
+                            '<div class="col-md-3">' +
+
+                                '<div class="timeline-item">' +
+
+                                    '<div class="task-item">' +
+
+                                        '<div class="task-icon ' +
+                                            type +
+                                        '">' +
+
+                                            '<i class="fas ' +
+                                                icon +
+                                            '"></i>' +
+
+                                        '</div>' +
+
+
+                                        '<div>' +
+
+                                            '<small style="color: var(--text-tertiary); font-size: 10px; font-family: \'JetBrains Mono\', monospace;">' +
+
+                                                label +
+
+                                            '</small>' +
+
+
+                                            '<div class="task-title">' +
+
+                                                escapeHTML(
+                                                    item.component
+                                                ) +
+
+                                            '</div>' +
+
+
+                                            '<div class="task-desc">' +
+
+                                                'PC ID: ' +
+
+                                                (
+                                                    item.computer_id
+                                                        ? escapeHTML(
+                                                            item.computer_id
+                                                          )
+                                                        : '—'
+                                                ) +
+
+                                                '<br>' +
+
+                                                escapeHTML(
+                                                    item.notes ||
+                                                    item.task ||
+                                                    'Replacement'
+                                                ) +
+
+                                            '</div>' +
+
+                                        '</div>' +
+
+                                    '</div>' +
+
+                                '</div>' +
+
+                            '</div>'
+
+                        );
+
+                    }
+                )
+
+                .join('');
+
+    }
+
+
+    /* =========================================================
+       FILTER PLANNER
+       ========================================================= */
+
+    window.filterPlanner =
+        function () {
+
+            const systemFilter =
+                document.getElementById(
+                    'plannerSystemFilter'
+                );
+
+
+            const priorityFilter =
+                document.getElementById(
+                    'plannerPriorityFilter'
+                );
+
+
+            const searchInput =
+                document.getElementById(
+                    'plannerSearch'
+                );
+
+
+            if (
+                !systemFilter ||
+                !priorityFilter ||
+                !searchInput
+            ) {
+                return;
+            }
+
+
+            const selectedSystem =
+                systemFilter.value
+                    .toLowerCase();
+
+
+            const selectedPriority =
+                priorityFilter.value
+                    .toLowerCase();
+
+
+            const search =
+                searchInput.value
+                    .toLowerCase()
+                    .trim();
+
+
+            document
+                .querySelectorAll(
+                    '#plannerBody tr[data-id]'
+                )
+                .forEach(
+                    function (row) {
+
+                        const system =
+                            String(
+                                row.getAttribute(
+                                    'data-system'
+                                ) || ''
+                            )
+                            .toLowerCase();
+
+
+                        const priority =
+                            String(
+                                row.getAttribute(
+                                    'data-priority'
+                                ) || ''
+                            )
+                            .toLowerCase();
+
+
+                        const text =
+                            row.textContent
+                                .toLowerCase();
+
+
+                        const systemMatch =
+                            selectedSystem === 'all' ||
+                            system === selectedSystem;
+
+
+                        const priorityMatch =
+                            selectedPriority === 'all' ||
+                            priority === selectedPriority;
+
+
+                        const searchMatch =
+                            search === '' ||
+                            text.includes(search);
+
+
+                        row.style.display =
+                            (
+                                systemMatch &&
+                                priorityMatch &&
+                                searchMatch
+                            )
+                                ? ''
+                                : 'none';
+
+                    }
+                );
+
+        };
+
+
+    /* =========================================================
+       LOAD MAINTENANCE DATA
+       ========================================================= */
+
+    async function loadMaintenanceData() {
+
+        try {
+
+            const response =
+                await fetch(
+                    '/api/maintenance/planner',
+                    {
+                        method: 'GET',
+
+                        credentials:
+                            'same-origin',
+
+                        headers: {
+                            'Accept':
+                                'application/json'
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    'HTTP ' +
+                    response.status
+                );
+            }
+
+
+            const result =
+                await response.json();
+
+
+            if (!result.success) {
+
+                throw new Error(
+                    result.error ||
+                    'Failed to load data'
+                );
+            }
+
+
+            const plannerBody =
+                document.getElementById(
+                    'plannerBody'
+                );
+
+
+            const costBody =
+                document.getElementById(
+                    'costBody'
+                );
+
+
+            if (
+                !plannerBody ||
+                !costBody
+            ) {
+                return;
+            }
+
+
+            plannerBody.innerHTML = '';
+
+            costBody.innerHTML = '';
+
+
+            let plannerCount = 0;
+
+            let costCount = 0;
+
+
+            const data =
+                Array.isArray(
+                    result.data
+                )
+                    ? result.data
+                    : [];
+
+
+            /*
+             * IMPORTANT:
+             *
+             * Even if maintenance data is empty,
+             * systems are already loaded separately
+             * from /api/computers.
+             *
+             * If maintenance records exist,
+             * their systems are also added.
+             */
+
+            data.forEach(
+                function (item) {
+
+
+                    /*
+                     * Add system from maintenance
+                     * record as an additional fallback.
+                     */
+
+                    if (
+                        item.system_name
+                    ) {
+
+                        addSystemToFilter(
+                            item.system_name
+                        );
+                    }
+
+
+                    /*
+                     * Scheduled maintenance
+                     */
+
+                    if (
+                        item.scheduled_date &&
+                        Number(
+                            item.estimated_cost || 0
+                        ) <= 0
+                    ) {
+
+                        plannerBody
+                            .insertAdjacentHTML(
+                                'beforeend',
+                                createPlannerRow(
+                                    item
+                                )
+                            );
+
+
+                        plannerCount++;
+                    }
+
+
+                    /*
+                     * Cost/replacement
+                     */
+
+                    if (
+                        Number(
+                            item.estimated_cost || 0
+                        ) > 0
+                    ) {
+
+                        costBody
+                            .insertAdjacentHTML(
+                                'beforeend',
+                                createCostRow(
+                                    item
+                                )
+                            );
+
+
+                        costCount++;
+                    }
+
+                }
+            );
+
+
+            if (
+                plannerCount === 0
+            ) {
+
+                plannerBody.innerHTML =
+
+                    '<tr>' +
+
+                        '<td colspan="8" class="text-center py-4" style="color: var(--text-tertiary);">' +
+
+                            '<i class="fas fa-calendar-check me-2"></i>' +
+
+                            'No scheduled maintenance tasks.' +
+
+                        '</td>' +
+
+                    '</tr>';
+            }
+
+
+            if (
+                costCount === 0
+            ) {
+
+                costBody.innerHTML =
+
+                    '<tr>' +
+
+                        '<td colspan="8" class="text-center py-4" style="color: var(--text-tertiary);">' +
+
+                            '<i class="fas fa-coins me-2"></i>' +
+
+                            'No cost or replacement records.' +
+
+                        '</td>' +
+
+                    '</tr>';
+            }
+
+
+            updateCostTotal();
+
+            updateNextReplacement(data);
+
+            updateTimeline(data);
+
+            window.filterPlanner();
+
+
+        } catch (error) {
+
+            console.error(
+                'Maintenance API Error:',
+                error
+            );
+
+
+            const plannerBody =
+                document.getElementById(
+                    'plannerBody'
+                );
+
+
+            const costBody =
+                document.getElementById(
+                    'costBody'
+                );
+
+
+            if (plannerBody) {
+
+                plannerBody.innerHTML =
+
+                    '<tr>' +
+
+                        '<td colspan="8" class="text-center py-4" style="color: var(--text-tertiary);">' +
+
+                            '<i class="fas fa-database me-2"></i>' +
+
+                            'Unable to load maintenance data.' +
+
+                        '</td>' +
+
+                    '</tr>';
+            }
+
+
+            if (costBody) {
+
+                costBody.innerHTML =
+
+                    '<tr>' +
+
+                        '<td colspan="8" class="text-center py-4" style="color: var(--text-tertiary);">' +
+
+                            '<i class="fas fa-database me-2"></i>' +
+
+                            'Unable to load cost data.' +
+
+                        '</td>' +
+
+                    '</tr>';
+            }
+
+        }
+
+    }
+
+
+    /* =========================================================
+       SUBMIT SCHEDULE
+       ========================================================= */
+
+    async function submitSchedule(event) {
+
+        event.preventDefault();
+
+
+        const pcId =
+            document.getElementById(
+                'schedulePcId'
+            ).value;
+
+
+        const system =
+            document.getElementById(
+                'scheduleSystem'
+            ).value;
+
+
+        const component =
+            document.getElementById(
+                'scheduleComponent'
+            ).value;
+
+
+        const task =
+            document.getElementById(
+                'scheduleType'
+            ).value;
+
+
+        const scheduledDate =
+            document.getElementById(
+                'scheduleDate'
+            ).value;
+
+
+        const priority =
+            document.getElementById(
+                'schedulePriority'
+            ).value;
+
+
+        const status =
+            document.getElementById(
+                'scheduleStatus'
+            ).value;
+
+
+        const notes =
+            document.getElementById(
+                'scheduleNotes'
+            ).value.trim();
+
+
+        if (
+            !pcId ||
+            !system ||
+            !component ||
+            !task ||
+            !scheduledDate ||
+            !status
+        ) {
+
+            alert(
+                'Please fill all required fields.'
+            );
+
+            return;
+        }
+
+
+        const submitButton =
+            event.target.querySelector(
+                'button[type="submit"]'
+            );
+
+
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    '/api/maintenance/planner',
+                    {
+                        method: 'POST',
+
+                        headers: {
+                            'Content-Type':
+                                'application/json',
+
+                            'Accept':
+                                'application/json'
+                        },
+
+                        body: JSON.stringify({
+
+                            computer_id:
+                                Number(pcId),
+
+                            system_name:
+                                system,
+
+                            component:
+                                component,
+
+                            task:
+                                task,
+
+                            scheduled_date:
+                                scheduledDate,
+
+                            priority:
+                                priority,
+
+                            estimated_cost:
+                                0,
+
+                            replacement_date:
+                                null,
+
+                            status:
+                                status,
+
+                            notes:
+                                notes
+
+                        })
+                    }
+                );
+
+
+            const responseText =
+                await response.text();
+
+
+            let result;
+
+
+            try {
+
+                result =
+                    responseText
+                        ? JSON.parse(
+                            responseText
+                          )
+                        : {};
+
+            } catch (e) {
+
+                throw new Error(
+                    'Server returned non-JSON response (HTTP ' +
+                    response.status +
+                    ')'
+                );
+            }
+
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.error ||
+                    'Failed to save task'
+                );
+            }
+
+
+            event.target.reset();
+
+
+            const modalElement =
+                document.getElementById(
+                    'scheduleModal'
+                );
+
+
+            if (
+                modalElement &&
+                typeof bootstrap !==
+                'undefined'
+            ) {
+
+                const modal =
+                    bootstrap.Modal
+                        .getInstance(
+                            modalElement
+                        );
+
+
+                if (modal) {
+                    modal.hide();
+                }
+
+            }
+
+
+            /*
+             * Reload maintenance data.
+             */
+
+            await loadMaintenanceData();
+
+
+            /*
+             * Reload systems as well.
+             */
+
+            await loadMaintenanceSystems();
+
+
+            alert(
+                'Maintenance task saved successfully.'
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                'Schedule Error:',
+                error
+            );
+
+
+            alert(
+                'Failed to save maintenance task.\n\n' +
+                error.message
+            );
+
+
+        } finally {
+
+            if (submitButton) {
+                submitButton.disabled = false;
+            }
+
+        }
+
+    }
+
+
+    /* =========================================================
+       SUBMIT COST
+       ========================================================= */
+
+    async function submitCost(event) {
+
+        event.preventDefault();
+
+
+        const pcId =
+            document.getElementById(
+                'costPcId'
+            ).value;
+
+
+        const system =
+            document.getElementById(
+                'costSystem'
+            ).value;
+
+
+        const component =
+            document.getElementById(
+                'costComponent'
+            ).value.trim();
+
+
+        const condition =
+            document.getElementById(
+                'costCondition'
+            ).value;
+
+
+        const action =
+            document.getElementById(
+                'costAction'
+            ).value;
+
+
+        const amount =
+            Number(
+                document.getElementById(
+                    'costAmount'
+                ).value
+            );
+
+
+        const replacementDate =
+            document.getElementById(
+                'replacementDate'
+            ).value;
+
+
+        const status =
+            document.getElementById(
+                'costStatus'
+            ).value;
+
+
+        if (
+            !pcId ||
+            !system ||
+            !component ||
+            !condition ||
+            !action ||
+            amount <= 0 ||
+            !status
+        ) {
+
+            alert(
+                'Please fill all required fields.'
+            );
+
+            return;
+        }
+
+
+        const submitButton =
+            event.target.querySelector(
+                'button[type="submit"]'
+            );
+
+
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    '/api/maintenance/planner',
+                    {
+                        method: 'POST',
+
+                        headers: {
+                            'Content-Type':
+                                'application/json',
+
+                            'Accept':
+                                'application/json'
+                        },
+
+                        body: JSON.stringify({
+
+                            computer_id:
+                                Number(pcId),
+
+                            system_name:
+                                system,
+
+                            component:
+                                component,
+
+                            task:
+                                action,
+
+                            notes:
+                                condition,
+
+                            scheduled_date:
+                                replacementDate ||
+                                null,
+
+                            priority:
+                                condition ===
+                                'Critical'
+                                    ? 'High'
+                                    : 'Medium',
+
+                            estimated_cost:
+                                amount,
+
+                            replacement_date:
+                                replacementDate ||
+                                null,
+
+                            status:
+                                status
+
+                        })
+                    }
+                );
+
+
+            const responseText =
+                await response.text();
+
+
+            let result;
+
+
+            try {
+
+                result =
+                    responseText
+                        ? JSON.parse(
+                            responseText
+                          )
+                        : {};
+
+            } catch (e) {
+
+                throw new Error(
+                    'Server returned non-JSON response (HTTP ' +
+                    response.status +
+                    ')'
+                );
+            }
+
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.error ||
+                    'Failed to save cost'
+                );
+            }
+
+
+            event.target.reset();
+
+
+            const modalElement =
+                document.getElementById(
+                    'costModal'
+                );
+
+
+            if (
+                modalElement &&
+                typeof bootstrap !==
+                'undefined'
+            ) {
+
+                const modal =
+                    bootstrap.Modal
+                        .getInstance(
+                            modalElement
+                        );
+
+
+                if (modal) {
+                    modal.hide();
+                }
+
+            }
+
+
+            await loadMaintenanceData();
+
+            await loadMaintenanceSystems();
+
+
+            alert(
+                'Cost record saved successfully.'
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                'Cost Error:',
+                error
+            );
+
+
+            alert(
+                'Failed to save cost record.\n\n' +
+                error.message
+            );
+
+
+        } finally {
+
+            if (submitButton) {
+                submitButton.disabled = false;
+            }
+
+        }
+
+    }
+
+
+    /* =========================================================
+       DELETE PLANNER
+       ========================================================= */
+
+    window.deletePlannerRow =
+        async function (button) {
+
+            const row =
+                button.closest('tr');
+
+
+            if (!row) {
+                return;
+            }
+
+
+            const id =
+                row.getAttribute(
+                    'data-id'
+                );
+
+
+            if (!id) {
+
+                row.remove();
+
+                return;
+            }
+
+
+            if (
+                !confirm(
+                    'Are you sure you want to delete this maintenance task?'
+                )
+            ) {
+                return;
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        '/api/maintenance/planner/' +
+                        encodeURIComponent(id),
+                        {
+                            method: 'DELETE',
+
+                            headers: {
+                                'Accept':
+                                    'application/json'
+                            }
+                        }
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                if (
+                    !response.ok ||
+                    !result.success
+                ) {
+
+                    throw new Error(
+                        result.error ||
+                        'Delete failed'
+                    );
+                }
+
+
+                await loadMaintenanceData();
+
+
+            } catch (error) {
+
+                console.error(
+                    'Delete Planner Error:',
+                    error
+                );
+
+
+                alert(
+                    'Unable to delete task.\n\n' +
+                    error.message
+                );
+
+            }
+
+        };
+
+
+    /* =========================================================
+       CLEAR PLANNER
+       ========================================================= */
+
+    window.clearPlanner =
+        async function () {
+
+            const rows =
+                Array.from(
+                    document.querySelectorAll(
+                        '#plannerBody tr[data-id]'
+                    )
+                );
+
+
+            if (rows.length === 0) {
+
+                alert(
+                    'Maintenance Planner is already empty.'
+                );
+
+                return;
+            }
+
+
+            if (
+                !confirm(
+                    'Are you sure you want to clear all scheduled maintenance tasks?'
+                )
+            ) {
+                return;
+            }
+
+
+            try {
+
+                const ids =
+                    rows
+                        .map(
+                            function (row) {
+
+                                return row.getAttribute(
+                                    'data-id'
+                                );
+
+                            }
+                        )
+                        .filter(Boolean);
+
+
+                for (
+                    const id of ids
+                ) {
+
+                    const response =
+                        await fetch(
+                            '/api/maintenance/planner/' +
+                            encodeURIComponent(id),
+                            {
+                                method: 'DELETE'
+                            }
+                        );
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            'Failed to delete task ID ' +
+                            id
+                        );
+                    }
+
+                }
+
+
+                await loadMaintenanceData();
+
+
+            } catch (error) {
+
+                console.error(
+                    'Clear Planner Error:',
+                    error
+                );
+
+
+                alert(
+                    'Unable to clear planner.\n\n' +
+                    error.message
+                );
+
+            }
+
+        };
+
+
+    /* =========================================================
+       DELETE COST
+       ========================================================= */
+
+    window.deleteCostRow =
+        async function (button) {
+
+            const row =
+                button.closest('tr');
+
+
+            if (!row) {
+                return;
+            }
+
+
+            const id =
+                row.getAttribute(
+                    'data-id'
+                );
+
+
+            if (!id) {
+
+                row.remove();
+
+                updateCostTotal();
+
+                return;
+            }
+
+
+            if (
+                !confirm(
+                    'Are you sure you want to delete this cost record?'
+                )
+            ) {
+                return;
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        '/api/maintenance/planner/' +
+                        encodeURIComponent(id),
+                        {
+                            method: 'DELETE',
+
+                            headers: {
+                                'Accept':
+                                    'application/json'
+                            }
+                        }
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                if (
+                    !response.ok ||
+                    !result.success
+                ) {
+
+                    throw new Error(
+                        result.error ||
+                        'Delete failed'
+                    );
+                }
+
+
+                await loadMaintenanceData();
+
+
+            } catch (error) {
+
+                console.error(
+                    'Delete Cost Error:',
+                    error
+                );
+
+
+                alert(
+                    'Unable to delete cost record.\n\n' +
+                    error.message
+                );
+
+            }
+
+        };
+
+
+    /* =========================================================
+       CLEAR COSTS
+       ========================================================= */
+
+    window.clearCosts =
+        async function () {
+
+            const rows =
+                Array.from(
+                    document.querySelectorAll(
+                        '#costBody tr[data-id]'
+                    )
+                );
+
+
+            if (rows.length === 0) {
+
+                alert(
+                    'Cost & Replacement list is already empty.'
+                );
+
+                return;
+            }
+
+
+            if (
+                !confirm(
+                    'Are you sure you want to clear all cost and replacement records?'
+                )
+            ) {
+                return;
+            }
+
+
+            try {
+
+                const ids =
+                    rows
+                        .map(
+                            function (row) {
+
+                                return row.getAttribute(
+                                    'data-id'
+                                );
+
+                            }
+                        )
+                        .filter(Boolean);
+
+
+                for (
+                    const id of ids
+                ) {
+
+                    const response =
+                        await fetch(
+                            '/api/maintenance/planner/' +
+                            encodeURIComponent(id),
+                            {
+                                method: 'DELETE'
+                            }
+                        );
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            'Failed to delete cost ID ' +
+                            id
+                        );
+                    }
+
+                }
+
+
+                await loadMaintenanceData();
+
+
+            } catch (error) {
+
+                console.error(
+                    'Clear Costs Error:',
+                    error
+                );
+
+
+                alert(
+                    'Unable to clear cost records.\n\n' +
+                    error.message
+                );
+
+            }
+
+        };
+
+
+    /* =========================================================
+       INITIALIZE EVERYTHING
+       ========================================================= */
+
+    document.addEventListener(
+        'DOMContentLoaded',
+        async function () {
+
+            try {
+
+                console.log(
+                    '===================================='
+                );
+
+                console.log(
+                    'NEXUS CORE MAINTENANCE INITIALIZING'
+                );
+
+                console.log(
+                    '===================================='
+                );
+
+
+                /* -----------------------------------------
+                   Planner filters
+                   ----------------------------------------- */
+
+                const systemFilter =
+                    document.getElementById(
+                        'plannerSystemFilter'
+                    );
+
+
+                const priorityFilter =
+                    document.getElementById(
+                        'plannerPriorityFilter'
+                    );
+
+
+                const searchInput =
+                    document.getElementById(
+                        'plannerSearch'
+                    );
+
+
+                if (systemFilter) {
+
+                    systemFilter.addEventListener(
+                        'change',
+                        window.filterPlanner
+                    );
+                }
+
+
+                if (priorityFilter) {
+
+                    priorityFilter.addEventListener(
+                        'change',
+                        window.filterPlanner
+                    );
+                }
+
+
+                if (searchInput) {
+
+                    searchInput.addEventListener(
+                        'input',
+                        window.filterPlanner
+                    );
+                }
+
+
+                /* -----------------------------------------
+                   Forms
+                   ----------------------------------------- */
+
+                const scheduleForm =
+                    document.getElementById(
+                        'scheduleForm'
+                    );
+
+
+                if (scheduleForm) {
+
+                    scheduleForm.addEventListener(
+                        'submit',
+                        submitSchedule
+                    );
+                }
+
+
+                const costForm =
+                    document.getElementById(
+                        'costForm'
+                    );
+
+
+                if (costForm) {
+
+                    costForm.addEventListener(
+                        'submit',
+                        submitCost
+                    );
+                }
+
+
+                /* -----------------------------------------
+                   IMPORTANT LOAD ORDER
+                   -----------------------------------------
+
+                   First:
+                   /api/computers
+
+                   This loads actual systems.
+
+                   Then:
+                   /api/maintenance/planner
+
+                   This loads maintenance records.
+
+                   This means dropdowns work even when
+                   maintenance table is completely empty.
+                   ----------------------------------------- */
+
+
+                await loadMaintenanceSystems();
+
+
+                await loadMaintenanceData();
+
+
+                console.log(
+                    'Nexus Core Maintenance initialized successfully.'
+                );
+
+
+                console.log(
+                    '===================================='
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    'Maintenance initialization error:',
+                    error
+                );
+
+            }
+
+        }
+    );
+
+})();
+
+</script>
+
+</body>
+</html>

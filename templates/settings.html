@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings · Nexus Core</title>
+
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('nexus-theme') || 'dark';
+                var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var effective = saved === 'auto' ? (systemDark ? 'dark' : 'light') : saved;
+                document.documentElement.setAttribute('data-theme', effective);
+                document.documentElement.setAttribute('data-theme-pref', saved);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════
+           THEME TOKENS
+           ═══════════════════════════════════════════════════════ */
+        :root,
+        [data-theme="light"] {
+            --bg-canvas: #f7f8fa;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f2f4f7;
+            --bg-hover: #eaecf0;
+            --border-subtle: #eaecf0;
+            --border-default: #d0d5dd;
+            --border-strong: #98a2b3;
+            --text-primary: #101828;
+            --text-secondary: #475467;
+            --text-tertiary: #667085;
+            --text-quaternary: #98a2b3;
+            --accent: #1570ef;
+            --accent-hover: #175cd3;
+            --accent-subtle: rgba(21, 112, 239, 0.08);
+            --success: #12b76a;
+            --success-subtle: rgba(18, 183, 106, 0.08);
+            --warning: #f79009;
+            --warning-subtle: rgba(247, 144, 9, 0.08);
+            --danger: #f04438;
+            --danger-subtle: rgba(240, 68, 56, 0.08);
+            --info: #06aed4;
+            --info-subtle: rgba(6, 174, 212, 0.08);
+            --purple: #7a5af8;
+            --purple-subtle: rgba(122, 90, 248, 0.08);
+            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+            --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08);
+            --scrollbar-thumb: #d0d5dd;
+        }
+
+        [data-theme="dark"] {
+            --bg-canvas: #0a0e1a;
+            --bg-surface: #0f1524;
+            --bg-elevated: #171e2f;
+            --bg-hover: #1f2937;
+            --border-subtle: #1a2235;
+            --border-default: #2a3347;
+            --border-strong: #3d4859;
+            --text-primary: #f9fafb;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-quaternary: #475569;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-subtle: rgba(59, 130, 246, 0.1);
+            --success: #22c55e;
+            --success-subtle: rgba(34, 197, 94, 0.1);
+            --warning: #f59e0b;
+            --warning-subtle: rgba(245, 158, 11, 0.1);
+            --danger: #ef4444;
+            --danger-subtle: rgba(239, 68, 68, 0.1);
+            --info: #06b6d4;
+            --info-subtle: rgba(6, 182, 212, 0.1);
+            --purple: #a78bfa;
+            --purple-subtle: rgba(167, 139, 250, 0.1);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+            --scrollbar-thumb: #2a3347;
+        }
+
+        :root {
+            --sidebar-width: 236px;
+            --topbar-height: 56px;
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            background: var(--bg-canvas);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text-primary);
+            font-size: 13px;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+        html.theme-transitioning *,
+        html.theme-transitioning *::before,
+        html.theme-transitioning *::after {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+        }
+
+        /* APP LAYOUT */
+        .app {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 16px; height: var(--topbar-height);
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+
+        .brand-mark {
+            width: 30px; height: 30px; border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 13px; flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(21, 112, 239, 0.25);
+        }
+
+        .brand-text { display: flex; flex-direction: column; overflow: hidden; }
+        .brand-name { font-size: 13px; font-weight: 700; line-height: 1.2; }
+        .brand-tag { font-size: 9px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase; }
+
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 8px; }
+        .nav-section { margin-top: 14px; }
+        .nav-section:first-child { margin-top: 0; }
+
+        .nav-section-title {
+            font-size: 10px; font-weight: 600; color: var(--text-quaternary);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            padding: 6px 12px 4px;
+        }
+
+        .nav-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 12px; border-radius: var(--radius-md);
+            color: var(--text-secondary); font-size: 13px;
+            font-weight: 500; text-decoration: none;
+            transition: all 0.12s ease;
+            position: relative;
+        }
+
+        .nav-link i { width: 16px; font-size: 13px; text-align: center; flex-shrink: 0; color: var(--text-quaternary); }
+        .nav-link:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-link:hover i { color: var(--text-secondary); }
+        .nav-link.active { background: var(--accent-subtle); color: var(--accent); font-weight: 600; }
+        .nav-link.active i { color: var(--accent); }
+
+        .nav-link.danger { color: var(--danger); }
+        .nav-link.danger i { color: var(--danger); }
+        .nav-link.danger:hover { background: var(--danger-subtle); }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border-subtle);
+            padding: 10px; flex-shrink: 0;
+        }
+
+        .user-card {
+            display: flex; align-items: center; gap: 10px;
+            padding: 6px 8px; border-radius: var(--radius-md);
+        }
+
+        .user-avatar-sm {
+            width: 30px; height: 30px; border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0;
+        }
+
+        .user-meta { display: flex; flex-direction: column; overflow: hidden; }
+        .user-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-role { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+
+        /* MAIN AREA */
+        .main { display: flex; flex-direction: column; overflow: hidden; }
+
+        .topbar {
+            height: var(--topbar-height);
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex; align-items: center; gap: 16px;
+            padding: 0 20px; flex-shrink: 0;
+        }
+
+        .topbar-toggle {
+            display: none; background: transparent;
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            width: 30px; height: 30px;
+            border-radius: var(--radius-md);
+            align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        .breadcrumb-nav { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); }
+        .breadcrumb-nav .sep { color: var(--text-quaternary); font-size: 10px; }
+        .breadcrumb-nav .current { color: var(--text-primary); font-weight: 600; }
+
+        .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 20px;
+            background: var(--success-subtle);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: var(--success);
+            font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+        }
+        .status-pill .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+        .theme-toggle {
+            display: inline-flex; align-items: center;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 2px; gap: 2px;
+        }
+        .theme-btn {
+            width: 26px; height: 26px;
+            background: transparent; border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-tertiary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 11px;
+            transition: all 0.15s ease;
+        }
+        .theme-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+        [data-theme-pref="auto"] .theme-btn[data-theme-value="auto"],
+        [data-theme-pref="light"] .theme-btn[data-theme-value="light"],
+        [data-theme-pref="dark"] .theme-btn[data-theme-value="dark"] {
+            background: var(--bg-surface); color: var(--accent); box-shadow: var(--shadow-sm);
+        }
+
+        .icon-btn {
+            width: 32px; height: 32px;
+            background: transparent; border: 1px solid transparent;
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 13px;
+            position: relative; transition: all 0.12s ease;
+        }
+        .icon-btn:hover { background: var(--bg-hover); border-color: var(--border-subtle); color: var(--text-primary); }
+
+        /* DROPDOWN */
+        .dropdown-menu {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            box-shadow: var(--shadow-md);
+            min-width: 220px;
+            margin-top: 6px;
+        }
+        .dropdown-item {
+            color: var(--text-secondary);
+            font-size: 12px; padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 500;
+        }
+        .dropdown-item i { width: 14px; font-size: 12px; color: var(--text-quaternary); }
+        .dropdown-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .dropdown-item.danger { color: var(--danger); }
+        .dropdown-item.danger i { color: var(--danger); }
+        .dropdown-item.danger:hover { background: var(--danger-subtle); }
+        .dropdown-divider { border-color: var(--border-subtle); margin: 4px 0; }
+        .dropdown-header {
+            font-size: 10px; font-weight: 600;
+            color: var(--text-quaternary);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            padding: 6px 10px 4px;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           PAGE CONTENT — SINGLE SCREEN LAYOUT
+           ═══════════════════════════════════════════════════════ */
+        .page {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px 18px;
+            min-height: 0;
+        }
+
+        .page-header {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .page-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+            margin-bottom: 2px;
+        }
+
+        .page-desc {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 14px;
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: transparent;
+        }
+
+        .card-header i { color: var(--purple); font-size: 11px; margin-right: 6px; }
+
+        .card-body { padding: 12px 14px; }
+
+        /* Alerts */
+        .alert {
+            border-radius: 8px;
+            font-size: 11px;
+            border: 1px solid var(--border-subtle);
+            padding: 8px 12px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        [data-theme="light"] .alert-info {
+            background: rgba(6, 174, 212, 0.06);
+            color: #06aed4;
+            border-color: rgba(6, 174, 212, 0.2);
+        }
+        [data-theme="dark"] .alert-info {
+            background: rgba(6, 182, 212, 0.08);
+            color: #22d3ee;
+            border-color: rgba(6, 182, 212, 0.2);
+        }
+
+        /* Form */
+        .form-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            letter-spacing: 0.01em;
+            display: block;
+        }
+
+        .form-control {
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
+            border-radius: 8px;
+            font-size: 12px;
+            padding: 7px 10px;
+            font-family: inherit;
+            height: 36px;
+            width: 100%;
+            transition: all 0.15s ease;
+        }
+
+        .form-control:focus {
+            background: var(--bg-canvas);
+            border-color: var(--accent);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 3px var(--accent-subtle);
+            outline: none;
+        }
+
+        .text-muted {
+            color: var(--text-tertiary) !important;
+            font-size: 9px;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Buttons */
+        .btn {
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 7px 14px;
+            border-radius: var(--radius-md);
+            transition: all 0.12s ease;
+            letter-spacing: 0.01em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+            color: #fff;
+        }
+
+        .btn-success {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #0e9f5c;
+            border-color: #0e9f5c;
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: #fff;
+        }
+
+        .btn-outline-secondary {
+            background: transparent;
+            border-color: var(--border-default);
+            color: var(--text-secondary);
+        }
+        .btn-outline-secondary:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--border-strong);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 10px;
+        }
+
+        /* System Info */
+        .system-info-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .system-info-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .system-info-tag i {
+            font-size: 10px;
+        }
+
+        /* Section heading inside cards */
+        .form-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-section-title i {
+            color: var(--purple);
+            font-size: 10px;
+        }
+
+        /* Form rows compact */
+        .row-tight {
+            margin-bottom: 8px;
+        }
+
+        /* Toast */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast-custom {
+            min-width: 260px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            border-radius: 10px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-md);
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.25s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast-custom.success { border-left: 3px solid var(--success); }
+        .toast-custom.success i { color: var(--success); }
+        .toast-custom.error { border-left: 3px solid var(--danger); }
+        .toast-custom.error i { color: var(--danger); }
+        .toast-custom.warning { border-left: 3px solid var(--warning); }
+        .toast-custom.warning i { color: var(--warning); }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .app { grid-template-columns: 1fr; }
+            .sidebar {
+                position: fixed; top: 0; left: 0; bottom: 0;
+                width: var(--sidebar-width);
+                transform: translateX(-100%);
+                transition: transform 0.2s ease;
+                z-index: 1040;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .topbar-toggle { display: flex; }
+        }
+
+        @media (max-width: 640px) {
+            .page { padding: 12px; }
+            .topbar { padding: 0 12px; gap: 8px; }
+            .breadcrumb-nav { display: none; }
+            .status-pill span:not(.dot) { display: none; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-mark"><i class="fas fa-microchip"></i></div>
+            <div class="brand-text">
+                <span class="brand-name">Nexus Core</span>
+                <span class="brand-tag">Settings</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Overview</div>
+                <a href="{{ url_for('index') }}" class="nav-link">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Monitoring</div>
+                <a href="{{ url_for('systems') }}" class="nav-link">
+                    <i class="fas fa-desktop"></i> Systems
+                </a>
+                <a href="{{ url_for('predictions') }}" class="nav-link">
+                    <i class="fas fa-chart-line"></i> Predictions
+                </a>
+                <a href="{{ url_for('alerts') }}" class="nav-link">
+                    <i class="fas fa-bell"></i> Alerts
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Operations</div>
+                <a href="{{ url_for('maintenance') }}" class="nav-link">
+                    <i class="fas fa-tools"></i> Maintenance
+                </a>
+                <a href="{{ url_for('inventory') }}" class="nav-link">
+                    <i class="fas fa-boxes-stacked"></i> Inventory
+                </a>
+                <a href="{{ url_for('tickets') }}" class="nav-link">
+                    <i class="fas fa-ticket-alt"></i> Tickets
+                </a>
+                <a href="{{ url_for('qr_selection') }}" class="nav-link">
+                    <i class="fas fa-qrcode"></i> QR Codes
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Account</div>
+                <a href="{{ url_for('profile') }}" class="nav-link">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="{{ url_for('settings') }}" class="nav-link active">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="{{ url_for('about') }}" class="nav-link">
+                    <i class="fas fa-info-circle"></i> About
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-link danger">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar-sm">
+                    {{ (current_account.username[0]|upper) if current_account else 'A' }}
+                </div>
+                <div class="user-meta">
+                    <span class="user-name">{{ current_account.username if current_account else 'Admin' }}</span>
+                    <span class="user-role">{{ current_role|upper if current_role else 'USER' }}</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <button class="topbar-toggle" id="menu-toggle" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav class="breadcrumb-nav">
+                <span>Nexus Core</span>
+                <span class="sep">/</span>
+                <span class="current">Settings</span>
+            </nav>
+
+            <div class="topbar-right">
+                <span class="status-pill">
+                    <span class="dot"></span>
+                    <span>LIVE</span>
+                </span>
+
+                <div class="theme-toggle" role="group" aria-label="Theme">
+                    <button type="button" class="theme-btn" data-theme-value="light" title="Light mode">
+                        <i class="fas fa-sun"></i>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme-value="auto" title="System default">
+                        <i class="fas fa-circle-half-stroke"></i>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme-value="dark" title="Dark mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+
+                <div class="dropdown">
+                    <button class="icon-btn" data-bs-toggle="dropdown" aria-label="Account">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li class="dropdown-header">Signed in as</li>
+                        <li class="dropdown-header" style="color: var(--text-primary); text-transform: none; font-size: 12px; letter-spacing: 0;">
+                            {{ current_account.username if current_account else 'Admin' }}
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <i class="fas fa-user"></i> Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('settings') }}">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item danger" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> Sign Out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <main class="page">
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Settings</h1>
+                    <p class="page-desc">Configure thresholds, data and preferences</p>
+                </div>
+            </div>
+
+            <!-- ═══ SINGLE-SCREEN TWO-COLUMN LAYOUT ═══ -->
+            <div class="row g-2">
+
+                <!-- LEFT COLUMN: SYSTEM CONFIGURATION -->
+                <div class="col-lg-8">
+                    <div class="card" style="margin-bottom: 0;">
+                        <div class="card-header">
+                            <div>
+                                <i class="fas fa-sliders-h"></i>
+                                System Configuration
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                These settings control warning, critical and offline thresholds for Nexus Core.
+                            </div>
+
+                            <form id="settings-form">
+
+                                <!-- SYSTEM BEHAVIOR -->
+                                <div class="form-section-title">
+                                    <i class="fas fa-clock"></i> System Behavior
+                                </div>
+
+                                <div class="row row-tight">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Refresh Interval (seconds)</label>
+                                        <input type="number" class="form-control" id="refresh-interval" value="5" min="1" max="60" required>
+                                        <small class="text-muted">Dashboard refresh rate</small>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Offline Threshold (seconds)</label>
+                                        <input type="number" class="form-control" id="offline-threshold" value="20" min="5" max="300" required>
+                                        <small class="text-muted">Time before marked offline</small>
+                                    </div>
+                                </div>
+
+                                <!-- CPU -->
+                                <div class="form-section-title">
+                                    <i class="fas fa-microchip"></i> CPU Thresholds
+                                </div>
+
+                                <div class="row row-tight">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Attention %</label>
+                                        <input type="number" class="form-control" id="cpu-warning" value="70" min="0" max="100" step="0.1" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Critical %</label>
+                                        <input type="number" class="form-control" id="cpu-critical" value="90" min="0" max="100" step="0.1" required>
+                                    </div>
+                                </div>
+
+                                <!-- RAM -->
+                                <div class="form-section-title">
+                                    <i class="fas fa-memory"></i> RAM Thresholds
+                                </div>
+
+                                <div class="row row-tight">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Attention %</label>
+                                        <input type="number" class="form-control" id="ram-warning" value="80" min="0" max="100" step="0.1" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Critical %</label>
+                                        <input type="number" class="form-control" id="ram-critical" value="90" min="0" max="100" step="0.1" required>
+                                    </div>
+                                </div>
+
+                                <!-- DISK -->
+                                <div class="form-section-title">
+                                    <i class="fas fa-hdd"></i> Disk Thresholds
+                                </div>
+
+                                <div class="row" style="margin-bottom: 12px;">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Attention %</label>
+                                        <input type="number" class="form-control" id="disk-warning" value="85" min="0" max="100" step="0.1" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Critical %</label>
+                                        <input type="number" class="form-control" id="disk-critical" value="95" min="0" max="100" step="0.1" required>
+                                    </div>
+                                </div>
+
+                                <!-- BUTTONS -->
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="submit" class="btn btn-primary" id="save-settings">
+                                        <i class="fas fa-save"></i> Save Configuration
+                                    </button>
+
+                                    <button type="button" class="btn btn-outline-secondary" id="restore-defaults">
+                                        <i class="fas fa-undo"></i> Restore Defaults
+                                    </button>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: DATA + SYSTEM INFO -->
+                <div class="col-lg-4">
+
+                    <!-- DATA MANAGEMENT -->
+                    <div class="card" style="margin-bottom: 10px;">
+                        <div class="card-header">
+                            <div>
+                                <i class="fas fa-database"></i>
+                                Data Management
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="alert alert-info" style="margin-bottom: 10px;">
+                                <strong>Database:</strong> MySQL
+                                <br>
+                                <strong>Name:</strong> predictive_maintenance
+                                <br>
+                                <strong>Table:</strong> system_settings
+                            </div>
+
+                            <button id="db-backup" class="btn btn-success w-100 mb-2">
+                                <i class="fas fa-download"></i> Export Data
+                            </button>
+
+                            <button id="db-clear-all" class="btn btn-danger w-100">
+                                <i class="fas fa-trash"></i> Clear All Data
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <!-- SYSTEM INFO -->
+                    <div class="card" style="margin-bottom: 0;">
+                        <div class="card-header">
+                            <div>
+                                <i class="fas fa-info-circle"></i>
+                                System Information
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+
+                            <div style="font-weight: 600; font-size: 12px; color: var(--text-primary); margin-bottom: 3px;">
+                                IoT-Ready Predictive Maintenance System
+                            </div>
+
+                            <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 10px;">
+                                Version 1.0.0 · College Project
+                            </div>
+
+                            <div class="system-info-row">
+                                <span class="system-info-tag">
+                                    <i class="fas fa-code" style="color: var(--accent);"></i>
+                                    Python 3
+                                </span>
+
+                                <span class="system-info-tag">
+                                    <i class="fas fa-flask" style="color: var(--success);"></i>
+                                    Flask
+                                </span>
+
+                                <span class="system-info-tag">
+                                    <i class="fas fa-database" style="color: var(--warning);"></i>
+                                    MySQL
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- ═══ END SINGLE-SCREEN LAYOUT ═══ -->
+
+        </main>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// THEME MANAGER
+(function () {
+    var STORAGE_KEY = 'nexus-theme';
+    var root = document.documentElement;
+
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function resolveTheme(pref) { return pref === 'auto' ? getSystemTheme() : pref; }
+
+    function applyTheme(pref, animate) {
+        var effective = resolveTheme(pref);
+        if (animate) {
+            root.classList.add('theme-transitioning');
+            setTimeout(function () { root.classList.remove('theme-transitioning'); }, 250);
+        }
+        root.setAttribute('data-theme', effective);
+        root.setAttribute('data-theme-pref', pref);
+        try { localStorage.setItem(STORAGE_KEY, pref); } catch (e) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.theme-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { applyTheme(btn.dataset.themeValue, true); });
+        });
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+            if (root.getAttribute('data-theme-pref') === 'auto') applyTheme('auto', true);
+        });
+    });
+})();
+
+// SIDEBAR TOGGLE
+document.getElementById('menu-toggle').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('sidebar').classList.toggle('open');
+});
+
+// SETTINGS LOGIC
+$(document).ready(function () {
+
+    function showToast(message, type = 'warning') {
+        var toast = $('#toast-container');
+        if (toast.length === 0) {
+            $('body').append('<div id="toast-container"></div>');
+            toast = $('#toast-container');
+        }
+
+        var toastClass = type === 'success' ? 'success' : type === 'error' ? 'error' : 'warning';
+        var icon = type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'exclamation-triangle';
+
+        toast.append(
+            '<div class="toast-custom ' + toastClass + '">' +
+                '<i class="fas fa-' + icon + ' me-2"></i>' +
+                $('<div>').text(message).html() +
+            '</div>'
+        );
+
+        setTimeout(function () {
+            $('.toast-custom:first').remove();
+        }, 3500);
+    }
+
+    const DEFAULT_SETTINGS = {
+        refresh_interval: 5,
+        offline_threshold: 20,
+        cpu_warning: 70,
+        cpu_critical: 90,
+        ram_warning: 80,
+        ram_critical: 90,
+        disk_warning: 85,
+        disk_critical: 95
+    };
+
+    function applySettings(settings) {
+        $('#refresh-interval').val(settings.refresh_interval);
+        $('#offline-threshold').val(settings.offline_threshold);
+        $('#cpu-warning').val(settings.cpu_warning);
+        $('#cpu-critical').val(settings.cpu_critical);
+        $('#ram-warning').val(settings.ram_warning);
+        $('#ram-critical').val(settings.ram_critical);
+        $('#disk-warning').val(settings.disk_warning);
+        $('#disk-critical').val(settings.disk_critical);
+    }
+
+    function loadSettings() {
+        $.ajax({
+            url: '/api/settings',
+            method: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                if (response.success && response.settings) {
+                    applySettings(response.settings);
+                    console.log('Settings loaded from database:', response.settings);
+                } else {
+                    applySettings(DEFAULT_SETTINGS);
+                    showToast('Could not load settings. Defaults loaded.', 'warning');
+                }
+            },
+            error: function (xhr) {
+                console.error('Settings load error:', xhr.responseText);
+                applySettings(DEFAULT_SETTINGS);
+                showToast('Unable to load settings from server.', 'error');
+            }
+        });
+    }
+
+    $('#settings-form').submit(function (e) {
+        e.preventDefault();
+
+        var settings = {
+            refresh_interval: parseInt($('#refresh-interval').val()),
+            offline_threshold: parseInt($('#offline-threshold').val()),
+            cpu_warning: parseFloat($('#cpu-warning').val()),
+            cpu_critical: parseFloat($('#cpu-critical').val()),
+            ram_warning: parseFloat($('#ram-warning').val()),
+            ram_critical: parseFloat($('#ram-critical').val()),
+            disk_warning: parseFloat($('#disk-warning').val()),
+            disk_critical: parseFloat($('#disk-critical').val())
+        };
+
+        if (settings.cpu_warning >= settings.cpu_critical) {
+            showToast('CPU Attention must be lower than CPU Critical.', 'error');
+            return;
+        }
+        if (settings.ram_warning >= settings.ram_critical) {
+            showToast('RAM Attention must be lower than RAM Critical.', 'error');
+            return;
+        }
+        if (settings.disk_warning >= settings.disk_critical) {
+            showToast('Disk Attention must be lower than Disk Critical.', 'error');
+            return;
+        }
+
+        var saveButton = $('#save-settings');
+        saveButton.prop('disabled', true);
+        saveButton.html('<i class="fas fa-spinner fa-spin"></i>Saving...');
+
+        $.ajax({
+            url: '/api/settings',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(settings),
+            success: function (response) {
+                if (response.success) {
+                    showToast(response.message || 'Configuration saved successfully!', 'success');
+                    if (response.settings) {
+                        applySettings(response.settings);
+                    }
+                } else {
+                    showToast(response.error || 'Unable to save configuration.', 'error');
+                }
+            },
+            error: function (xhr) {
+                var message = 'Unable to save configuration.';
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.error) message = response.error;
+                } catch (e) {}
+                showToast(message, 'error');
+            },
+            complete: function () {
+                saveButton.prop('disabled', false);
+                saveButton.html('<i class="fas fa-save"></i>Save Configuration');
+            }
+        });
+    });
+
+    $('#restore-defaults').click(function () {
+        var confirmed = confirm(
+            'Restore all settings to default values?\n\n' +
+            'Refresh: 5 seconds\n' +
+            'Offline: 20 seconds\n' +
+            'CPU: 70% / 90%\n' +
+            'RAM: 80% / 90%\n' +
+            'Disk: 85% / 95%'
+        );
+
+        if (!confirmed) return;
+
+        applySettings(DEFAULT_SETTINGS);
+
+        $.ajax({
+            url: '/api/settings',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(DEFAULT_SETTINGS),
+            success: function (response) {
+                if (response.success) {
+                    if (response.settings) applySettings(response.settings);
+                    showToast('Default settings restored successfully!', 'success');
+                } else {
+                    showToast(response.error || 'Unable to restore defaults.', 'error');
+                }
+            },
+            error: function (xhr) {
+                var message = 'Unable to restore default settings.';
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.error) message = response.error;
+                } catch (e) {}
+                showToast(message, 'error');
+                loadSettings();
+            }
+        });
+    });
+
+    $('#db-backup').click(function () {
+        var button = $(this);
+        button.prop('disabled', true);
+        button.html('<i class="fas fa-spinner fa-spin"></i>Exporting...');
+
+        $.ajax({
+            url: '/api/computers',
+            method: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response, null, 2));
+                    var downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href", dataStr);
+                    downloadAnchorNode.setAttribute("download", "nexus_core_backup.json");
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                    showToast('Data exported successfully!', 'success');
+                } else {
+                    showToast('Unable to export data.', 'error');
+                }
+            },
+            error: function () {
+                showToast('Error exporting data.', 'error');
+            },
+            complete: function () {
+                button.prop('disabled', false);
+                button.html('<i class="fas fa-download"></i>Export Data');
+            }
+        });
+    });
+
+    $('#db-clear-all').click(function () {
+        var confirmed = confirm(
+            '⚠️ WARNING!\n\n' +
+            'Are you sure you want to clear ALL computer and history data?\n\n' +
+            'This action cannot be undone.'
+        );
+
+        if (!confirmed) return;
+
+        $.ajax({
+            url: '/api/clear-all',
+            method: 'DELETE',
+            success: function (response) {
+                if (response.success) {
+                    showToast('All data cleared successfully!', 'success');
+                } else {
+                    showToast(response.error || 'Error clearing data.', 'error');
+                }
+            },
+            error: function (xhr) {
+                var message = 'Error clearing data.';
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.error) message = response.error;
+                } catch (e) {}
+                showToast(message, 'error');
+            }
+        });
+    });
+
+    loadSettings();
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Register · Nexus Core</title>
+
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('nexus-theme') || 'dark';
+                var systemDark = window.matchMedia(
+                    '(prefers-color-scheme: dark)'
+                ).matches;
+
+                var effective = saved === 'auto'
+                    ? (systemDark ? 'dark' : 'light')
+                    : saved;
+
+                document.documentElement.setAttribute(
+                    'data-theme',
+                    effective
+                );
+
+                document.documentElement.setAttribute(
+                    'data-theme-pref',
+                    saved
+                );
+            } catch (e) {
+                document.documentElement.setAttribute(
+                    'data-theme',
+                    'dark'
+                );
+            }
+        })();
+    </script>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <!-- Google Font -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        /* =========================================================
+           THEME TOKENS
+        ========================================================= */
+
+        :root,
+        [data-theme="light"] {
+            --bg-canvas: #f7f8fa;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f2f4f7;
+            --bg-hover: #eaecf0;
+
+            --border-subtle: #eaecf0;
+            --border-default: #d0d5dd;
+            --border-strong: #98a2b3;
+
+            --text-primary: #101828;
+            --text-secondary: #475467;
+            --text-tertiary: #667085;
+            --text-quaternary: #98a2b3;
+
+            --accent: #1570ef;
+            --accent-hover: #175cd3;
+            --accent-subtle: rgba(21, 112, 239, 0.08);
+
+            --success: #12b76a;
+            --success-subtle: rgba(18, 183, 106, 0.08);
+
+            --warning: #f79009;
+            --warning-subtle: rgba(247, 144, 9, 0.08);
+
+            --danger: #f04438;
+            --danger-subtle: rgba(240, 68, 56, 0.08);
+
+            --info: #06aed4;
+            --info-subtle: rgba(6, 174, 212, 0.08);
+
+            --purple: #7a5af8;
+            --purple-subtle: rgba(122, 90, 248, 0.08);
+
+            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+            --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08);
+            --shadow-lg: 0 20px 60px -20px rgba(16, 24, 40, 0.18);
+        }
+
+        [data-theme="dark"] {
+            --bg-canvas: #0a0e1a;
+            --bg-surface: #0f1524;
+            --bg-elevated: #171e2f;
+            --bg-hover: #1f2937;
+
+            --border-subtle: #1a2235;
+            --border-default: #2a3347;
+            --border-strong: #3d4859;
+
+            --text-primary: #f9fafb;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-quaternary: #475569;
+
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-subtle: rgba(59, 130, 246, 0.1);
+
+            --success: #22c55e;
+            --success-subtle: rgba(34, 197, 94, 0.1);
+
+            --warning: #f59e0b;
+            --warning-subtle: rgba(245, 158, 11, 0.1);
+
+            --danger: #ef4444;
+            --danger-subtle: rgba(239, 68, 68, 0.1);
+
+            --info: #06b6d4;
+            --info-subtle: rgba(6, 182, 212, 0.1);
+
+            --purple: #a78bfa;
+            --purple-subtle: rgba(167, 139, 250, 0.1);
+
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+            --shadow-lg: 0 25px 70px rgba(0, 0, 0, 0.55);
+        }
+
+        :root {
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            --radius-xl: 12px;
+        }
+
+        /* =========================================================
+           GLOBAL
+        ========================================================= */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100vh;
+        }
+
+        body {
+            font-family:
+                'Inter',
+                -apple-system,
+                BlinkMacSystemFont,
+                'Segoe UI',
+                sans-serif;
+
+            background: var(--bg-canvas);
+            color: var(--text-primary);
+
+            font-size: 13px;
+            line-height: 1.4;
+
+            -webkit-font-smoothing: antialiased;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 40px 20px;
+
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* =========================================================
+           BACKGROUND GLOW
+        ========================================================= */
+
+        .bg-glow {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(140px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        [data-theme="light"] .bg-glow {
+            opacity: 0.25;
+        }
+
+        .bg-glow-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -200px;
+            left: -150px;
+        }
+
+        .bg-glow-2 {
+            width: 500px;
+            height: 500px;
+            background: var(--purple);
+            bottom: -220px;
+            right: -150px;
+        }
+
+        /* =========================================================
+           THEME TOGGLE
+        ========================================================= */
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+
+            display: inline-flex;
+            align-items: center;
+
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+
+            border-radius: var(--radius-md);
+
+            padding: 3px;
+            gap: 2px;
+
+            z-index: 100;
+
+            box-shadow: var(--shadow-sm);
+        }
+
+        .theme-btn {
+            width: 30px;
+            height: 30px;
+
+            background: transparent;
+            border: none;
+
+            border-radius: var(--radius-sm);
+
+            color: var(--text-tertiary);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+
+            font-size: 12px;
+
+            transition: all 0.15s ease;
+        }
+
+        .theme-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        [data-theme-pref="auto"]
+        .theme-btn[data-theme-value="auto"],
+
+        [data-theme-pref="light"]
+        .theme-btn[data-theme-value="light"],
+
+        [data-theme-pref="dark"]
+        .theme-btn[data-theme-value="dark"] {
+            background: var(--accent-subtle);
+            color: var(--accent);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* =========================================================
+           REGISTER CONTAINER
+        ========================================================= */
+
+        .register-container {
+            width: 100%;
+            max-width: 460px;
+
+            position: relative;
+            z-index: 2;
+        }
+
+        .register-card {
+            background: var(--bg-surface);
+
+            border: 1px solid var(--border-subtle);
+
+            border-radius: 20px;
+
+            padding: 36px;
+
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* =========================================================
+           BRAND
+        ========================================================= */
+
+        .brand {
+            text-align: center;
+            margin-bottom: 26px;
+        }
+
+        .brand-icon {
+            width: 58px;
+            height: 58px;
+
+            margin: 0 auto 16px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 16px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--accent),
+                    var(--purple)
+                );
+
+            box-shadow:
+                0 10px 30px rgba(21, 112, 239, 0.28);
+        }
+
+        .brand-icon i {
+            font-size: 23px;
+            color: #ffffff;
+        }
+
+        .brand h1 {
+            font-size: 22px;
+            font-weight: 700;
+
+            letter-spacing: -0.02em;
+
+            margin-bottom: 6px;
+
+            color: var(--text-primary);
+        }
+
+        .brand h1 span {
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--accent),
+                    var(--purple)
+                );
+
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+
+            background-clip: text;
+        }
+
+        .brand p {
+            color: var(--text-tertiary);
+
+            font-size: 12px;
+            line-height: 1.6;
+
+            margin: 0;
+        }
+
+        /* =========================================================
+           FLASH MESSAGES
+        ========================================================= */
+
+        .flash-container {
+            margin-bottom: 18px;
+        }
+
+        .alert {
+            border-radius: 10px;
+
+            font-size: 12px;
+
+            border: 1px solid var(--border-subtle);
+
+            padding: 10px 14px;
+
+            font-weight: 500;
+        }
+
+        [data-theme="light"] .alert-success {
+            background: rgba(18, 183, 106, 0.08);
+            color: #12b76a;
+            border-color: rgba(18, 183, 106, 0.2);
+        }
+
+        [data-theme="dark"] .alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+
+        [data-theme="light"] .alert-danger {
+            background: rgba(240, 68, 56, 0.08);
+            color: #f04438;
+            border-color: rgba(240, 68, 56, 0.2);
+        }
+
+        [data-theme="dark"] .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        [data-theme="light"] .alert-warning {
+            background: rgba(247, 144, 9, 0.08);
+            color: #f79009;
+            border-color: rgba(247, 144, 9, 0.2);
+        }
+
+        [data-theme="dark"] .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        [data-theme="light"] .alert-info {
+            background: rgba(6, 174, 212, 0.08);
+            color: #06aed4;
+            border-color: rgba(6, 174, 212, 0.2);
+        }
+
+        [data-theme="dark"] .alert-info {
+            background: rgba(6, 182, 212, 0.1);
+            color: #22d3ee;
+            border-color: rgba(6, 182, 212, 0.2);
+        }
+
+        /* =========================================================
+           FORM
+        ========================================================= */
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            color: var(--text-secondary);
+
+            font-size: 11px;
+            font-weight: 600;
+
+            margin-bottom: 6px;
+
+            letter-spacing: 0.01em;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper > i {
+            position: absolute;
+
+            left: 14px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            color: var(--text-quaternary);
+
+            font-size: 13px;
+
+            pointer-events: none;
+
+            z-index: 2;
+
+            transition: color 0.15s ease;
+        }
+
+        .form-control,
+        .form-select {
+            width: 100%;
+            height: 44px;
+
+            background: var(--bg-canvas);
+
+            border: 1px solid var(--border-default);
+
+            border-radius: 10px;
+
+            color: var(--text-primary);
+
+            font-size: 12px;
+
+            padding-left: 40px;
+            padding-right: 14px;
+
+            font-family: inherit;
+
+            transition: all 0.15s ease;
+        }
+
+        .form-control::placeholder {
+            color: var(--text-quaternary);
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background: var(--bg-canvas);
+
+            border-color: var(--accent);
+
+            box-shadow:
+                0 0 0 3px var(--accent-subtle);
+
+            color: var(--text-primary);
+
+            outline: none;
+        }
+
+        .form-control:focus + i,
+        .form-select:focus + i {
+            color: var(--accent);
+        }
+
+        /* =========================================================
+           SELECT
+        ========================================================= */
+
+        .form-select {
+            cursor: pointer;
+
+            appearance: none;
+            -webkit-appearance: none;
+
+            background-image:
+                url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+
+            background-repeat: no-repeat;
+
+            background-position:
+                right 14px center;
+
+            padding-right: 36px;
+        }
+
+        .form-select option {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+        }
+
+        /* =========================================================
+           PASSWORD TOGGLE
+        ========================================================= */
+
+        .password-toggle {
+            position: absolute;
+
+            right: 14px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            color: var(--text-quaternary);
+
+            cursor: pointer;
+
+            font-size: 13px;
+
+            transition: color 0.15s ease;
+
+            z-index: 3;
+        }
+
+        .password-toggle:hover {
+            color: var(--accent);
+        }
+
+        /* =========================================================
+           SECURITY BOX
+        ========================================================= */
+
+        .security-box {
+            margin-top: 6px;
+            margin-bottom: 20px;
+
+            padding: 16px;
+
+            background: var(--purple-subtle);
+
+            border: 1px solid var(--border-subtle);
+
+            border-radius: 12px;
+        }
+
+        .security-title {
+            color: var(--purple);
+
+            font-size: 11px;
+            font-weight: 700;
+
+            margin-bottom: 14px;
+
+            letter-spacing: 0.02em;
+
+            text-transform: uppercase;
+        }
+
+        .security-title i {
+            margin-right: 7px;
+        }
+
+        .security-help {
+            color: var(--text-tertiary);
+
+            font-size: 10px;
+
+            line-height: 1.5;
+
+            margin-top: 7px;
+        }
+
+        /* =========================================================
+           REGISTER BUTTON
+        ========================================================= */
+
+        .btn-register {
+            width: 100%;
+            height: 46px;
+
+            border: none;
+            border-radius: 10px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--accent),
+                    var(--purple)
+                );
+
+            color: #ffffff;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            letter-spacing: 0.02em;
+
+            transition: all 0.2s ease;
+
+            box-shadow:
+                0 6px 20px rgba(21, 112, 239, 0.22);
+
+            cursor: pointer;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-1px);
+
+            box-shadow:
+                0 10px 28px rgba(21, 112, 239, 0.35);
+        }
+
+        .btn-register:active {
+            transform: translateY(0);
+        }
+
+        .btn-register:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* =========================================================
+           LOGIN LINK
+        ========================================================= */
+
+        .login-link {
+            display: flex;
+
+            justify-content: center;
+            align-items: center;
+
+            gap: 6px;
+
+            margin-top: 22px;
+
+            color: var(--text-tertiary);
+
+            font-size: 12px;
+
+            text-decoration: none;
+
+            transition: color 0.15s ease;
+        }
+
+        .login-link span {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .login-link:hover {
+            color: var(--text-secondary);
+        }
+
+        .login-link:hover span {
+            color: var(--accent-hover);
+        }
+
+        /* =========================================================
+           RESPONSIVE
+        ========================================================= */
+
+        @media (max-width: 480px) {
+
+            body {
+                padding: 20px 14px;
+            }
+
+            .register-card {
+                padding: 26px 20px;
+                border-radius: 16px;
+            }
+
+            .brand h1 {
+                font-size: 20px;
+            }
+
+            .brand-icon {
+                width: 52px;
+                height: 52px;
+                border-radius: 14px;
+            }
+
+            .brand-icon i {
+                font-size: 20px;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- =========================================================
+         AMBIENT BACKGROUND
+    ========================================================= -->
+
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+
+    <!-- =========================================================
+         THEME TOGGLE
+    ========================================================= -->
+
+    <div
+        class="theme-toggle"
+        role="group"
+        aria-label="Theme"
+    >
+
+        <button
+            type="button"
+            class="theme-btn"
+            data-theme-value="light"
+            title="Light mode"
+        >
+            <i class="fas fa-sun"></i>
+        </button>
+
+        <button
+            type="button"
+            class="theme-btn"
+            data-theme-value="auto"
+            title="System default"
+        >
+            <i class="fas fa-circle-half-stroke"></i>
+        </button>
+
+        <button
+            type="button"
+            class="theme-btn"
+            data-theme-value="dark"
+            title="Dark mode"
+        >
+            <i class="fas fa-moon"></i>
+        </button>
+
+    </div>
+
+
+    <!-- =========================================================
+         REGISTER CONTAINER
+    ========================================================= -->
+
+    <div class="register-container">
+
+        <div class="register-card">
+
+
+            <!-- =================================================
+                 BRAND
+            ================================================= -->
+
+            <div class="brand">
+
+                <div class="brand-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+
+                <h1>
+                    Nexus <span>Core</span>
+                </h1>
+
+                <p>
+                    Create your Nexus Core account.
+                </p>
+
+            </div>
+
+
+            <!-- =================================================
+                 FLASH MESSAGES
+            ================================================= -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+
+                {% if messages %}
+
+                    <div class="flash-container">
+
+                        {% for category, message in messages %}
+
+                            <div
+                                class="alert alert-{{ category }}"
+                                role="alert"
+                            >
+
+                                {% if category == 'success' %}
+
+                                    <i class="fas fa-circle-check me-2"></i>
+
+                                {% elif category == 'danger' %}
+
+                                    <i class="fas fa-circle-exclamation me-2"></i>
+
+                                {% elif category == 'warning' %}
+
+                                    <i class="fas fa-triangle-exclamation me-2"></i>
+
+                                {% else %}
+
+                                    <i class="fas fa-circle-info me-2"></i>
+
+                                {% endif %}
+
+                                {{ message }}
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+            {% endwith %}
+
+
+            <!-- =================================================
+                 REGISTER FORM
+            ================================================= -->
+
+            <form
+                method="POST"
+                action="{{ url_for('register') }}"
+                id="registerForm"
+            >
+
+
+                <!-- =================================================
+                     USERNAME
+                ================================================= -->
+
+                <div class="form-group">
+
+                    <label
+                        for="username"
+                        class="form-label"
+                    >
+                        Username
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fas fa-user"></i>
+
+                        <input
+                            type="text"
+                            name="username"
+                            id="username"
+                            class="form-control"
+                            placeholder="Enter username"
+                            value="{{ request.form.get('username', '') }}"
+                            autocomplete="username"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     EMAIL
+                ================================================= -->
+
+                <div class="form-group">
+
+                    <label
+                        for="email"
+                        class="form-label"
+                    >
+                        Email
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fas fa-envelope"></i>
+
+                        <input
+                            type="email"
+                            name="email"
+                            id="email"
+                            class="form-control"
+                            placeholder="Enter email address"
+                            value="{{ request.form.get('email', '') }}"
+                            autocomplete="email"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     PASSWORD
+                ================================================= -->
+
+                <div class="form-group">
+
+                    <label
+                        for="password"
+                        class="form-label"
+                    >
+                        Password
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fas fa-lock"></i>
+
+                        <input
+                            type="password"
+                            name="password"
+                            id="password"
+                            class="form-control"
+                            placeholder="Create password"
+                            minlength="6"
+                            autocomplete="new-password"
+                            required
+                        >
+
+                        <span
+                            class="password-toggle"
+                            onclick="togglePassword('password', this)"
+                        >
+                            <i class="fas fa-eye"></i>
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     CONFIRM PASSWORD
+
+                     IMPORTANT:
+                     Flask backend expects:
+                     password_confirm
+
+                     ID remains:
+                     confirm_password
+
+                     because JavaScript uses this ID.
+                ================================================= -->
+
+                <div class="form-group">
+
+                    <label
+                        for="confirm_password"
+                        class="form-label"
+                    >
+                        Confirm Password
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fas fa-lock"></i>
+
+                        <input
+                            type="password"
+                            name="password_confirm"
+                            id="confirm_password"
+                            class="form-control"
+                            placeholder="Confirm password"
+                            minlength="6"
+                            autocomplete="new-password"
+                            required
+                        >
+
+                        <span
+                            class="password-toggle"
+                            onclick="togglePassword('confirm_password', this)"
+                        >
+                            <i class="fas fa-eye"></i>
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     SECURITY BOX
+                ================================================= -->
+
+                <div class="security-box">
+
+                    <div class="security-title">
+
+                        <i class="fas fa-shield-halved"></i>
+
+                        Account Recovery
+
+                    </div>
+
+
+                    <!-- SECURITY QUESTION -->
+
+                    <div class="form-group">
+
+                        <label
+                            for="security_question"
+                            class="form-label"
+                        >
+                            Security Question
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i class="fas fa-circle-question"></i>
+
+                            <select
+                                name="security_question"
+                                id="security_question"
+                                class="form-select"
+                                required
+                            >
+
+                                <option
+                                    value=""
+                                    selected
+                                    disabled
+                                >
+                                    Select a security question
+                                </option>
+
+                                <option value="What is your pet's name?">
+                                    What is your pet's name?
+                                </option>
+
+                                <option value="What is your favorite color?">
+                                    What is your favorite color?
+                                </option>
+
+                                <option value="What is your birthplace?">
+                                    What is your birthplace?
+                                </option>
+
+                                <option value="What was your first school's name?">
+                                    What was your first school's name?
+                                </option>
+
+                                <option value="What is your favorite food?">
+                                    What is your favorite food?
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- SECURITY ANSWER -->
+
+                    <div class="form-group mb-0">
+
+                        <label
+                            for="security_answer"
+                            class="form-label"
+                        >
+                            Security Answer
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i class="fas fa-shield-halved"></i>
+
+                            <input
+                                type="text"
+                                name="security_answer"
+                                id="security_answer"
+                                class="form-control"
+                                placeholder="Enter your answer"
+                                autocomplete="off"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="security-help">
+
+                            Remember this answer.
+                            It will be required if you need
+                            to reset your password.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     REGISTER BUTTON
+                ================================================= -->
+
+                <button
+                    type="submit"
+                    class="btn-register"
+                >
+
+                    <i class="fas fa-user-plus me-2"></i>
+
+                    Create Account
+
+                </button>
+
+            </form>
+
+
+            <!-- =================================================
+                 LOGIN LINK
+            ================================================= -->
+
+            <a
+                href="{{ url_for('login') }}"
+                class="login-link"
+            >
+
+                Already have an account?
+
+                <span>
+                    Login
+                </span>
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+    ========================================================= -->
+
+    <script>
+
+        /* =========================================================
+           THEME MANAGER
+        ========================================================= */
+
+        (function () {
+
+            var STORAGE_KEY = 'nexus-theme';
+
+            var root = document.documentElement;
+
+
+            function getSystemTheme() {
+
+                return window.matchMedia(
+                    '(prefers-color-scheme: dark)'
+                ).matches
+                    ? 'dark'
+                    : 'light';
+            }
+
+
+            function resolveTheme(pref) {
+
+                return pref === 'auto'
+                    ? getSystemTheme()
+                    : pref;
+            }
+
+
+            function applyTheme(pref, animate) {
+
+                var effective = resolveTheme(pref);
+
+
+                if (animate) {
+
+                    root.style.transition =
+                        'background-color 0.2s ease, color 0.2s ease';
+
+                    setTimeout(function () {
+
+                        root.style.transition = '';
+
+                    }, 250);
+                }
+
+
+                root.setAttribute(
+                    'data-theme',
+                    effective
+                );
+
+
+                root.setAttribute(
+                    'data-theme-pref',
+                    pref
+                );
+
+
+                try {
+
+                    localStorage.setItem(
+                        STORAGE_KEY,
+                        pref
+                    );
+
+                } catch (e) {}
+
+            }
+
+
+            document.addEventListener(
+                'DOMContentLoaded',
+                function () {
+
+                    document
+                        .querySelectorAll('.theme-btn')
+                        .forEach(function (btn) {
+
+                            btn.addEventListener(
+                                'click',
+                                function () {
+
+                                    applyTheme(
+                                        btn.dataset.themeValue,
+                                        true
+                                    );
+
+                                }
+                            );
+
+                        });
+
+
+                    window
+                        .matchMedia(
+                            '(prefers-color-scheme: dark)'
+                        )
+                        .addEventListener(
+                            'change',
+                            function () {
+
+                                if (
+                                    root.getAttribute(
+                                        'data-theme-pref'
+                                    ) === 'auto'
+                                ) {
+
+                                    applyTheme(
+                                        'auto',
+                                        true
+                                    );
+
+                                }
+
+                            }
+                        );
+
+                }
+            );
+
+        })();
+
+
+        /* =========================================================
+           PASSWORD TOGGLE
+        ========================================================= */
+
+        function togglePassword(inputId, element) {
+
+            const input =
+                document.getElementById(inputId);
+
+            const icon =
+                element.querySelector('i');
+
+
+            if (input.type === 'password') {
+
+                input.type = 'text';
+
+                icon.classList.remove(
+                    'fa-eye'
+                );
+
+                icon.classList.add(
+                    'fa-eye-slash'
+                );
+
+            } else {
+
+                input.type = 'password';
+
+                icon.classList.remove(
+                    'fa-eye-slash'
+                );
+
+                icon.classList.add(
+                    'fa-eye'
+                );
+
+            }
+
+        }
+
+
+        /* =========================================================
+           FORM VALIDATION
+        ========================================================= */
+
+        document
+            .getElementById('registerForm')
+            .addEventListener(
+                'submit',
+                function (event) {
+
+                    const password =
+                        document.getElementById(
+                            'password'
+                        ).value;
+
+                    const confirmPassword =
+                        document.getElementById(
+                            'confirm_password'
+                        ).value;
+
+                    const securityQuestion =
+                        document.getElementById(
+                            'security_question'
+                        ).value;
+
+                    const securityAnswer =
+                        document.getElementById(
+                            'security_answer'
+                        ).value.trim();
+
+                    const button =
+                        document.querySelector(
+                            '.btn-register'
+                        );
+
+
+                    /* PASSWORD MATCH */
+
+                    if (
+                        password !==
+                        confirmPassword
+                    ) {
+
+                        event.preventDefault();
+
+                        alert(
+                            'Passwords do not match.'
+                        );
+
+                        return;
+                    }
+
+
+                    /* PASSWORD LENGTH */
+
+                    if (
+                        password.length < 6
+                    ) {
+
+                        event.preventDefault();
+
+                        alert(
+                            'Password must be at least 6 characters.'
+                        );
+
+                        return;
+                    }
+
+
+                    /* SECURITY QUESTION */
+
+                    if (!securityQuestion) {
+
+                        event.preventDefault();
+
+                        alert(
+                            'Please select a security question.'
+                        );
+
+                        return;
+                    }
+
+
+                    /* SECURITY ANSWER */
+
+                    if (
+                        securityAnswer.length < 2
+                    ) {
+
+                        event.preventDefault();
+
+                        alert(
+                            'Security answer must be at least 2 characters.'
+                        );
+
+                        return;
+                    }
+
+
+                    /* DISABLE BUTTON */
+
+                    button.disabled = true;
+
+                    button.innerHTML =
+                        '<i class="fas fa-spinner fa-spin me-2"></i>' +
+                        'Creating Account...';
+
+                }
+            );
+
+    </script>
+
+</body>
+
+</html>
