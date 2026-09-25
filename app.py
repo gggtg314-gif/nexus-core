@@ -320,7 +320,8 @@ def before_request():
     'forgot_password',
     'forgot_change_password',
     'static',
-    'update_computer'
+    'update_computer',
+    'update_iot_data'
     ]
 
     if request.endpoint in public_routes:
@@ -4398,6 +4399,473 @@ def internal_server_error(e):
     return redirect(
         url_for('login')
     )
+
+# ============================================================
+# IOT - DHT11 API
+# ============================================================
+
+@app.route(
+    '/api/iot/update',
+    methods=['POST']
+)
+def update_iot_data():
+
+    try:
+
+        data = request.get_json(
+            silent=True
+        ) or {}
+
+        device_id = str(
+            data.get('device_id', '')
+        ).strip()
+
+        device_name = str(
+            data.get(
+                'device_name',
+                device_id
+            )
+        ).strip()
+
+        temperature = data.get(
+            'temperature'
+        )
+
+        humidity = data.get(
+            'humidity'
+        )
+
+        # ----------------------------------------------------
+        # Required fields
+        # ----------------------------------------------------
+
+        if not device_id:
+            return jsonify({
+                'success': False,
+                'error': 'device_id is required'
+            }), 400
+
+        if temperature is None:
+            return jsonify({
+                'success': False,
+                'error': 'temperature is required'
+            }), 400
+
+        if humidity is None:
+            return jsonify({
+                'success': False,
+                'error': 'humidity is required'
+            }), 400
+
+        # ----------------------------------------------------
+        # Convert sensor values
+        # ----------------------------------------------------
+
+        temperature = float(temperature)
+        humidity = float(humidity)
+
+        # ----------------------------------------------------
+        # Validate DHT11 values
+        # ----------------------------------------------------
+
+        if not -40 <= temperature <= 80:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid temperature value'
+            }), 400
+
+        if not 0 <= humidity <= 100:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid humidity value'
+            }), 400
+
+        now = datetime.utcnow()
+
+        # ----------------------------------------------------
+        # Check whether device already exists
+        # ----------------------------------------------------
+
+        device = db.session.execute(
+            text("""
+                SELECT id
+                FROM iot_devices
+                WHERE device_id = :device_id
+                LIMIT 1
+            """),
+            {
+                'device_id': device_id
+            }
+        ).first()
+
+        # ----------------------------------------------------
+        # Create / update device
+        # ----------------------------------------------------
+
+        if device:
+
+            db.session.execute(
+                text("""
+                    UPDATE iot_devices
+                    SET
+                        device_name = :device_name,
+                        sensor_type = 'DHT11',
+                        status = 'online',
+                        last_seen = :last_seen
+                    WHERE device_id = :device_id
+                """),
+                {
+                    'device_name': device_name,
+                    'last_seen': now,
+                    'device_id': device_id
+                }
+            )
+
+        else:
+
+            db.session.execute(
+                text("""
+                    INSERT INTO iot_devices
+                    (
+                        device_id,
+                        device_name,
+                        sensor_type,
+                        status,
+                        last_seen
+                    )
+                    VALUES
+                    (
+                        :device_id,
+                        :device_name,
+                        'DHT11',
+                        'online',
+                        :last_seen
+                    )
+                """),
+                {
+                    'device_id': device_id,
+                    'device_name': device_name,
+                    'last_seen': now
+                }
+            )
+
+        # ----------------------------------------------------
+        # Save sensor reading
+        # ----------------------------------------------------
+
+        db.session.execute(
+            text("""
+                INSERT INTO iot_readings
+                (
+                    device_id,
+                    temperature,
+                    humidity,
+                    recorded_at
+                )
+                VALUES
+                (
+                    :device_id,
+                    :temperature,
+                    :humidity,
+                    :recorded_at
+                )
+            """),
+            {
+                'device_id': device_id,
+                'temperature': temperature,
+                'humidity': humidity,
+                'recorded_at': now
+            }
+        )
+
+        db.session.commit()
+
+        logger.info(
+            f"IoT data received | "
+            f"Device={device_id} | "
+            f"Temperature={temperature} C | "
+            f"Humidity={humidity}%"
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'IoT data received successfully',
+            'device_id': device_id,
+            'temperature': temperature,
+            'humidity': humidity,
+            'timestamp': now.strftime(
+                '%Y-%m-%d %H:%M:%S'
+            )
+        }), 200
+
+    except (ValueError, TypeError):
+
+        db.session.rollback()
+
+        return jsonify({
+            'success': False,
+            'error': 'Invalid sensor data'
+        }), 400
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        logger.error(
+            f"IoT API error: {e}"
+        )
+
+        logger.error(
+            traceback.format_exc()
+        )
+
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ============================================================
+# IOT DASHBOARD
+# ============================================================
+
+@app.route('/iot')
+@login_required
+def iot_dashboard():
+    return render_template('iot.html')
+
+
+@app.route('/api/iot/devices', methods=['GET'])
+@login_required
+def get_iot_devices():
+
+    try:
+        rows = db.session.execute(
+            text("""
+                SELECT
+                    id,
+                    device_id,
+                    device_name,
+                    sensor_type,
+                    status,
+                    last_seen,
+                    created_at
+                FROM iot_devices
+                ORDER BY id DESC
+            """)
+        ).mappings().all()
+
+        devices = []
+
+        for row in rows:
+            devices.append({
+                'id': row['id'],
+                'device_id': row['device_id'],
+                'device_name': row['device_name'],
+                'sensor_type': row['sensor_type'],
+                'status': row['status'],
+                'last_seen': (
+                    row['last_seen'].isoformat()
+                    if row['last_seen']
+                    else None
+                ),
+                'created_at': (
+                    row['created_at'].isoformat()
+                    if row['created_at']
+                    else None
+                )
+            })
+
+        return jsonify({
+            'success': True,
+            'devices': devices
+        }), 200
+
+    except Exception as e:
+        logger.error(f"IoT devices error: {e}")
+
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/iot/readings/<string:device_id>', methods=['GET'])
+@login_required
+def get_iot_readings(device_id):
+
+    try:
+        rows = db.session.execute(
+            text("""
+                SELECT
+                    id,
+                    device_id,
+                    temperature,
+                    humidity,
+                    recorded_at
+                FROM iot_readings
+                WHERE device_id = :device_id
+                ORDER BY recorded_at DESC
+                LIMIT 100
+            """),
+            {
+                'device_id': device_id
+            }
+        ).mappings().all()
+
+        readings = []
+
+        for row in rows:
+            readings.append({
+                'id': row['id'],
+                'device_id': row['device_id'],
+                'temperature': (
+                    float(row['temperature'])
+                    if row['temperature'] is not None
+                    else None
+                ),
+                'humidity': (
+                    float(row['humidity'])
+                    if row['humidity'] is not None
+                    else None
+                ),
+                'recorded_at': (
+                    row['recorded_at'].isoformat()
+                    if row['recorded_at']
+                    else None
+                )
+            })
+
+        return jsonify({
+            'success': True,
+            'readings': readings
+        }), 200
+
+    except Exception as e:
+        logger.error(f"IoT readings error: {e}")
+
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ============================================================
+# IOT HISTORY - CLEAR SELECTED DEVICE
+# ============================================================
+
+@app.route(
+    '/api/iot/history/clear/<string:device_id>',
+    methods=['DELETE']
+)
+@admin_required
+def clear_iot_history(device_id):
+
+    try:
+
+        device_id = str(
+            device_id
+        ).strip()
+
+        if not device_id:
+
+            return jsonify({
+                'success': False,
+                'error': 'Device ID is required'
+            }), 400
+
+
+        # ----------------------------------------------------
+        # Check device exists
+        # ----------------------------------------------------
+
+        device = db.session.execute(
+            text("""
+                SELECT id
+                FROM iot_devices
+                WHERE device_id = :device_id
+                LIMIT 1
+            """),
+            {
+                'device_id': device_id
+            }
+        ).first()
+
+
+        if not device:
+
+            return jsonify({
+                'success': False,
+                'error': 'IoT device not found'
+            }), 404
+
+
+        # ----------------------------------------------------
+        # Delete readings only
+        # Device itself will remain
+        # ----------------------------------------------------
+
+        result = db.session.execute(
+            text("""
+                DELETE FROM iot_readings
+                WHERE device_id = :device_id
+            """),
+            {
+                'device_id': device_id
+            }
+        )
+
+
+        deleted_count = result.rowcount
+
+
+        db.session.commit()
+
+
+        logger.info(
+            f"IoT history cleared | "
+            f"Device={device_id} | "
+            f"Rows={deleted_count}"
+        )
+
+
+        return jsonify({
+
+            'success': True,
+
+            'message':
+                'IoT history cleared successfully',
+
+            'device_id':
+                device_id,
+
+            'deleted_count':
+                deleted_count
+
+        }), 200
+
+
+    except Exception as e:
+
+        db.session.rollback()
+
+
+        logger.error(
+            f"Error clearing IoT history: {e}"
+        )
+
+
+        logger.error(
+            traceback.format_exc()
+        )
+
+
+        return jsonify({
+
+            'success': False,
+
+            'error':
+                str(e)
+
+        }), 500
 
 
 # ============================================================

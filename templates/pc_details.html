@@ -13,8 +13,10 @@
                 var effective = saved === 'auto' ? (systemDark ? 'dark' : 'light') : saved;
                 document.documentElement.setAttribute('data-theme', effective);
                 document.documentElement.setAttribute('data-theme-pref', saved);
+                document.documentElement.setAttribute('data-bs-theme', effective); /* FIX: sync Bootstrap theme */
             } catch (e) {
                 document.documentElement.setAttribute('data-theme', 'dark');
+                document.documentElement.setAttribute('data-bs-theme', 'dark'); /* FIX: sync Bootstrap theme */
             }
         })();
     </script>
@@ -702,7 +704,19 @@
         }
 
         /* History table */
+        /* FIX: override Bootstrap's CSS variables directly so the table
+           always follows our own theme tokens instead of Bootstrap's
+           light-only defaults (this is what was breaking dark mode) */
         .history-table {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--text-secondary);
+            --bs-table-border-color: var(--border-subtle);
+            --bs-table-striped-bg: var(--bg-elevated);
+            --bs-table-striped-color: var(--text-secondary);
+            --bs-table-active-bg: var(--bg-hover);
+            --bs-table-active-color: var(--text-primary);
+            --bs-table-hover-bg: var(--bg-hover);
+            --bs-table-hover-color: var(--text-primary);
             color: var(--text-secondary);
             margin: 0;
         }
@@ -724,10 +738,18 @@
             border-bottom: 1px solid var(--border-subtle);
             vertical-align: middle;
             padding: 8px 10px;
+            background: transparent;
         }
 
         .history-table tbody tr:hover td {
             background: var(--bg-hover);
+        }
+
+        /* FIX: table-responsive wrapper + table-borderless etc pick up
+           Bootstrap variables from body; make sure the wrapper itself
+           doesn't paint a light background under dark mode */
+        .table-responsive {
+            background: transparent;
         }
 
         /* Alert */
@@ -842,6 +864,9 @@
                 </a>
                 <a href="{{ url_for('predictions') }}" class="nav-link">
                     <i class="fas fa-chart-line"></i> Predictions
+                </a>
+                  <a href="{{ url_for('iot_dashboard') }}" class="nav-link">
+                    <i class="fas fa-tower-broadcast"></i> IoT Monitoring
                 </a>
                 <a href="{{ url_for('alerts') }}" class="nav-link">
                     <i class="fas fa-bell"></i> Alerts
@@ -1411,6 +1436,7 @@
         }
         root.setAttribute('data-theme', effective);
         root.setAttribute('data-theme-pref', pref);
+        root.setAttribute('data-bs-theme', effective); /* FIX: keep Bootstrap's theme in sync */
         try { localStorage.setItem(STORAGE_KEY, pref); } catch (e) {}
         // Redraw charts with new theme colors
         if (typeof cpuChart !== 'undefined' && cpuChart) cpuChart.update();
@@ -1828,4 +1854,4 @@ $(document).ready(function() {
 </script>
 
 </body>
-</html> 
+</html>

@@ -48,7 +48,7 @@ import json
 # CONFIGURATION
 # =========================================================
 
-SERVER_URL = "https://af57-2401-4900-c40c-ed4e-c85e-6795-9f90-aa5c.ngrok-free.app/api/update"
+SERVER_URL = "http://10.201.134.223:5000/api/update"
 AGENT_INTERVAL = 1
 
 
