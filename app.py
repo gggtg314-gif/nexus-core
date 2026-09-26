@@ -3240,16 +3240,28 @@ def update_computer():
         disk_warning = settings_data['disk_warning']
         disk_critical = settings_data['disk_critical']
 
+        # =====================================================
+        # CONNECTION STATUS
+        # =====================================================
+        # If agent successfully sends data, computer is ONLINE.
+        #
         # IMPORTANT:
-        # Fixed previous blank critical status.
+        # Do NOT put warning/critical here.
+        # Health is calculated separately below.
+
+        status = 'online'
+
+        # =====================================================
+        # HEALTH STATUS
+        # =====================================================
+
         if (
             cpu >= cpu_critical
             or ram >= ram_critical
             or disk >= disk_critical
         ):
 
-            status = 'critical'
-          
+            health_status = 'critical'
 
         elif (
             cpu >= cpu_warning
@@ -3257,16 +3269,29 @@ def update_computer():
             or disk >= disk_warning
         ):
 
-            status = 'warning'
-           
+            health_status = 'warning'
 
         else:
 
-            status = 'online'
+            health_status = 'healthy'
+
+        logger.info(
+            f"Computer: {data['computer_name']} | "
+            f"Connection: {status} | "
+            f"Health: {health_status}"
+        )
+
+        # =====================================================
+        # FIND COMPUTER
+        # =====================================================
 
         computer = Computer.query.filter_by(
             computer_name=data['computer_name']
         ).first()
+
+        # =====================================================
+        # EXISTING COMPUTER
+        # =====================================================
 
         if computer:
 
@@ -3275,7 +3300,9 @@ def update_computer():
             ]
 
             computer.cpu_usage = cpu
+
             computer.ram_usage = ram
+
             computer.disk_usage = disk
 
             computer.cpu_model = data.get(
@@ -3391,13 +3418,27 @@ def update_computer():
                 'Unknown'
             )
 
-            computer.status = status
+            # =================================================
+            # IMPORTANT
+            # status = CONNECTION STATUS ONLY
+            # =================================================
+
+            computer.status = 'online'
+
+            # =================================================
+            # HEARTBEAT
+            # =================================================
 
             computer.last_update = datetime.utcnow()
 
             logger.info(
-                f'Updated: {computer.computer_name}'
+                f'Updated: {computer.computer_name} | '
+                f'Online | Health: {health_status}'
             )
+
+        # =====================================================
+        # NEW COMPUTER
+        # =====================================================
 
         else:
 
@@ -3406,6 +3447,7 @@ def update_computer():
             )
 
             computer = Computer(
+
                 device_id=device_id,
 
                 computer_name=data[
@@ -3417,7 +3459,9 @@ def update_computer():
                 ],
 
                 cpu_usage=cpu,
+
                 ram_usage=ram,
+
                 disk_usage=disk,
 
                 cpu_model=data.get(
@@ -3533,8 +3577,10 @@ def update_computer():
                     'Unknown'
                 ),
 
-                status=status,
+                # Connection status only
+                status='online',
 
+                # Heartbeat
                 last_update=datetime.utcnow()
             )
 
@@ -3545,26 +3591,53 @@ def update_computer():
             logger.info(
                 f'New computer: '
                 f'{computer.computer_name} '
-                f'with Device ID: {device_id}'
+                f'with Device ID: {device_id} | '
+                f'Online | Health: {health_status}'
             )
+
+        # =====================================================
+        # SAVE COMPUTER
+        # =====================================================
 
         db.session.commit()
 
+        # =====================================================
+        # HISTORY
+        # =====================================================
+
         history = History(
+
             computer_id=computer.id,
+
             cpu=cpu,
+
             ram=ram,
+
             disk=disk,
+
             timestamp=datetime.utcnow()
         )
 
-        db.session.add(history)
+        db.session.add(
+            history
+        )
 
         db.session.commit()
 
+        # =====================================================
+        # RESPONSE
+        # =====================================================
+
         return jsonify({
+
             'success': True,
-            'message': 'Data updated'
+
+            'message': 'Data updated',
+
+            'connection_status': 'online',
+
+            'health_status': health_status
+
         }), 200
 
     except Exception as e:
@@ -3583,6 +3656,9 @@ def update_computer():
             'error': str(e)
         }), 500
 
+# ============================================================
+# COMPUTERS API
+# ============================================================
 
 # ============================================================
 # COMPUTERS API
@@ -3605,121 +3681,194 @@ def get_computers():
         # OFFLINE THRESHOLD
         # =====================================================
 
+        offline_seconds = int(
+            settings_data.get(
+                'offline_threshold',
+                20
+            )
+        )
+
         offline_threshold = (
             datetime.utcnow()
             - timedelta(
-                seconds=settings_data[
-                    'offline_threshold'
-                ]
+                seconds=offline_seconds
             )
         )
 
         result = []
 
         # =====================================================
-        # CALCULATE CURRENT STATUS
+        # PROCESS EACH COMPUTER
         # =====================================================
 
         for comp in computers:
 
-            # -------------------------------------------------
-            # Remove timezone if database returns timezone-aware
-            # -------------------------------------------------
+            # =================================================
+            # DATETIME NORMALIZATION
+            # =================================================
 
-            if comp.last_update:
+            last_update = comp.last_update
 
-                if comp.last_update.tzinfo is not None:
+            if last_update:
 
-                    comp.last_update = (
-                        comp.last_update
-                        .replace(
+                if last_update.tzinfo is not None:
+
+                    last_update = (
+                        last_update.replace(
                             tzinfo=None
                         )
                     )
 
-            # -------------------------------------------------
-            # OFFLINE
-            # -------------------------------------------------
+            # =================================================
+            # CONNECTION STATUS
+            # =================================================
 
             if (
-                not comp.last_update
-                or comp.last_update < offline_threshold
+                not last_update
+                or last_update < offline_threshold
             ):
 
-                comp.status = 'offline'
+                connection_status = 'offline'
 
             else:
 
-                cpu = comp.cpu_usage or 0
-                ram = comp.ram_usage or 0
-                disk = comp.disk_usage or 0
+                connection_status = 'online'
 
-                # ---------------------------------------------
-                # CRITICAL
-                # ---------------------------------------------
+            # =================================================
+            # CURRENT RESOURCE VALUES
+            # =================================================
 
-                if (
-                    cpu >= settings_data[
-                        'cpu_critical'
-                    ]
+            cpu = float(
+                comp.cpu_usage or 0
+            )
 
-                    or
+            ram = float(
+                comp.ram_usage or 0
+            )
 
-                    ram >= settings_data[
-                        'ram_critical'
-                    ]
+            disk = float(
+                comp.disk_usage or 0
+            )
 
-                    or
+            # =================================================
+            # HEALTH STATUS
+            # =================================================
 
-                    disk >= settings_data[
-                        'disk_critical'
-                    ]
-                ):
+            if (
+                cpu >= settings_data[
+                    'cpu_critical'
+                ]
 
-                    comp.status = 'critical'
+                or
 
-                # ---------------------------------------------
-                # WARNING
-                # ---------------------------------------------
+                ram >= settings_data[
+                    'ram_critical'
+                ]
 
-                elif (
-                    cpu >= settings_data[
-                        'cpu_warning'
-                    ]
+                or
 
-                    or
+                disk >= settings_data[
+                    'disk_critical'
+                ]
+            ):
 
-                    ram >= settings_data[
-                        'ram_warning'
-                    ]
+                health_status = 'critical'
 
-                    or
+            elif (
+                cpu >= settings_data[
+                    'cpu_warning'
+                ]
 
-                    disk >= settings_data[
-                        'disk_warning'
-                    ]
-                ):
+                or
 
-                    comp.status = 'warning'
+                ram >= settings_data[
+                    'ram_warning'
+                ]
 
-                # ---------------------------------------------
-                # ONLINE
-                # ---------------------------------------------
+                or
 
-                else:
+                disk >= settings_data[
+                    'disk_warning'
+                ]
+            ):
 
-                    comp.status = 'online'
+                health_status = 'warning'
 
-            # -------------------------------------------------
+            else:
+
+                health_status = 'healthy'
+
+            # =================================================
+            # OFFLINE = NO CURRENT HEALTH STATE
+            # =================================================
+
+            if connection_status == 'offline':
+
+                display_health_status = 'offline'
+
+            else:
+
+                display_health_status = health_status
+
+            # =================================================
+            # IMPORTANT
+            #
+            # Keep database status as CONNECTION status only.
+            #
+            # Old frontend/code using comp.status will therefore
+            # still see:
+            #
+            # online / offline
+            #
+            # It will NEVER become warning/critical.
+            # =================================================
+
+            comp.status = connection_status
+
+            # =================================================
+            # CREATE DICTIONARY
+            # =================================================
+
+            computer_data = comp.to_dict()
+
+            # =================================================
+            # ADD NEW SEPARATE STATUS FIELDS
+            # =================================================
+
+            computer_data[
+                'connection_status'
+            ] = connection_status
+
+            computer_data[
+                'health_status'
+            ] = display_health_status
+
+            # =================================================
+            # LAST UPDATE
+            # =================================================
+
+            if last_update:
+
+                computer_data[
+                    'last_update'
+                ] = last_update.isoformat()
+
+            else:
+
+                computer_data[
+                    'last_update'
+                ] = None
+
+            # =================================================
             # ADD TO RESULT
-            # -------------------------------------------------
+            # =================================================
 
             result.append(
-                comp.to_dict()
+                computer_data
             )
 
         # =====================================================
-        # RETURN DATA
+        # RESPONSE
         # =====================================================
 
         return jsonify({
@@ -3732,10 +3881,8 @@ def get_computers():
 
     except Exception as e:
 
-        db.session.rollback()
-
         logger.error(
-            f'Error: {str(e)}'
+            f'Error getting computers: {str(e)}'
         )
 
         logger.error(
@@ -3743,6 +3890,8 @@ def get_computers():
         )
 
         return jsonify({
+
+            'success': False,
 
             'error': str(e)
 
@@ -3774,38 +3923,122 @@ def get_computer(computer_id):
 
         settings_data = get_system_settings()
 
-        offline_threshold = (
-            datetime.utcnow()
-            - timedelta(
-                seconds=settings_data[
-                    'offline_threshold'
-                ]
+        # =====================================================
+        # OFFLINE THRESHOLD
+        # =====================================================
+
+        offline_seconds = int(
+            settings_data.get(
+                'offline_threshold',
+                20
             )
         )
 
-        if computer.last_update:
+        offline_threshold = (
+            datetime.utcnow()
+            - timedelta(
+                seconds=offline_seconds
+            )
+        )
 
-            if computer.last_update.tzinfo is not None:
+        # =====================================================
+        # DATETIME
+        # =====================================================
 
-                computer.last_update = (
-                    computer.last_update
-                    .replace(tzinfo=None)
+        last_update = computer.last_update
+
+        if last_update:
+
+            if last_update.tzinfo is not None:
+
+                last_update = (
+                    last_update.replace(
+                        tzinfo=None
+                    )
                 )
 
+        # =====================================================
+        # CONNECTION STATUS
+        # =====================================================
+
         if (
-            computer.last_update
-            and computer.last_update < offline_threshold
+            not last_update
+            or last_update < offline_threshold
         ):
 
-            computer.status = 'offline'
+            connection_status = 'offline'
 
-            db.session.commit()
+        else:
+
+            connection_status = 'online'
+
+        # =====================================================
+        # RESOURCE VALUES
+        # =====================================================
+
+        cpu = float(
+            computer.cpu_usage or 0
+        )
+
+        ram = float(
+            computer.ram_usage or 0
+        )
+
+        disk = float(
+            computer.disk_usage or 0
+        )
+
+        # =====================================================
+        # HEALTH STATUS
+        # =====================================================
+
+        if (
+            cpu >= settings_data['cpu_critical']
+            or
+            ram >= settings_data['ram_critical']
+            or
+            disk >= settings_data['disk_critical']
+        ):
+
+            health_status = 'critical'
+
+        elif (
+            cpu >= settings_data['cpu_warning']
+            or
+            ram >= settings_data['ram_warning']
+            or
+            disk >= settings_data['disk_warning']
+        ):
+
+            health_status = 'warning'
+
+        else:
+
+            health_status = 'healthy'
+
+        # =====================================================
+        # OFFLINE = NO CURRENT HEALTH STATE
+        # =====================================================
+
+        if connection_status == 'offline':
+
+            display_health_status = 'offline'
+
+        else:
+
+            display_health_status = health_status
+
+        # =====================================================
+        # KEEP LEGACY STATUS AS CONNECTION STATUS
+        # =====================================================
+
+        computer.status = connection_status
+
+        # =====================================================
+        # PREDICTIONS
+        # =====================================================
 
         predictions = []
-
-        cpu = computer.cpu_usage or 0
-        ram = computer.ram_usage or 0
-        disk = computer.disk_usage or 0
 
         if cpu >= settings_data['cpu_critical']:
 
@@ -3843,11 +4076,19 @@ def get_computer(computer_id):
                 '⚠️ High Disk Usage'
             )
 
-        if computer.status == 'offline':
+        # =====================================================
+        # OFFLINE PREDICTION
+        # =====================================================
+
+        if connection_status == 'offline':
 
             predictions.append(
                 '📴 Offline - No updates received'
             )
+
+        # =====================================================
+        # HISTORY
+        # =====================================================
 
         history = (
             History.query
@@ -3863,14 +4104,50 @@ def get_computer(computer_id):
 
         history = history[::-1]
 
+        # =====================================================
+        # COMPUTER DATA
+        # =====================================================
+
+        computer_data = computer.to_dict()
+
+        # Separate connection + health
+        computer_data[
+            'connection_status'
+        ] = connection_status
+
+        computer_data[
+            'health_status'
+        ] = display_health_status
+
+        if last_update:
+
+            computer_data[
+                'last_update'
+            ] = last_update.isoformat()
+
+        else:
+
+            computer_data[
+                'last_update'
+            ] = None
+
+        # =====================================================
+        # RESPONSE
+        # =====================================================
+
         return jsonify({
+
             'success': True,
-            'computer': computer.to_dict(),
+
+            'computer': computer_data,
+
             'predictions': predictions,
+
             'history': [
                 h.to_dict()
                 for h in history
             ]
+
         }), 200
 
     except Exception as e:
@@ -3879,10 +4156,13 @@ def get_computer(computer_id):
             f'Error: {str(e)}'
         )
 
+        logger.error(
+            traceback.format_exc()
+        )
+
         return jsonify({
             'error': str(e)
         }), 500
-
 
 # ============================================================
 # HISTORY
