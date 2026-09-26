@@ -3257,7 +3257,7 @@ def update_computer():
             or disk >= disk_warning
         ):
 
-            status = 'Warning'
+            status = 'warning'
            
 
         else:
@@ -3601,6 +3601,10 @@ def get_computers():
 
         settings_data = get_system_settings()
 
+        # =====================================================
+        # OFFLINE THRESHOLD
+        # =====================================================
+
         offline_threshold = (
             datetime.utcnow()
             - timedelta(
@@ -3612,7 +3616,15 @@ def get_computers():
 
         result = []
 
+        # =====================================================
+        # CALCULATE CURRENT STATUS
+        # =====================================================
+
         for comp in computers:
+
+            # -------------------------------------------------
+            # Remove timezone if database returns timezone-aware
+            # -------------------------------------------------
 
             if comp.last_update:
 
@@ -3620,25 +3632,102 @@ def get_computers():
 
                     comp.last_update = (
                         comp.last_update
-                        .replace(tzinfo=None)
+                        .replace(
+                            tzinfo=None
+                        )
                     )
 
+            # -------------------------------------------------
+            # OFFLINE
+            # -------------------------------------------------
+
             if (
-                comp.last_update
-                and comp.last_update < offline_threshold
+                not comp.last_update
+                or comp.last_update < offline_threshold
             ):
 
                 comp.status = 'offline'
+
+            else:
+
+                cpu = comp.cpu_usage or 0
+                ram = comp.ram_usage or 0
+                disk = comp.disk_usage or 0
+
+                # ---------------------------------------------
+                # CRITICAL
+                # ---------------------------------------------
+
+                if (
+                    cpu >= settings_data[
+                        'cpu_critical'
+                    ]
+
+                    or
+
+                    ram >= settings_data[
+                        'ram_critical'
+                    ]
+
+                    or
+
+                    disk >= settings_data[
+                        'disk_critical'
+                    ]
+                ):
+
+                    comp.status = 'critical'
+
+                # ---------------------------------------------
+                # WARNING
+                # ---------------------------------------------
+
+                elif (
+                    cpu >= settings_data[
+                        'cpu_warning'
+                    ]
+
+                    or
+
+                    ram >= settings_data[
+                        'ram_warning'
+                    ]
+
+                    or
+
+                    disk >= settings_data[
+                        'disk_warning'
+                    ]
+                ):
+
+                    comp.status = 'warning'
+
+                # ---------------------------------------------
+                # ONLINE
+                # ---------------------------------------------
+
+                else:
+
+                    comp.status = 'online'
+
+            # -------------------------------------------------
+            # ADD TO RESULT
+            # -------------------------------------------------
 
             result.append(
                 comp.to_dict()
             )
 
-        db.session.commit()
+        # =====================================================
+        # RETURN DATA
+        # =====================================================
 
         return jsonify({
+
             'success': True,
+
             'computers': result
+
         }), 200
 
     except Exception as e:
@@ -3649,10 +3738,15 @@ def get_computers():
             f'Error: {str(e)}'
         )
 
-        return jsonify({
-            'error': str(e)
-        }), 500
+        logger.error(
+            traceback.format_exc()
+        )
 
+        return jsonify({
+
+            'error': str(e)
+
+        }), 500
 
 # ============================================================
 # SINGLE COMPUTER API
