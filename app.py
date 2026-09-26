@@ -3249,7 +3249,7 @@ def update_computer():
         ):
 
             status = 'critical'
-            status = 'online'
+          
 
         elif (
             cpu >= cpu_warning
@@ -3258,7 +3258,7 @@ def update_computer():
         ):
 
             status = 'Warning'
-            status = 'online'
+           
 
         else:
 
