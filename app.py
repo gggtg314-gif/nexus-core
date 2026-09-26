@@ -3249,6 +3249,7 @@ def update_computer():
         ):
 
             status = 'critical'
+            status = 'online'
 
         elif (
             cpu >= cpu_warning
@@ -3256,6 +3257,7 @@ def update_computer():
             or disk >= disk_warning
         ):
 
+            status = 'Warning'
             status = 'online'
 
         else:
