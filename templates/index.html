@@ -1420,17 +1420,17 @@
                 <a href="{{ url_for('predictions') }}" class="qa-btn">
                     <i class="fas fa-chart-line"></i> View Predictions
                 </a>
-                   <a 
-                    href="{{ url_for('static', filename='downloads/NexusCore-Agent.exe') }}" 
-                    class="sys-btn" 
-                    style="flex:0 0 auto;height:32px;padding:0 12px;" 
-                >
-                    <i class="fas fa-download"></i> 
-                   Download Agent 
-                </a>
+            
                 <button class="qa-btn" onclick="exportData()">
                     <i class="fas fa-download"></i> Export Data
                 </button>
+                <a 
+                     href="{{ url_for('static', filename='downloads/NexusCore-Agent.exe') }}" 
+                     class="qa-btn"
+                >
+                     <i class="fas fa-download"></i>
+                     Download Agent
+               </a>
              
             </div>
 
