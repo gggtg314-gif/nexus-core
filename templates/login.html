@@ -25,7 +25,7 @@
 
     <style>
         /* ═══════════════════════════════════════════════════════
-           THEME TOKENS
+           THEME TOKENS — Premium Dark
            ═══════════════════════════════════════════════════════ */
         :root,
         [data-theme="light"] {
@@ -57,37 +57,50 @@
             --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08);
             --shadow-lg: 0 20px 60px -20px rgba(16, 24, 40, 0.18);
             --particle-color: 21, 112, 239;
+            --particle-glow: 21, 112, 239;
+            --particle-base-opacity: 0.55;
+            --particle-line-opacity: 0.20;
+            --particle-size-mul: 1;
+            --card-inner-glow: transparent;
         }
 
         [data-theme="dark"] {
-            --bg-canvas: #060914;
-            --bg-surface: #0d1322;
-            --bg-elevated: #171e2f;
-            --bg-hover: #1f2937;
-            --border-subtle: #1a2235;
-            --border-default: #2a3347;
-            --border-strong: #3d4859;
-            --text-primary: #f9fafb;
-            --text-secondary: #94a3b8;
-            --text-tertiary: #64748b;
-            --text-quaternary: #475569;
-            --accent: #3b82f6;
-            --accent-hover: #60a5fa;
-            --accent-subtle: rgba(59, 130, 246, 0.1);
-            --success: #22c55e;
-            --success-subtle: rgba(34, 197, 94, 0.1);
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --danger-subtle: rgba(239, 68, 68, 0.1);
-            --info: #06b6d4;
-            --info-subtle: rgba(6, 182, 212, 0.1);
-            --purple: #a78bfa;
-            --purple-subtle: rgba(167, 139, 250, 0.1);
-            --cyan: #22d3ee;
-            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-            --shadow-lg: 0 25px 70px rgba(0, 0, 0, 0.65);
-            --particle-color: 96, 165, 250;
+            --bg-canvas: #04060f;
+            --bg-surface: #0a1120;
+            --bg-elevated: #141c30;
+            --bg-hover: #1c2740;
+            --border-subtle: #16203a;
+            --border-default: #24304c;
+            --border-strong: #384660;
+            --text-primary: #f8fafc;
+            --text-secondary: #a4b2c8;
+            --text-tertiary: #7a8aa3;
+            --text-quaternary: #4a5a75;
+            --accent: #4b8dff;
+            --accent-hover: #6ea3ff;
+            --accent-subtle: rgba(75, 141, 255, 0.12);
+            --success: #2ee06a;
+            --success-subtle: rgba(46, 224, 106, 0.12);
+            --warning: #ffb43d;
+            --danger: #ff5c5c;
+            --danger-subtle: rgba(255, 92, 92, 0.12);
+            --info: #22d3ee;
+            --info-subtle: rgba(34, 211, 238, 0.12);
+            --purple: #b794ff;
+            --purple-subtle: rgba(183, 148, 255, 0.12);
+            --cyan: #38e0ff;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.55);
+            --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.75),
+                         0 0 0 1px rgba(75, 141, 255, 0.08),
+                         0 0 100px rgba(75, 141, 255, 0.06);
+            --particle-color: 130, 190, 255;
+            --particle-glow: 100, 165, 255;
+            --particle-base-opacity: 0.9;
+            --particle-line-opacity: 0.4;
+            --particle-size-mul: 1.25;
+            --card-inner-glow: 0 0 0 1px rgba(75, 141, 255, 0.06) inset,
+                               0 0 60px rgba(75, 141, 255, 0.05) inset;
         }
 
         :root {
@@ -126,7 +139,6 @@
             width: 100%; height: 100%;
             z-index: 0;
             pointer-events: none;
-            opacity: 0.7;
         }
 
         .grid-overlay {
@@ -138,10 +150,14 @@
                 linear-gradient(var(--border-subtle) 1px, transparent 1px),
                 linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
             background-size: 50px 50px;
-            opacity: 0.25;
-            mask-image: radial-gradient(ellipse at center, #000 0%, transparent 75%);
-            -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, transparent 75%);
+            opacity: 0.3;
+            mask-image: radial-gradient(ellipse at center, #000 0%, transparent 78%);
+            -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, transparent 78%);
             animation: gridMove 30s linear infinite;
+        }
+
+        [data-theme="dark"] .grid-overlay {
+            opacity: 0.4;
         }
 
         @keyframes gridMove {
@@ -152,33 +168,35 @@
         .bg-glow {
             position: fixed;
             border-radius: 50%;
-            filter: blur(120px);
+            filter: blur(130px);
             pointer-events: none;
             z-index: 0;
-            opacity: 0.5;
+            opacity: 0.55;
             will-change: transform;
         }
         [data-theme="light"] .bg-glow { opacity: 0.3; }
+        [data-theme="dark"] .bg-glow { opacity: 0.7; }
 
         .bg-glow-1 {
-            width: 600px; height: 600px;
+            width: 650px; height: 650px;
             background: radial-gradient(circle, var(--accent), transparent 70%);
-            top: -250px; left: -200px;
+            top: -280px; left: -220px;
             animation: floatOrb1 18s ease-in-out infinite;
         }
         .bg-glow-2 {
-            width: 550px; height: 550px;
+            width: 600px; height: 600px;
             background: radial-gradient(circle, var(--purple), transparent 70%);
-            bottom: -260px; right: -180px;
+            bottom: -280px; right: -200px;
             animation: floatOrb2 22s ease-in-out infinite;
         }
         .bg-glow-3 {
-            width: 400px; height: 400px;
+            width: 450px; height: 450px;
             background: radial-gradient(circle, var(--cyan), transparent 70%);
             top: 40%; left: 45%;
-            opacity: 0.25;
+            opacity: 0.3;
             animation: floatOrb3 26s ease-in-out infinite;
         }
+        [data-theme="dark"] .bg-glow-3 { opacity: 0.45; }
 
         @keyframes floatOrb1 {
             0%, 100% { transform: translate(0, 0) scale(1); }
@@ -190,8 +208,8 @@
             50% { transform: translate(-100px, -60px) scale(1.2); }
         }
         @keyframes floatOrb3 {
-            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
-            50% { transform: translate(-80px, -80px) scale(1.3); opacity: 0.4; }
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+            50% { transform: translate(-80px, -80px) scale(1.3); opacity: 0.5; }
         }
 
         body::after {
@@ -200,7 +218,7 @@
             inset: 0;
             z-index: 1;
             pointer-events: none;
-            background: radial-gradient(ellipse at center, transparent 40%, var(--bg-canvas) 130%);
+            background: radial-gradient(ellipse at center, transparent 45%, var(--bg-canvas) 135%);
         }
 
         /* ═══════════════════════════════════════════════════════
@@ -259,13 +277,22 @@
             border-radius: 16px;
             padding: 1px;
             background: linear-gradient(135deg,
-                rgba(59, 130, 246, 0.5),
-                rgba(167, 139, 250, 0.5),
-                rgba(34, 211, 238, 0.5),
-                rgba(59, 130, 246, 0.5));
+                rgba(59, 130, 246, 0.6),
+                rgba(167, 139, 250, 0.6),
+                rgba(34, 211, 238, 0.6),
+                rgba(59, 130, 246, 0.6));
             background-size: 300% 300%;
             animation: shimmerBorder 8s linear infinite;
             box-shadow: var(--shadow-lg);
+        }
+
+        [data-theme="dark"] .login-card-wrap {
+            background: linear-gradient(135deg,
+                rgba(75, 141, 255, 0.85),
+                rgba(183, 148, 255, 0.75),
+                rgba(56, 224, 255, 0.7),
+                rgba(75, 141, 255, 0.85));
+            background-size: 300% 300%;
         }
 
         @keyframes shimmerBorder {
@@ -283,6 +310,7 @@
             position: relative;
             transform-style: preserve-3d;
             transition: transform 0.3s ease-out;
+            box-shadow: var(--card-inner-glow);
         }
 
         .login-card::before {
@@ -362,6 +390,12 @@
             position: relative;
         }
 
+        [data-theme="dark"] .logo-icon {
+            box-shadow: 0 12px 40px rgba(75, 141, 255, 0.55),
+                        0 0 60px rgba(75, 141, 255, 0.25),
+                        0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+        }
+
         .logo-icon::before {
             content: '';
             position: absolute;
@@ -369,7 +403,7 @@
             border-radius: 24px;
             background: linear-gradient(135deg, var(--accent), var(--purple));
             opacity: 0;
-            filter: blur(12px);
+            filter: blur(14px);
             transition: opacity 0.5s ease;
             z-index: -1;
         }
@@ -379,7 +413,7 @@
         }
 
         .logo-icon:hover::before {
-            opacity: 0.8;
+            opacity: 0.9;
         }
 
         @keyframes iconFloat {
@@ -416,7 +450,6 @@
             text-transform: uppercase;
         }
 
-        /* Brand feature list — only real/neutral info */
         .brand-features {
             display: flex;
             flex-direction: column;
@@ -458,6 +491,10 @@
             font-size: 11px;
             flex-shrink: 0;
             transition: all 0.25s ease;
+        }
+
+        [data-theme="dark"] .brand-feature i {
+            box-shadow: 0 0 12px rgba(75, 141, 255, 0.25);
         }
 
         .brand-feature:hover i {
@@ -539,7 +576,7 @@
         }
 
         .input-wrapper:focus-within::before {
-            opacity: 0.35;
+            opacity: 0.45;
         }
 
         .form-control {
@@ -558,6 +595,10 @@
             z-index: 1;
         }
 
+        [data-theme="dark"] .form-control {
+            background: rgba(4, 6, 15, 0.6);
+        }
+
         .form-control::placeholder {
             color: var(--text-quaternary);
             font-size: 12px;
@@ -574,6 +615,12 @@
             box-shadow: 0 0 0 4px var(--accent-subtle);
             outline: none;
             transform: translateY(-1px);
+        }
+
+        [data-theme="dark"] .form-control:focus {
+            background: rgba(4, 6, 15, 0.85);
+            box-shadow: 0 0 0 4px var(--accent-subtle),
+                        0 0 24px rgba(75, 141, 255, 0.15);
         }
 
         .form-control:-webkit-autofill,
@@ -765,10 +812,20 @@
             animation: fieldEnter 0.5s ease-out 0.45s both;
         }
 
+        [data-theme="dark"] .btn-login {
+            box-shadow: 0 8px 28px rgba(75, 141, 255, 0.45),
+                        0 0 40px rgba(75, 141, 255, 0.15);
+        }
+
         .btn-login:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 32px rgba(59, 130, 246, 0.5);
             background-position: 100% 50%;
+        }
+
+        [data-theme="dark"] .btn-login:hover {
+            box-shadow: 0 14px 40px rgba(75, 141, 255, 0.6),
+                        0 0 60px rgba(75, 141, 255, 0.25);
         }
 
         .btn-login:active {
@@ -883,25 +940,25 @@
 
         .alert-danger {
             background: var(--danger-subtle);
-            border-color: rgba(240, 68, 56, 0.2);
+            border-color: rgba(240, 68, 56, 0.25);
             color: var(--danger);
         }
 
         .alert-success {
             background: var(--success-subtle);
-            border-color: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.25);
             color: var(--success);
         }
 
         .alert-info {
             background: var(--info-subtle);
-            border-color: rgba(6, 174, 212, 0.2);
+            border-color: rgba(6, 174, 212, 0.25);
             color: var(--info);
         }
 
         .alert-warning {
             background: var(--info-subtle);
-            border-color: rgba(245, 158, 11, 0.2);
+            border-color: rgba(245, 158, 11, 0.25);
             color: var(--warning);
         }
 
@@ -989,6 +1046,185 @@
         }
 
         /* ═══════════════════════════════════════════════════════
+           PAGE TRANSITION OVERLAY
+           ═══════════════════════════════════════════════════════ */
+        .page-transition {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.45s ease, visibility 0.45s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-canvas);
+        }
+
+        .page-transition.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: all;
+        }
+
+        .page-transition::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, var(--accent-subtle), transparent 60%);
+            opacity: 0.8;
+            animation: transitionPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes transitionPulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.1); }
+        }
+
+        .page-transition-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 22px;
+            transform: scale(0.8);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s;
+        }
+
+        .page-transition.active .page-transition-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .transition-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 12px 40px rgba(75, 141, 255, 0.5),
+                        0 0 80px rgba(75, 141, 255, 0.25);
+            animation: transitionLogoPulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes transitionLogoPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 12px 40px rgba(75, 141, 255, 0.5), 0 0 80px rgba(75, 141, 255, 0.25); }
+            50% { transform: scale(1.08); box-shadow: 0 16px 50px rgba(75, 141, 255, 0.7), 0 0 100px rgba(75, 141, 255, 0.4); }
+        }
+
+        .transition-logo i {
+            font-size: 34px;
+            color: #fff;
+            animation: transitionIconSpin 2s linear infinite;
+        }
+
+        @keyframes transitionIconSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Pulsing rings around logo */
+        .transition-logo::before,
+        .transition-logo::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 26px;
+            border: 2px solid var(--accent);
+            opacity: 0;
+            animation: ringPulse 1.8s ease-out infinite;
+        }
+
+        .transition-logo::after {
+            animation-delay: 0.9s;
+        }
+
+        @keyframes ringPulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1.4);
+                opacity: 0;
+            }
+        }
+
+        .transition-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .transition-text .dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: dotBounce 1.2s ease-in-out infinite;
+        }
+
+        .transition-text .dot:nth-child(2) { animation-delay: 0.15s; }
+        .transition-text .dot:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes dotBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* Progress bar */
+        .transition-progress {
+            width: 180px;
+            height: 3px;
+            background: var(--border-subtle);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .transition-progress::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg,
+                transparent,
+                var(--accent),
+                var(--purple),
+                transparent);
+            background-size: 200% 100%;
+            animation: progressSlide 1.2s linear infinite;
+        }
+
+        @keyframes progressSlide {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        /* Card exit animation when navigating */
+        .login-card-wrap.exiting {
+            animation: cardExit 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+        }
+
+        @keyframes cardExit {
+            to {
+                opacity: 0;
+                transform: translateX(-40px) scale(0.94);
+                filter: blur(6px);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════
            RESPONSIVE
            ═══════════════════════════════════════════════════════ */
         @media (max-width: 820px) {
@@ -1018,6 +1254,12 @@
             .logo-title {
                 font-size: 20px;
             }
+            .transition-logo {
+                width: 68px;
+                height: 68px;
+                border-radius: 18px;
+            }
+            .transition-logo i { font-size: 28px; }
         }
 
         @media (max-width: 480px) {
@@ -1025,6 +1267,7 @@
             .form-panel { padding: 24px 20px; }
             .form-header h2 { font-size: 20px; }
             .brand-panel { padding: 24px 20px; }
+            .transition-progress { width: 140px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -1045,6 +1288,22 @@
     <div class="bg-glow bg-glow-2"></div>
     <div class="bg-glow bg-glow-3"></div>
 
+    <!-- Page transition overlay -->
+    <div class="page-transition" id="pageTransition" aria-hidden="true">
+        <div class="page-transition-content">
+            <div class="transition-logo">
+                <i class="fas fa-microchip"></i>
+            </div>
+            <div class="transition-text">
+                <span>Loading</span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+            <div class="transition-progress"></div>
+        </div>
+    </div>
+
     <div class="theme-toggle" role="group" aria-label="Theme">
         <button type="button" class="theme-btn" data-theme-value="light" title="Light mode">
             <i class="fas fa-sun"></i>
@@ -1058,7 +1317,7 @@
     </div>
 
     <div class="login-container">
-        <div class="login-card-wrap">
+        <div class="login-card-wrap" id="loginCardWrap">
             <div class="login-card" id="loginCard">
 
                 <!-- ═══ LEFT — BRANDING ═══ -->
@@ -1167,7 +1426,9 @@
                                     Remember me
                                 </label>
                             </div>
-                            <a href="{{ url_for('forgot_password') }}" class="forgot-link">
+                            <a href="{{ url_for('forgot_password') }}"
+                               class="forgot-link"
+                               data-transition="true">
                                 Forgot password?
                             </a>
                         </div>
@@ -1182,7 +1443,9 @@
                     <div class="register-section">
                         <span class="register-text">
                             Don't have an account?
-                            <a href="{{ url_for('register') }}" class="register-link">Create one</a>
+                            <a href="{{ url_for('register') }}"
+                               class="register-link"
+                               data-transition="true">Create one</a>
                         </span>
                     </div>
 
@@ -1204,57 +1467,78 @@
 
     <script>
         /* ═══════════════════════════════════════════════════════
-           PARTICLE NETWORK BACKGROUND
+           ENHANCED PARTICLE NETWORK
+           — Brighter, bigger, more visible
+           — Dark mode gets extra glow
            ═══════════════════════════════════════════════════════ */
         (function () {
             const canvas = document.getElementById('particleCanvas');
             const ctx = canvas.getContext('2d');
             let particles = [];
             let mouse = { x: null, y: null };
-            const PARTICLE_COUNT = window.innerWidth < 768 ? 40 : 80;
-            const CONNECTION_DIST = 130;
-            const MOUSE_DIST = 180;
+            const isMobile = window.innerWidth < 768;
+            const PARTICLE_COUNT = isMobile ? 50 : 95;
+            const CONNECTION_DIST = 150;
+            const MOUSE_DIST = 200;
+            let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-            function getParticleColor() {
-                const styles = getComputedStyle(document.documentElement);
-                return styles.getPropertyValue('--particle-color').trim() || '96, 165, 250';
+            function getTokens() {
+                const s = getComputedStyle(document.documentElement);
+                return {
+                    color: s.getPropertyValue('--particle-color').trim() || '130, 190, 255',
+                    glow: s.getPropertyValue('--particle-glow').trim() || '100, 165, 255',
+                    baseOpacity: parseFloat(s.getPropertyValue('--particle-base-opacity')) || 0.9,
+                    lineOpacity: parseFloat(s.getPropertyValue('--particle-line-opacity')) || 0.4,
+                    sizeMul: parseFloat(s.getPropertyValue('--particle-size-mul')) || 1
+                };
             }
 
             function resize() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
+                dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = window.innerWidth * dpr;
+                canvas.height = window.innerHeight * dpr;
+                canvas.style.width = window.innerWidth + 'px';
+                canvas.style.height = window.innerHeight + 'px';
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             }
 
             function createParticles() {
+                const w = window.innerWidth;
+                const h = window.innerHeight;
                 particles = [];
                 for (let i = 0; i < PARTICLE_COUNT; i++) {
                     particles.push({
-                        x: Math.random() * canvas.width,
-                        y: Math.random() * canvas.height,
-                        vx: (Math.random() - 0.5) * 0.35,
-                        vy: (Math.random() - 0.5) * 0.35,
-                        r: Math.random() * 1.8 + 0.6
+                        x: Math.random() * w,
+                        y: Math.random() * h,
+                        vx: (Math.random() - 0.5) * 0.4,
+                        vy: (Math.random() - 0.5) * 0.4,
+                        r: Math.random() * 2.2 + 1.1,        // bigger base radius
+                        twinkle: Math.random() * Math.PI * 2, // for subtle pulsing
+                        twinkleSpeed: 0.01 + Math.random() * 0.02
                     });
                 }
             }
 
             function drawParticles() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const color = getParticleColor();
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+                const tokens = getTokens();
 
+                ctx.clearRect(0, 0, w, h);
+
+                // Draw connections first (behind particles)
                 for (let i = 0; i < particles.length; i++) {
                     const p1 = particles[i];
-
                     for (let j = i + 1; j < particles.length; j++) {
                         const p2 = particles[j];
                         const dx = p1.x - p2.x;
                         const dy = p1.y - p2.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-
-                        if (dist < CONNECTION_DIST) {
-                            const alpha = (1 - dist / CONNECTION_DIST) * 0.28;
-                            ctx.strokeStyle = `rgba(${color}, ${alpha})`;
-                            ctx.lineWidth = 0.7;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < CONNECTION_DIST * CONNECTION_DIST) {
+                            const dist = Math.sqrt(distSq);
+                            const alpha = (1 - dist / CONNECTION_DIST) * tokens.lineOpacity;
+                            ctx.strokeStyle = `rgba(${tokens.color}, ${alpha})`;
+                            ctx.lineWidth = 0.9;
                             ctx.beginPath();
                             ctx.moveTo(p1.x, p1.y);
                             ctx.lineTo(p2.x, p2.y);
@@ -1262,41 +1546,61 @@
                         }
                     }
 
+                    // Mouse connections — brighter
                     if (mouse.x !== null) {
                         const dx = p1.x - mouse.x;
                         const dy = p1.y - mouse.y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
-
                         if (dist < MOUSE_DIST) {
-                            const alpha = (1 - dist / MOUSE_DIST) * 0.5;
-                            ctx.strokeStyle = `rgba(${color}, ${alpha})`;
-                            ctx.lineWidth = 1;
+                            const alpha = (1 - dist / MOUSE_DIST) * 0.75;
+                            ctx.strokeStyle = `rgba(${tokens.glow}, ${alpha})`;
+                            ctx.lineWidth = 1.2;
                             ctx.beginPath();
                             ctx.moveTo(p1.x, p1.y);
                             ctx.lineTo(mouse.x, mouse.y);
                             ctx.stroke();
-                            p1.x -= dx * 0.005;
-                            p1.y -= dy * 0.005;
+                            p1.x -= dx * 0.004;
+                            p1.y -= dy * 0.004;
                         }
                     }
                 }
 
+                // Draw particles
                 for (let p of particles) {
-                    ctx.fillStyle = `rgba(${color}, 0.75)`;
+                    p.twinkle += p.twinkleSpeed;
+                    const twinkleMul = 0.85 + Math.sin(p.twinkle) * 0.15;
+                    const radius = p.r * tokens.sizeMul * twinkleMul;
+
+                    // Outer glow halo (bigger + brighter)
+                    const glowGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius * 5);
+                    glowGrad.addColorStop(0, `rgba(${tokens.glow}, ${0.35 * tokens.baseOpacity})`);
+                    glowGrad.addColorStop(0.4, `rgba(${tokens.glow}, ${0.12 * tokens.baseOpacity})`);
+                    glowGrad.addColorStop(1, `rgba(${tokens.glow}, 0)`);
+                    ctx.fillStyle = glowGrad;
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.arc(p.x, p.y, radius * 5, 0, Math.PI * 2);
                     ctx.fill();
 
-                    ctx.fillStyle = `rgba(${color}, 0.15)`;
+                    // Core particle
+                    ctx.fillStyle = `rgba(${tokens.color}, ${tokens.baseOpacity})`;
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
+                    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
                     ctx.fill();
 
+                    // Bright center highlight
+                    ctx.fillStyle = `rgba(255, 255, 255, ${0.6 * tokens.baseOpacity})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, radius * 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Update
                     p.x += p.vx;
                     p.y += p.vy;
 
-                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    if (p.x < -10) p.x = w + 10;
+                    if (p.x > w + 10) p.x = -10;
+                    if (p.y < -10) p.y = h + 10;
+                    if (p.y > h + 10) p.y = -10;
                 }
 
                 requestAnimationFrame(drawParticles);
@@ -1313,6 +1617,19 @@
             });
 
             window.addEventListener('mouseleave', () => {
+                mouse.x = null;
+                mouse.y = null;
+            });
+
+            // Touch support for mobile
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0) {
+                    mouse.x = e.touches[0].clientX;
+                    mouse.y = e.touches[0].clientY;
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchend', () => {
                 mouse.x = null;
                 mouse.y = null;
             });
@@ -1469,6 +1786,53 @@
                     }
                 });
             }
+        })();
+
+        /* ═══════════════════════════════════════════════════════
+           PAGE TRANSITION
+           — Attaches to any [data-transition="true"] link
+           — Fade + slide card out, show brand loader, then navigate
+           ═══════════════════════════════════════════════════════ */
+        (function () {
+            const overlay = document.getElementById('pageTransition');
+            const cardWrap = document.getElementById('loginCardWrap');
+            if (!overlay) return;
+
+            const DURATION = 650;
+
+            function navigateWithTransition(href) {
+                // Step 1: slide card out
+                if (cardWrap) cardWrap.classList.add('exiting');
+
+                // Step 2: show overlay
+                setTimeout(() => {
+                    overlay.classList.add('active');
+                    overlay.setAttribute('aria-hidden', 'false');
+                }, 180);
+
+                // Step 3: navigate
+                setTimeout(() => {
+                    window.location.href = href;
+                }, DURATION);
+            }
+
+            document.querySelectorAll('[data-transition="true"]').forEach((link) => {
+                link.addEventListener('click', function (e) {
+                    // Respect modifier keys (Ctrl/Cmd/middle click) — open new tab normally
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+                    e.preventDefault();
+                    navigateWithTransition(this.href);
+                });
+            });
+
+            // Fade overlay out on page show (browser back/forward)
+            window.addEventListener('pageshow', function (e) {
+                if (e.persisted || overlay.classList.contains('active')) {
+                    overlay.classList.remove('active');
+                    overlay.setAttribute('aria-hidden', 'true');
+                    if (cardWrap) cardWrap.classList.remove('exiting');
+                }
+            });
         })();
 
         /* ═══════════════════════════════════════════════════════
