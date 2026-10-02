@@ -3008,12 +3008,67 @@ def alerts():
 @login_required
 def qr_selection():
 
-    computers = Computer.query.all()
+    try:
 
-    return render_template(
-        'qr_selection.html',
-        computers=computers
-    )
+        computers = Computer.query.all()
+
+        settings_data = get_system_settings()
+
+        offline_seconds = int(
+            settings_data.get(
+                'offline_threshold',
+                20
+            )
+        )
+
+        offline_threshold = (
+            datetime.utcnow()
+            - timedelta(
+                seconds=offline_seconds
+            )
+        )
+
+        for comp in computers:
+
+            last_update = comp.last_update
+
+            if last_update:
+
+                if last_update.tzinfo is not None:
+                    last_update = last_update.replace(
+                        tzinfo=None
+                    )
+
+            if (
+                not last_update
+                or last_update < offline_threshold
+            ):
+
+                comp.connection_status = 'offline'
+
+            else:
+
+                comp.connection_status = 'online'
+
+        return render_template(
+            'qr_selection.html',
+            computers=computers
+        )
+
+    except Exception as e:
+
+        logger.error(
+            f'Error loading QR selection: {str(e)}'
+        )
+
+        logger.error(
+            traceback.format_exc()
+        )
+
+        return render_template(
+            'qr_selection.html',
+            computers=[]
+        )
 
 
 @app.route('/qr/<int:computer_id>')
@@ -3035,6 +3090,56 @@ def qr_display(computer_id):
         return redirect(
             url_for('qr_selection')
         )
+
+    try:
+
+        settings_data = get_system_settings()
+
+        offline_seconds = int(
+            settings_data.get(
+                'offline_threshold',
+                20
+            )
+        )
+
+        offline_threshold = (
+            datetime.utcnow()
+            - timedelta(
+                seconds=offline_seconds
+            )
+        )
+
+        last_update = computer.last_update
+
+        if last_update:
+
+            if last_update.tzinfo is not None:
+                last_update = last_update.replace(
+                    tzinfo=None
+                )
+
+        if (
+            not last_update
+            or last_update < offline_threshold
+        ):
+
+            computer.connection_status = 'offline'
+
+        else:
+
+            computer.connection_status = 'online'
+
+    except Exception as e:
+
+        logger.error(
+            f'Error checking QR computer status: {str(e)}'
+        )
+
+        logger.error(
+            traceback.format_exc()
+        )
+
+        computer.connection_status = 'offline'
 
     return render_template(
         'qr_code.html',
@@ -3091,7 +3196,10 @@ def generate_qr_code(computer_id):
         )
 
         qr.add_data(qr_data)
-        qr.make(fit=True)
+
+        qr.make(
+            fit=True
+        )
 
         img = qr.make_image(
             fill_color='black',
@@ -3136,6 +3244,10 @@ def generate_qr_code(computer_id):
             f'Error generating QR code: {e}'
         )
 
+        logger.error(
+            traceback.format_exc()
+        )
+
         return jsonify({
             'error': str(e)
         }), 500
@@ -3170,10 +3282,13 @@ def get_device_by_id(device_id):
             f'Error looking up device: {e}'
         )
 
+        logger.error(
+            traceback.format_exc()
+        )
+
         return jsonify({
             'error': str(e)
         }), 500
-
 
 # ============================================================
 # AGENT TELEMETRY UPDATE
