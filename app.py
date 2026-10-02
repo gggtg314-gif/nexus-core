@@ -5318,12 +5318,6 @@ def iot_dashboard():
 
 # ============================================================
 # IOT DEVICES API
-# REAL-TIME ONLINE / OFFLINE STATUS
-# ============================================================
-
-# ============================================================
-# IOT DEVICES API
-# REAL-TIME ONLINE / OFFLINE STATUS
 # ============================================================
 
 @app.route('/api/iot/devices', methods=['GET'])
@@ -5331,15 +5325,6 @@ def iot_dashboard():
 def get_iot_devices():
 
     try:
-
-        # ----------------------------------------------------
-        # DEVICE ONLINE LIMIT
-        # ESP32 ne last 20 seconds mein data bheja
-        # to ONLINE.
-        # Uske baad OFFLINE.
-        # ----------------------------------------------------
-
-        offline_threshold = 20
 
         rows = db.session.execute(
             text("""
@@ -5353,9 +5338,11 @@ def get_iot_devices():
 
                     CASE
                         WHEN last_seen IS NOT NULL
-                        AND last_seen >=
+                        AND TIMESTAMPDIFF(
+                            SECOND,
+                            last_seen,
                             UTC_TIMESTAMP()
-                            - INTERVAL 20 SECOND
+                        ) BETWEEN 0 AND 20
                         THEN 'online'
                         ELSE 'offline'
                     END AS connection_status
@@ -5371,9 +5358,7 @@ def get_iot_devices():
         for row in rows:
 
             devices.append({
-
-                'id':
-                    row['id'],
+                'id': row['id'],
 
                 'device_id':
                     row['device_id'],
@@ -5385,37 +5370,27 @@ def get_iot_devices():
                     row['sensor_type'],
 
                 # IMPORTANT:
-                # DB ka old status use nahi karna.
-                # SQL real-time status calculate kar raha hai.
+                # Old database status is NOT used.
+                # Status is calculated from last_seen.
                 'status':
                     row['connection_status'],
 
-                'last_seen':
-                    (
-                        row['last_seen'].isoformat()
-                        if row['last_seen']
-                        else None
-                    ),
+                'last_seen': (
+                    row['last_seen'].isoformat()
+                    if row['last_seen']
+                    else None
+                ),
 
-                'created_at':
-                    (
-                        row['created_at'].isoformat()
-                        if row['created_at']
-                        else None
-                    )
+                'created_at': (
+                    row['created_at'].isoformat()
+                    if row['created_at']
+                    else None
+                )
             })
 
         return jsonify({
-
-            'success':
-                True,
-
-            'devices':
-                devices,
-
-            'offline_threshold':
-                offline_threshold
-
+            'success': True,
+            'devices': devices
         }), 200
 
     except Exception as e:
@@ -5429,13 +5404,8 @@ def get_iot_devices():
         )
 
         return jsonify({
-
-            'success':
-                False,
-
-            'error':
-                str(e)
-
+            'success': False,
+            'error': str(e)
         }), 500
 
 @# ============================================================
