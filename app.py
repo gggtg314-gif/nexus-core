@@ -5321,6 +5321,36 @@ def iot_dashboard():
 def get_iot_devices():
 
     try:
+
+        # ----------------------------------------------------
+        # Get offline threshold
+        # ----------------------------------------------------
+        offline_threshold = 20
+
+        try:
+            settings_row = db.session.execute(
+                text("""
+                    SELECT offline_threshold
+                    FROM system_settings
+                    WHERE id = 1
+                    LIMIT 1
+                """)
+            ).mappings().first()
+
+            if settings_row and settings_row['offline_threshold'] is not None:
+                offline_threshold = int(
+                    settings_row['offline_threshold']
+                )
+
+        except Exception:
+            # If settings table/value is unavailable,
+            # safely use 20 seconds.
+            offline_threshold = 20
+
+
+        # ----------------------------------------------------
+        # Get all IoT devices
+        # ----------------------------------------------------
         rows = db.session.execute(
             text("""
                 SELECT
@@ -5336,216 +5366,98 @@ def get_iot_devices():
             """)
         ).mappings().all()
 
+
+        # ----------------------------------------------------
+        # Current server time
+        # ----------------------------------------------------
+        now = datetime.utcnow()
+
         devices = []
 
+
+        # ----------------------------------------------------
+        # Calculate REAL-TIME status
+        # ----------------------------------------------------
         for row in rows:
+
+            last_seen = row['last_seen']
+
+            # Default = OFFLINE
+            connection_status = 'offline'
+
+            if last_seen:
+
+                age_seconds = (
+                    now - last_seen
+                ).total_seconds()
+
+                # Device is online ONLY when
+                # recent data has actually arrived.
+                if age_seconds <= offline_threshold:
+                    connection_status = 'online'
+
+
             devices.append({
+
                 'id': row['id'],
+
                 'device_id': row['device_id'],
+
                 'device_name': row['device_name'],
+
                 'sensor_type': row['sensor_type'],
-                'status': row['status'],
+
+                # IMPORTANT:
+                # Do NOT trust old DB status.
+                'status': connection_status,
+
                 'last_seen': (
-                    row['last_seen'].isoformat()
-                    if row['last_seen']
+                    last_seen.isoformat()
+                    if last_seen
                     else None
                 ),
+
                 'created_at': (
                     row['created_at'].isoformat()
                     if row['created_at']
                     else None
-                )
+                ),
+
+                # Useful for frontend / debugging
+                'offline_threshold': offline_threshold
+
             })
 
-        return jsonify({
-            'success': True,
-            'devices': devices
-        }), 200
-
-    except Exception as e:
-        logger.error(f"IoT devices error: {e}")
-
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
-@app.route('/api/iot/readings/<string:device_id>', methods=['GET'])
-@login_required
-def get_iot_readings(device_id):
-
-    try:
-        rows = db.session.execute(
-            text("""
-                SELECT
-                    id,
-                    device_id,
-                    temperature,
-                    humidity,
-                    recorded_at
-                FROM iot_readings
-                WHERE device_id = :device_id
-                ORDER BY recorded_at DESC
-                LIMIT 100
-            """),
-            {
-                'device_id': device_id
-            }
-        ).mappings().all()
-
-        readings = []
-
-        for row in rows:
-            readings.append({
-                'id': row['id'],
-                'device_id': row['device_id'],
-                'temperature': (
-                    float(row['temperature'])
-                    if row['temperature'] is not None
-                    else None
-                ),
-                'humidity': (
-                    float(row['humidity'])
-                    if row['humidity'] is not None
-                    else None
-                ),
-                'recorded_at': (
-                    row['recorded_at'].isoformat()
-                    if row['recorded_at']
-                    else None
-                )
-            })
-
-        return jsonify({
-            'success': True,
-            'readings': readings
-        }), 200
-
-    except Exception as e:
-        logger.error(f"IoT readings error: {e}")
-
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-# ============================================================
-# IOT HISTORY - CLEAR SELECTED DEVICE
-# ============================================================
-
-@app.route(
-    '/api/iot/history/clear/<string:device_id>',
-    methods=['DELETE']
-)
-@admin_required
-def clear_iot_history(device_id):
-
-    try:
-
-        device_id = str(
-            device_id
-        ).strip()
-
-        if not device_id:
-
-            return jsonify({
-                'success': False,
-                'error': 'Device ID is required'
-            }), 400
-
 
         # ----------------------------------------------------
-        # Check device exists
+        # Response
         # ----------------------------------------------------
-
-        device = db.session.execute(
-            text("""
-                SELECT id
-                FROM iot_devices
-                WHERE device_id = :device_id
-                LIMIT 1
-            """),
-            {
-                'device_id': device_id
-            }
-        ).first()
-
-
-        if not device:
-
-            return jsonify({
-                'success': False,
-                'error': 'IoT device not found'
-            }), 404
-
-
-        # ----------------------------------------------------
-        # Delete readings only
-        # Device itself will remain
-        # ----------------------------------------------------
-
-        result = db.session.execute(
-            text("""
-                DELETE FROM iot_readings
-                WHERE device_id = :device_id
-            """),
-            {
-                'device_id': device_id
-            }
-        )
-
-
-        deleted_count = result.rowcount
-
-
-        db.session.commit()
-
-
-        logger.info(
-            f"IoT history cleared | "
-            f"Device={device_id} | "
-            f"Rows={deleted_count}"
-        )
-
-
         return jsonify({
 
             'success': True,
 
-            'message':
-                'IoT history cleared successfully',
+            'devices': devices,
 
-            'device_id':
-                device_id,
-
-            'deleted_count':
-                deleted_count
+            'offline_threshold': offline_threshold
 
         }), 200
 
 
     except Exception as e:
-
-        db.session.rollback()
-
 
         logger.error(
-            f"Error clearing IoT history: {e}"
+            f"IoT devices error: {e}"
         )
-
 
         logger.error(
             traceback.format_exc()
         )
 
-
         return jsonify({
 
             'success': False,
 
-            'error':
-                str(e)
+            'error': str(e)
 
         }), 500
 
