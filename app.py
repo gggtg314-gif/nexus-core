@@ -5322,35 +5322,12 @@ def get_iot_devices():
 
     try:
 
-        # ----------------------------------------------------
-        # Get offline threshold
-        # ----------------------------------------------------
+        # ESP32 kitne seconds tak active maana jayega
         offline_threshold = 20
 
-        try:
-            settings_row = db.session.execute(
-                text("""
-                    SELECT offline_threshold
-                    FROM system_settings
-                    WHERE id = 1
-                    LIMIT 1
-                """)
-            ).mappings().first()
-
-            if settings_row and settings_row['offline_threshold'] is not None:
-                offline_threshold = int(
-                    settings_row['offline_threshold']
-                )
-
-        except Exception:
-            # If settings table/value is unavailable,
-            # safely use 20 seconds.
-            offline_threshold = 20
-
-
-        # ----------------------------------------------------
-        # Get all IoT devices
-        # ----------------------------------------------------
+        # ---------------------------------------------
+        # Get IoT devices
+        # ---------------------------------------------
         rows = db.session.execute(
             text("""
                 SELECT
@@ -5366,23 +5343,18 @@ def get_iot_devices():
             """)
         ).mappings().all()
 
-
-        # ----------------------------------------------------
-        # Current server time
-        # ----------------------------------------------------
+        # Server current UTC time
         now = datetime.utcnow()
 
         devices = []
 
-
-        # ----------------------------------------------------
-        # Calculate REAL-TIME status
-        # ----------------------------------------------------
+        # ---------------------------------------------
+        # REAL-TIME ONLINE / OFFLINE STATUS
+        # ---------------------------------------------
         for row in rows:
 
             last_seen = row['last_seen']
 
-            # Default = OFFLINE
             connection_status = 'offline'
 
             if last_seen:
@@ -5391,25 +5363,25 @@ def get_iot_devices():
                     now - last_seen
                 ).total_seconds()
 
-                # Device is online ONLY when
-                # recent data has actually arrived.
                 if age_seconds <= offline_threshold:
                     connection_status = 'online'
-
 
             devices.append({
 
                 'id': row['id'],
 
-                'device_id': row['device_id'],
+                'device_id':
+                    row['device_id'],
 
-                'device_name': row['device_name'],
+                'device_name':
+                    row['device_name'],
 
-                'sensor_type': row['sensor_type'],
+                'sensor_type':
+                    row['sensor_type'],
 
-                # IMPORTANT:
-                # Do NOT trust old DB status.
-                'status': connection_status,
+                # Old DB status ko ignore karo
+                'status':
+                    connection_status,
 
                 'last_seen': (
                     last_seen.isoformat()
@@ -5421,27 +5393,15 @@ def get_iot_devices():
                     row['created_at'].isoformat()
                     if row['created_at']
                     else None
-                ),
-
-                # Useful for frontend / debugging
-                'offline_threshold': offline_threshold
+                )
 
             })
 
-
-        # ----------------------------------------------------
-        # Response
-        # ----------------------------------------------------
         return jsonify({
-
             'success': True,
-
             'devices': devices,
-
             'offline_threshold': offline_threshold
-
         }), 200
-
 
     except Exception as e:
 
@@ -5454,13 +5414,9 @@ def get_iot_devices():
         )
 
         return jsonify({
-
             'success': False,
-
             'error': str(e)
-
         }), 500
-
 
 # ============================================================
 # NUXES AI - PROJECT CONTEXT + LANGUAGE + LIVE DATA
