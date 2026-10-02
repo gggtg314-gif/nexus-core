@@ -5316,97 +5316,81 @@ def iot_dashboard():
     return render_template('iot.html')
 
 
-@app.route('/api/iot/devices', methods=['GET'])
+# ============================================================
+# IOT READINGS API
+# ============================================================
+
+@app.route(
+    '/api/iot/readings/<string:device_id>',
+    methods=['GET']
+)
 @login_required
-def get_iot_devices():
+def get_iot_readings(device_id):
 
     try:
 
-        # ESP32 kitne seconds tak active maana jayega
-        offline_threshold = 20
-
-        # ---------------------------------------------
-        # Get IoT devices
-        # ---------------------------------------------
         rows = db.session.execute(
             text("""
                 SELECT
                     id,
                     device_id,
-                    device_name,
-                    sensor_type,
-                    status,
-                    last_seen,
-                    created_at
-                FROM iot_devices
-                ORDER BY id DESC
-            """)
+                    temperature,
+                    humidity,
+                    recorded_at
+                FROM iot_readings
+                WHERE device_id = :device_id
+                ORDER BY recorded_at DESC
+                LIMIT 100
+            """),
+            {
+                'device_id': device_id
+            }
         ).mappings().all()
 
-        # Server current UTC time
-        now = datetime.utcnow()
+        readings = []
 
-        devices = []
-
-        # ---------------------------------------------
-        # REAL-TIME ONLINE / OFFLINE STATUS
-        # ---------------------------------------------
         for row in rows:
 
-            last_seen = row['last_seen']
+            readings.append({
 
-            connection_status = 'offline'
-
-            if last_seen:
-
-                age_seconds = (
-                    now - last_seen
-                ).total_seconds()
-
-                if age_seconds <= offline_threshold:
-                    connection_status = 'online'
-
-            devices.append({
-
-                'id': row['id'],
+                'id':
+                    row['id'],
 
                 'device_id':
                     row['device_id'],
 
-                'device_name':
-                    row['device_name'],
-
-                'sensor_type':
-                    row['sensor_type'],
-
-                # Old DB status ko ignore karo
-                'status':
-                    connection_status,
-
-                'last_seen': (
-                    last_seen.isoformat()
-                    if last_seen
+                'temperature': (
+                    float(row['temperature'])
+                    if row['temperature'] is not None
                     else None
                 ),
 
-                'created_at': (
-                    row['created_at'].isoformat()
-                    if row['created_at']
+                'humidity': (
+                    float(row['humidity'])
+                    if row['humidity'] is not None
+                    else None
+                ),
+
+                'recorded_at': (
+                    row['recorded_at'].isoformat()
+                    if row['recorded_at']
                     else None
                 )
 
             })
 
         return jsonify({
+
             'success': True,
-            'devices': devices,
-            'offline_threshold': offline_threshold
+
+            'readings': readings
+
         }), 200
 
     except Exception as e:
 
         logger.error(
-            f"IoT devices error: {e}"
+            f"IoT readings error: {e}"
         )
 
         logger.error(
@@ -5414,8 +5398,11 @@ def get_iot_devices():
         )
 
         return jsonify({
+
             'success': False,
+
             'error': str(e)
+
         }), 500
 
 # ============================================================
