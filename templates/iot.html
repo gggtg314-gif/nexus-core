@@ -5758,451 +5758,1252 @@ window.addEventListener(
 
 </script>
 <!-- =========================================================
-     NUXES AI - FLOATING ASSISTANT
+     NUXES AI — PROFESSIONAL AI ASSISTANT
+     Nexus Core IoT Dashboard
      ========================================================= -->
 
 <style>
-    /* Nuxes AI Floating Button */
-    #nuxes-ai-button {
-        position: fixed;
-        right: 24px;
-        bottom: 24px;
-        width: 58px;
-        height: 58px;
-        border: none;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #7c3aed, #ec4899);
-        color: #fff;
-        cursor: pointer;
-        z-index: 9998;
-        box-shadow: 0 10px 35px rgba(124, 58, 237, 0.45);
-        font-size: 22px;
-        transition: 0.25s ease;
-    }
+/* =========================================================
+   NUXES AI ROOT
+   ========================================================= */
 
-    #nuxes-ai-button:hover {
-        transform: translateY(-3px) scale(1.04);
-        box-shadow: 0 14px 40px rgba(236, 72, 153, 0.45);
-    }
+#nuxes-ai-root {
+    --nuxes-purple: #7c3aed;
+    --nuxes-purple-2: #8b5cf6;
+    --nuxes-pink: #ec4899;
+    --nuxes-bg: #0b0b12;
+    --nuxes-panel: #11111b;
+    --nuxes-panel-2: #171722;
+    --nuxes-border: rgba(255,255,255,.09);
+    --nuxes-text: #f5f5f7;
+    --nuxes-muted: #8b8d98;
+    --nuxes-green: #22c55e;
+    font-family: Inter, "Plus Jakarta Sans", system-ui, sans-serif;
+}
 
-    /* AI Window */
-    #nuxes-ai-window {
-        position: fixed;
-        right: 24px;
-        bottom: 94px;
-        width: 390px;
-        height: 570px;
-        background: #11111b;
-        border: 1px solid rgba(255,255,255,0.10);
-        border-radius: 20px;
-        overflow: hidden;
-        display: none;
-        flex-direction: column;
-        z-index: 9999;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.55);
-        font-family: Inter, system-ui, sans-serif;
-    }
 
-    #nuxes-ai-window.active {
-        display: flex;
-    }
+/* =========================================================
+   FLOATING ORB
+   ========================================================= */
 
-    /* Header */
-    .nuxes-ai-header {
-        min-height: 66px;
-        padding: 12px 14px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: linear-gradient(
+#nuxes-ai-launcher {
+    position: fixed;
+    right: 26px;
+    bottom: 26px;
+    width: 66px;
+    height: 66px;
+    border: 0;
+    border-radius: 22px;
+    cursor: pointer;
+    z-index: 99990;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #fff;
+
+    background:
+        radial-gradient(
+            circle at 30% 20%,
+            rgba(255,255,255,.25),
+            transparent 28%
+        ),
+        linear-gradient(
             135deg,
-            rgba(124,58,237,0.25),
-            rgba(236,72,153,0.18)
+            #7c3aed,
+            #9333ea 45%,
+            #ec4899
         );
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+
+    box-shadow:
+        0 14px 45px rgba(124,58,237,.35),
+        0 5px 20px rgba(0,0,0,.35);
+
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+}
+
+#nuxes-ai-launcher:hover {
+    transform: translateY(-4px) scale(1.04);
+
+    box-shadow:
+        0 20px 55px rgba(124,58,237,.45),
+        0 8px 25px rgba(0,0,0,.4);
+}
+
+#nuxes-ai-launcher:active {
+    transform: scale(.96);
+}
+
+
+.nuxes-orb-icon {
+    position: relative;
+    z-index: 2;
+    font-size: 24px;
+}
+
+.nuxes-orb-pulse {
+    position: absolute;
+    inset: -6px;
+    border-radius: 26px;
+    border: 1px solid rgba(168,85,247,.45);
+    animation: nuxesPulse 2.4s infinite;
+}
+
+@keyframes nuxesPulse {
+    0% {
+        transform: scale(.92);
+        opacity: .8;
     }
 
-    .nuxes-ai-brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
+    70% {
+        transform: scale(1.18);
+        opacity: 0;
     }
 
-    .nuxes-ai-logo {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #7c3aed, #ec4899);
-        color: white;
-        font-size: 18px;
+    100% {
+        opacity: 0;
+    }
+}
+
+
+/* Small status dot */
+
+.nuxes-launcher-status {
+    position: absolute;
+    right: -2px;
+    top: -2px;
+
+    width: 13px;
+    height: 13px;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+    border: 3px solid #11111b;
+
+    z-index: 5;
+}
+
+
+/* =========================================================
+   MAIN WINDOW
+   ========================================================= */
+
+#nuxes-ai-panel {
+    position: fixed;
+
+    right: 26px;
+    bottom: 104px;
+
+    width: 430px;
+    height: 650px;
+
+    z-index: 99999;
+
+    display: none;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 100% 0%,
+            rgba(124,58,237,.13),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 0% 100%,
+            rgba(236,72,153,.08),
+            transparent 28%
+        ),
+        #0c0c14;
+
+    border:
+        1px solid rgba(255,255,255,.10);
+
+    border-radius: 24px;
+
+    box-shadow:
+        0 35px 100px rgba(0,0,0,.65),
+        0 0 0 1px rgba(124,58,237,.04);
+
+    backdrop-filter: blur(22px);
+
+    transform-origin: bottom right;
+
+    animation: nuxesOpen .22s ease;
+}
+
+#nuxes-ai-panel.active {
+    display: flex;
+}
+
+@keyframes nuxesOpen {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(.97);
     }
 
-    .nuxes-ai-title {
-        color: #fff;
-        font-size: 15px;
-        font-weight: 700;
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.nuxes-header {
+    height: 76px;
+    min-height: 76px;
+
+    padding: 0 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    border-bottom:
+        1px solid rgba(255,255,255,.07);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.035),
+            rgba(255,255,255,.012)
+        );
+}
+
+
+.nuxes-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+
+.nuxes-brand-logo {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 13px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: white;
+    font-size: 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed,
+            #ec4899
+        );
+
+    box-shadow:
+        0 8px 25px rgba(124,58,237,.25);
+}
+
+
+.nuxes-brand-title {
+    color: var(--nuxes-text);
+
+    font-size: 14px;
+    font-weight: 750;
+
+    letter-spacing: -.2px;
+}
+
+
+.nuxes-brand-subtitle {
+    margin-top: 3px;
+
+    color: var(--nuxes-muted);
+
+    font-size: 10px;
+}
+
+
+.nuxes-online {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+
+    margin-left: 4px;
+
+    color: #86efac;
+}
+
+
+.nuxes-online-dot {
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+
+    background: var(--nuxes-green);
+
+    box-shadow:
+        0 0 8px rgba(34,197,94,.7);
+}
+
+
+/* Header controls */
+
+.nuxes-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+
+.nuxes-icon-btn {
+    width: 32px;
+    height: 32px;
+
+    border: 0;
+    border-radius: 9px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(255,255,255,.045);
+    color: #9294a0;
+
+    cursor: pointer;
+
+    transition: .2s ease;
+}
+
+
+.nuxes-icon-btn:hover {
+    color: #fff;
+    background: rgba(255,255,255,.09);
+}
+
+
+.nuxes-language {
+    height: 32px;
+
+    border:
+        1px solid rgba(255,255,255,.09);
+
+    border-radius: 9px;
+
+    padding: 0 8px;
+
+    background: rgba(255,255,255,.045);
+    color: #ddd;
+
+    font-size: 10px;
+
+    outline: none;
+    cursor: pointer;
+}
+
+
+.nuxes-language option {
+    background: #12121b;
+    color: #fff;
+}
+
+
+/* =========================================================
+   DEVICE CONTEXT BAR
+   ========================================================= */
+
+.nuxes-context {
+    margin: 11px 13px 0;
+
+    min-height: 38px;
+
+    padding: 0 11px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    border:
+        1px solid rgba(255,255,255,.065);
+
+    border-radius: 11px;
+
+    background:
+        rgba(255,255,255,.025);
+}
+
+
+.nuxes-context-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    min-width: 0;
+}
+
+
+.nuxes-context-icon {
+    color: #a78bfa;
+    font-size: 12px;
+}
+
+
+.nuxes-context-text {
+    color: #b7b8c2;
+
+    font-size: 10px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.nuxes-context-value {
+    color: #fff;
+    font-weight: 650;
+}
+
+
+.nuxes-context-live {
+    color: #86efac;
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   CHAT AREA
+   ========================================================= */
+
+#nuxes-ai-messages {
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding:
+        15px 14px 10px;
+
+    scroll-behavior: smooth;
+}
+
+
+#nuxes-ai-messages::-webkit-scrollbar {
+    width: 5px;
+}
+
+
+#nuxes-ai-messages::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.12);
+    border-radius: 20px;
+}
+
+
+.nuxes-message {
+    display: flex;
+
+    margin-bottom: 14px;
+
+    animation:
+        nuxesMessageIn .18s ease;
+}
+
+
+@keyframes nuxesMessageIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
     }
 
-    .nuxes-ai-status {
-        margin-top: 2px;
-        color: #9ca3af;
-        font-size: 11px;
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+.nuxes-message.user {
+    justify-content: flex-end;
+}
+
+
+.nuxes-message.ai {
+    justify-content: flex-start;
+}
+
+
+.nuxes-avatar {
+    flex: 0 0 auto;
+
+    width: 27px;
+    height: 27px;
+
+    margin-right: 7px;
+    margin-top: 2px;
+
+    border-radius: 9px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed,
+            #ec4899
+        );
+
+    color: white;
+    font-size: 11px;
+}
+
+
+.nuxes-message-content {
+    max-width: 82%;
+}
+
+
+.nuxes-bubble {
+    padding:
+        10px 12px;
+
+    border-radius: 14px;
+
+    font-size: 12px;
+    line-height: 1.55;
+
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+
+.nuxes-message.ai .nuxes-bubble {
+    color: #dddde5;
+
+    background:
+        rgba(255,255,255,.045);
+
+    border:
+        1px solid rgba(255,255,255,.065);
+
+    border-top-left-radius: 5px;
+}
+
+
+.nuxes-message.user .nuxes-bubble {
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #6d28d9,
+            #9333ea
+        );
+
+    border:
+        1px solid rgba(167,139,250,.15);
+
+    border-top-right-radius: 5px;
+
+    box-shadow:
+        0 7px 22px rgba(109,40,217,.16);
+}
+
+
+/* Message tools */
+
+.nuxes-message-tools {
+    display: flex;
+    gap: 4px;
+
+    margin-top: 5px;
+}
+
+
+.nuxes-tool {
+    width: 25px;
+    height: 23px;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #686b78;
+
+    cursor: pointer;
+
+    font-size: 9px;
+}
+
+
+.nuxes-tool:hover {
+    background: rgba(255,255,255,.06);
+    color: #c4b5fd;
+}
+
+
+/* =========================================================
+   WELCOME CARD
+   ========================================================= */
+
+.nuxes-welcome {
+    margin: 2px 0 16px;
+
+    padding: 14px;
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(124,58,237,.10),
+            rgba(236,72,153,.055)
+        );
+
+    border:
+        1px solid rgba(124,58,237,.13);
+}
+
+
+.nuxes-welcome-title {
+    color: #fff;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    margin-bottom: 5px;
+}
+
+
+.nuxes-welcome-text {
+    color: #8f919d;
+
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   TYPING INDICATOR
+   ========================================================= */
+
+.nuxes-typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    height: 18px;
+}
+
+
+.nuxes-typing span {
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: #a78bfa;
+
+    animation:
+        nuxesTyping 1.1s infinite;
+}
+
+
+.nuxes-typing span:nth-child(2) {
+    animation-delay: .15s;
+}
+
+
+.nuxes-typing span:nth-child(3) {
+    animation-delay: .30s;
+}
+
+
+@keyframes nuxesTyping {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: .45;
     }
 
-    .nuxes-ai-status-dot {
-        display: inline-block;
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #22c55e;
-        margin-right: 4px;
+    30% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+   ========================================================= */
+
+.nuxes-quick-section {
+    padding:
+        0 13px 10px;
+}
+
+
+.nuxes-quick-label {
+    margin-bottom: 7px;
+
+    color: #686a77;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}
+
+
+.nuxes-quick {
+    display: flex;
+
+    gap: 6px;
+
+    overflow-x: auto;
+
+    scrollbar-width: none;
+}
+
+
+.nuxes-quick::-webkit-scrollbar {
+    display: none;
+}
+
+
+.nuxes-quick-btn {
+    flex: 0 0 auto;
+
+    height: 31px;
+
+    padding:
+        0 10px;
+
+    border:
+        1px solid rgba(255,255,255,.075);
+
+    border-radius: 9px;
+
+    background:
+        rgba(255,255,255,.035);
+
+    color: #b9bac4;
+
+    cursor: pointer;
+
+    font-size: 9px;
+
+    transition: .2s ease;
+}
+
+
+.nuxes-quick-btn:hover {
+    color: white;
+
+    background:
+        rgba(124,58,237,.13);
+
+    border-color:
+        rgba(124,58,237,.35);
+}
+
+
+/* =========================================================
+   INPUT AREA
+   ========================================================= */
+
+.nuxes-input-area {
+    padding: 10px 13px 12px;
+
+    border-top:
+        1px solid rgba(255,255,255,.07);
+
+    background:
+        rgba(7,7,12,.55);
+}
+
+
+.nuxes-input-wrapper {
+    display: flex;
+
+    align-items: flex-end;
+
+    gap: 7px;
+
+    padding: 6px;
+
+    border:
+        1px solid rgba(255,255,255,.085);
+
+    border-radius: 14px;
+
+    background:
+        #12121c;
+
+    transition: .2s ease;
+}
+
+
+.nuxes-input-wrapper:focus-within {
+    border-color:
+        rgba(124,58,237,.55);
+
+    box-shadow:
+        0 0 0 3px rgba(124,58,237,.07);
+}
+
+
+#nuxes-ai-input {
+    flex: 1;
+
+    min-width: 0;
+
+    max-height: 90px;
+
+    resize: none;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    color: #f3f4f6;
+
+    padding:
+        7px 6px;
+
+    font-family: inherit;
+    font-size: 12px;
+
+    line-height: 1.45;
+}
+
+
+#nuxes-ai-input::placeholder {
+    color: #60626d;
+}
+
+
+.nuxes-send {
+    flex: 0 0 auto;
+
+    width: 36px;
+    height: 36px;
+
+    border: 0;
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed,
+            #ec4899
+        );
+
+    color: white;
+
+    cursor: pointer;
+
+    transition: .2s ease;
+}
+
+
+.nuxes-send:hover {
+    transform: translateY(-1px);
+}
+
+
+.nuxes-send:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+.nuxes-meta {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    margin-top: 6px;
+
+    padding: 0 3px;
+
+    color: #555866;
+
+    font-size: 8px;
+}
+
+
+#nuxes-char-count {
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    #nuxes-ai-panel {
+        left: 9px;
+        right: 9px;
+
+        bottom: 88px;
+
+        width: auto;
+
+        height:
+            min(650px, calc(100vh - 105px));
+
+        border-radius: 20px;
     }
 
-    .nuxes-ai-actions {
-        display: flex;
-        align-items: center;
-        gap: 7px;
+
+    #nuxes-ai-launcher {
+        right: 17px;
+        bottom: 17px;
+
+        width: 59px;
+        height: 59px;
+
+        border-radius: 19px;
     }
 
-    .nuxes-ai-language {
-        border: 1px solid rgba(255,255,255,0.12);
-        background: rgba(255,255,255,0.06);
-        color: #fff;
-        border-radius: 8px;
-        padding: 6px 7px;
-        font-size: 11px;
-        outline: none;
+
+    .nuxes-header {
+        height: 70px;
+        min-height: 70px;
+    }
+}
+
+
+/* =========================================================
+   LIGHTER REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    #nuxes-ai-panel,
+    .nuxes-message,
+    .nuxes-orb-pulse,
+    .nuxes-typing span {
+        animation: none !important;
     }
 
-    .nuxes-ai-language option {
-        background: #11111b;
-        color: white;
-    }
-
-    .nuxes-ai-close {
-        width: 30px;
-        height: 30px;
-        border: none;
-        border-radius: 8px;
-        background: rgba(255,255,255,0.06);
-        color: #aaa;
-        cursor: pointer;
-        font-size: 16px;
-    }
-
-    .nuxes-ai-close:hover {
-        background: rgba(255,255,255,0.12);
-        color: #fff;
-    }
-
-    /* Messages */
-    #nuxes-ai-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 16px;
-        scrollbar-width: thin;
-    }
-
-    .nuxes-ai-message {
-        display: flex;
-        margin-bottom: 12px;
-    }
-
-    .nuxes-ai-message.user {
-        justify-content: flex-end;
-    }
-
-    .nuxes-ai-bubble {
-        max-width: 84%;
-        padding: 10px 12px;
-        border-radius: 14px;
-        font-size: 13px;
-        line-height: 1.5;
-        white-space: pre-wrap;
-        word-break: break-word;
-    }
-
-    .nuxes-ai-message.bot .nuxes-ai-bubble {
-        background: #1b1b29;
-        color: #e5e7eb;
-        border: 1px solid rgba(255,255,255,0.06);
-        border-bottom-left-radius: 5px;
-    }
-
-    .nuxes-ai-message.user .nuxes-ai-bubble {
-        background: linear-gradient(135deg, #7c3aed, #9333ea);
-        color: #fff;
-        border-bottom-right-radius: 5px;
-    }
-
-    /* Quick Actions */
-    .nuxes-ai-quick {
-        padding: 0 14px 10px;
-        display: flex;
-        gap: 7px;
-        overflow-x: auto;
-    }
-
-    .nuxes-ai-quick button {
-        flex: 0 0 auto;
-        border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(255,255,255,0.045);
-        color: #d1d5db;
-        border-radius: 10px;
-        padding: 7px 10px;
-        font-size: 11px;
-        cursor: pointer;
-    }
-
-    .nuxes-ai-quick button:hover {
-        background: rgba(124,58,237,0.18);
-        border-color: rgba(124,58,237,0.45);
-        color: #fff;
-    }
-
-    /* Input */
-    .nuxes-ai-input-area {
-        padding: 12px;
-        border-top: 1px solid rgba(255,255,255,0.08);
-        background: #0d0d15;
-    }
-
-    .nuxes-ai-input-row {
-        display: flex;
-        gap: 8px;
-    }
-
-    #nuxes-ai-input {
-        flex: 1;
-        min-width: 0;
-        height: 42px;
-        resize: none;
-        border: 1px solid rgba(255,255,255,0.10);
-        border-radius: 12px;
-        background: #181824;
-        color: #fff;
-        padding: 11px 12px;
-        outline: none;
-        font-size: 13px;
-        font-family: inherit;
-    }
-
-    #nuxes-ai-input:focus {
-        border-color: rgba(124,58,237,0.7);
-    }
-
-    #nuxes-ai-input::placeholder {
-        color: #6b7280;
-    }
-
-    #nuxes-ai-send {
-        width: 42px;
-        height: 42px;
-        border: none;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #7c3aed, #ec4899);
-        color: white;
-        cursor: pointer;
-        font-size: 15px;
-    }
-
-    #nuxes-ai-send:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .nuxes-ai-footer {
-        text-align: center;
-        color: #555b6b;
-        font-size: 9px;
-        margin-top: 7px;
-    }
-
-    .nuxes-ai-loading {
-        display: inline-flex;
-        gap: 4px;
-        align-items: center;
-    }
-
-    .nuxes-ai-loading span {
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background: #a78bfa;
-        animation: nuxesAiBounce 1s infinite ease-in-out;
-    }
-
-    .nuxes-ai-loading span:nth-child(2) {
-        animation-delay: 0.15s;
-    }
-
-    .nuxes-ai-loading span:nth-child(3) {
-        animation-delay: 0.3s;
-    }
-
-    @keyframes nuxesAiBounce {
-        0%, 80%, 100% {
-            transform: scale(0.7);
-            opacity: 0.5;
-        }
-        40% {
-            transform: scale(1);
-            opacity: 1;
-        }
-    }
-
-    /* Mobile */
-    @media (max-width: 520px) {
-        #nuxes-ai-window {
-            left: 10px;
-            right: 10px;
-            bottom: 82px;
-            width: auto;
-            height: min(570px, calc(100vh - 100px));
-            border-radius: 17px;
-        }
-
-        #nuxes-ai-button {
-            right: 16px;
-            bottom: 16px;
-        }
-    }
+}
 </style>
 
 
-<!-- Floating Button -->
-<button
-    id="nuxes-ai-button"
-    type="button"
-    onclick="toggleNuxesAI()"
-    aria-label="Open Nuxes AI">
-    <i class="fas fa-robot"></i>
-</button>
+<!-- =========================================================
+     FLOATING LAUNCHER
+     ========================================================= -->
+
+<div id="nuxes-ai-root">
+
+    <button
+        id="nuxes-ai-launcher"
+        type="button"
+        aria-label="Open Nuxes AI"
+        onclick="toggleNuxesAI()">
+
+        <span class="nuxes-orb-pulse"></span>
+
+        <span class="nuxes-orb-icon">
+            <i class="fas fa-brain"></i>
+        </span>
+
+        <span class="nuxes-launcher-status"></span>
+
+    </button>
 
 
-<!-- AI Window -->
-<div id="nuxes-ai-window">
+    <!-- =====================================================
+         AI PANEL
+         ===================================================== -->
 
-    <!-- Header -->
-    <div class="nuxes-ai-header">
+    <div id="nuxes-ai-panel">
 
-        <div class="nuxes-ai-brand">
-            <div class="nuxes-ai-logo">
-                <i class="fas fa-brain"></i>
-            </div>
 
-            <div>
-                <div class="nuxes-ai-title">
-                    Nuxes AI
+        <!-- HEADER -->
+
+        <div class="nuxes-header">
+
+            <div class="nuxes-brand">
+
+                <div class="nuxes-brand-logo">
+                    <i class="fas fa-brain"></i>
                 </div>
 
-                <div class="nuxes-ai-status">
-                    <span class="nuxes-ai-status-dot"></span>
-                    Online
+                <div>
+
+                    <div class="nuxes-brand-title">
+                        Nuxes AI
+                    </div>
+
+                    <div class="nuxes-brand-subtitle">
+
+                        Nexus Core Assistant
+
+                        <span class="nuxes-online">
+                            <span class="nuxes-online-dot"></span>
+                            Online
+                        </span>
+
+                    </div>
+
                 </div>
+
             </div>
-        </div>
-
-        <div class="nuxes-ai-actions">
-
-            <select
-                id="nuxes-ai-language"
-                class="nuxes-ai-language"
-                onchange="changeNuxesLanguage(this.value)">
-
-                <option value="en">EN</option>
-                <option value="hi">HI</option>
-                <option value="hinglish" selected>Hinglish</option>
-
-            </select>
-
-            <button
-                type="button"
-                class="nuxes-ai-close"
-                onclick="toggleNuxesAI()">
-                ×
-            </button>
-
-        </div>
-
-    </div>
 
 
-    <!-- Messages -->
-    <div id="nuxes-ai-messages">
+            <div class="nuxes-header-controls">
 
-        <div class="nuxes-ai-message bot">
-            <div class="nuxes-ai-bubble">
-                👋 Hi! Main Nuxes AI hoon.
+                <!-- Language -->
 
-                Main tumhare Nexus Core project,
-                PC monitoring aur IoT sensor data
-                ko samajhne mein help kar sakta hoon.
+                <select
+                    id="nuxes-ai-language"
+                    class="nuxes-language"
+                    title="Response language"
+                    onchange="changeNuxesLanguage(this.value)">
 
-                Kuch bhi poochho.
+                    <option value="en">
+                        English
+                    </option>
+
+                    <option value="hi">
+                        हिन्दी
+                    </option>
+
+                    <option value="hinglish" selected>
+                        Hinglish
+                    </option>
+
+                </select>
+
+
+                <!-- Clear -->
+
+                <button
+                    type="button"
+                    class="nuxes-icon-btn"
+                    title="Clear conversation"
+                    onclick="clearNuxesChat()">
+
+                    <i class="fas fa-trash-alt"></i>
+
+                </button>
+
+
+                <!-- Close -->
+
+                <button
+                    type="button"
+                    class="nuxes-icon-btn"
+                    title="Close"
+                    onclick="toggleNuxesAI()">
+
+                    <i class="fas fa-times"></i>
+
+                </button>
+
             </div>
-        </div>
-
-    </div>
-
-
-    <!-- Quick Actions -->
-    <div class="nuxes-ai-quick">
-
-        <button
-            type="button"
-            onclick="askNuxesQuick('Explain my IoT project')">
-            IoT Help
-        </button>
-
-        <button
-            type="button"
-            onclick="askNuxesQuick('Explain my Nexus Core project for viva')">
-            Viva Help
-        </button>
-
-        <button
-            type="button"
-            onclick="askNuxesQuick('Explain how my IoT data reaches the database')">
-            Explain Data
-        </button>
-
-        <button
-            type="button"
-            onclick="askNuxesQuick('Explain the current IoT sensor status')">
-            Sensor Status
-        </button>
-
-    </div>
-
-
-    <!-- Input -->
-    <div class="nuxes-ai-input-area">
-
-        <div class="nuxes-ai-input-row">
-
-            <textarea
-                id="nuxes-ai-input"
-                rows="1"
-                placeholder="Ask Nuxes AI..."
-                onkeydown="handleNuxesEnter(event)"></textarea>
-
-            <button
-                id="nuxes-ai-send"
-                type="button"
-                onclick="sendNuxesAI()">
-
-                <i class="fas fa-paper-plane"></i>
-
-            </button>
 
         </div>
 
-        <div class="nuxes-ai-footer">
-            Powered by Gemini • Nuxes Core
+
+        <!-- DEVICE CONTEXT -->
+
+        <div class="nuxes-context">
+
+            <div class="nuxes-context-left">
+
+                <span class="nuxes-context-icon">
+                    <i class="fas fa-microchip"></i>
+                </span>
+
+                <span
+                    id="nuxes-device-context"
+                    class="nuxes-context-text">
+
+                    No IoT device selected
+
+                </span>
+
+            </div>
+
+            <span class="nuxes-context-live">
+                LIVE CONTEXT
+            </span>
+
+        </div>
+
+
+        <!-- MESSAGES -->
+
+        <div id="nuxes-ai-messages">
+
+            <div class="nuxes-welcome">
+
+                <div class="nuxes-welcome-title">
+                    👋 Welcome to Nuxes AI
+                </div>
+
+                <div class="nuxes-welcome-text">
+                    I can help you understand your Nexus Core
+                    project, IoT sensors, live readings,
+                    database flow and viva questions.
+                </div>
+
+            </div>
+
+
+            <div class="nuxes-message ai">
+
+                <div class="nuxes-avatar">
+                    <i class="fas fa-brain"></i>
+                </div>
+
+                <div class="nuxes-message-content">
+
+                    <div class="nuxes-bubble">
+                        Hi! I'm Nuxes AI. Ask me anything about your IoT system or Nexus Core project.
+                    </div>
+
+                    <div class="nuxes-message-tools">
+
+                        <button
+                            class="nuxes-tool"
+                            title="Copy"
+                            onclick="copyNuxesText(this)">
+
+                            <i class="far fa-copy"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- QUICK ACTIONS -->
+
+        <div class="nuxes-quick-section">
+
+            <div class="nuxes-quick-label">
+                Quick actions
+            </div>
+
+            <div class="nuxes-quick">
+
+                <button
+                    type="button"
+                    class="nuxes-quick-btn"
+                    onclick="askNuxesQuick('Explain my IoT project in simple words')">
+
+                    <i class="fas fa-project-diagram"></i>
+                    Explain IoT
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="nuxes-quick-btn"
+                    onclick="askNuxesQuick('Explain the current IoT sensor status')">
+
+                    <i class="fas fa-heartbeat"></i>
+                    Sensor Status
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="nuxes-quick-btn"
+                    onclick="askNuxesQuick('Explain how ESP32 sensor data reaches my Nexus Core database')">
+
+                    <i class="fas fa-database"></i>
+                    Data Flow
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="nuxes-quick-btn"
+                    onclick="askNuxesQuick('Give me important viva questions for my Nexus Core IoT project')">
+
+                    <i class="fas fa-graduation-cap"></i>
+                    Viva
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- INPUT -->
+
+        <div class="nuxes-input-area">
+
+            <div class="nuxes-input-wrapper">
+
+                <textarea
+                    id="nuxes-ai-input"
+                    rows="1"
+                    maxlength="1000"
+                    placeholder="Ask Nuxes AI..."
+                    oninput="updateNuxesCharCount(); autoResizeNuxesInput(this)"
+                    onkeydown="handleNuxesEnter(event)"></textarea>
+
+
+                <button
+                    id="nuxes-ai-send"
+                    class="nuxes-send"
+                    type="button"
+                    onclick="sendNuxesAI()"
+                    title="Send">
+
+                    <i class="fas fa-paper-plane"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="nuxes-meta">
+
+                <span>
+                    Enter to send • Shift + Enter for new line
+                </span>
+
+                <span id="nuxes-char-count">
+                    0 / 1000
+                </span>
+
+            </div>
+
         </div>
 
     </div>
@@ -6212,22 +7013,31 @@ window.addEventListener(
 
 <script>
 /* =========================================================
-   NUXES AI JAVASCRIPT
+   NUXES AI PROFESSIONAL JAVASCRIPT
    ========================================================= */
 
 let nuxesAILanguage = "hinglish";
 let nuxesAILoading = false;
+let nuxesLastQuestion = "";
+let nuxesLastAnswer = "";
 
 
-/* Open / Close */
+/* =========================================================
+   OPEN / CLOSE
+   ========================================================= */
+
 function toggleNuxesAI() {
 
-    const windowElement =
-        document.getElementById("nuxes-ai-window");
+    const panel =
+        document.getElementById("nuxes-ai-panel");
 
-    windowElement.classList.toggle("active");
+    if (!panel) return;
 
-    if (windowElement.classList.contains("active")) {
+    panel.classList.toggle("active");
+
+    if (panel.classList.contains("active")) {
+
+        updateNuxesDeviceContext();
 
         setTimeout(() => {
 
@@ -6238,12 +7048,15 @@ function toggleNuxesAI() {
                 input.focus();
             }
 
-        }, 100);
+        }, 120);
     }
 }
 
 
-/* Language */
+/* =========================================================
+   LANGUAGE
+   ========================================================= */
+
 function changeNuxesLanguage(language) {
 
     nuxesAILanguage = language;
@@ -6254,125 +7067,455 @@ function changeNuxesLanguage(language) {
     if (!input) return;
 
     if (language === "hi") {
-        input.placeholder = "Nuxes AI se kuch poochho...";
+
+        input.placeholder =
+            "Nuxes AI se apna sawaal poochhein...";
+
     }
     else if (language === "hinglish") {
-        input.placeholder = "Nuxes AI se kuch bhi poochho...";
+
+        input.placeholder =
+            "Nuxes AI se kuch bhi poochho...";
+
     }
     else {
-        input.placeholder = "Ask Nuxes AI...";
+
+        input.placeholder =
+            "Ask Nuxes AI...";
+
     }
 }
 
 
-/* Enter key */
+/* =========================================================
+   DEVICE CONTEXT
+   ========================================================= */
+
+function updateNuxesDeviceContext() {
+
+    const context =
+        document.getElementById(
+            "nuxes-device-context"
+        );
+
+    if (!context) return;
+
+
+    let device = "";
+
+    /*
+     * Existing IoT page ka selectedDeviceId.
+     */
+    if (
+        typeof selectedDeviceId !== "undefined" &&
+        selectedDeviceId
+    ) {
+
+        device = selectedDeviceId;
+
+    }
+
+
+    /*
+     * Agar selected device nahi hai,
+     * page par available selected device element
+     * se fallback try karo.
+     */
+
+    if (!device) {
+
+        const selected =
+            document.querySelector(
+                "[data-device-id].active"
+            );
+
+        if (selected) {
+
+            device =
+                selected.getAttribute(
+                    "data-device-id"
+                ) || "";
+
+        }
+
+    }
+
+
+    if (device) {
+
+        context.innerHTML =
+            '<span class="nuxes-context-value">' +
+            escapeNuxesHTML(device) +
+            '</span>';
+
+    }
+    else {
+
+        context.textContent =
+            "No IoT device selected";
+
+    }
+}
+
+
+/* =========================================================
+   ENTER KEY
+   ========================================================= */
+
 function handleNuxesEnter(event) {
 
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (
+        event.key === "Enter" &&
+        !event.shiftKey
+    ) {
 
         event.preventDefault();
 
         sendNuxesAI();
+
     }
 }
 
 
-/* Quick question */
+/* =========================================================
+   AUTO RESIZE
+   ========================================================= */
+
+function autoResizeNuxesInput(element) {
+
+    element.style.height = "auto";
+
+    element.style.height =
+        Math.min(
+            element.scrollHeight,
+            90
+        ) + "px";
+}
+
+
+/* =========================================================
+   CHARACTER COUNT
+   ========================================================= */
+
+function updateNuxesCharCount() {
+
+    const input =
+        document.getElementById(
+            "nuxes-ai-input"
+        );
+
+    const counter =
+        document.getElementById(
+            "nuxes-char-count"
+        );
+
+    if (!input || !counter) return;
+
+    counter.textContent =
+        input.value.length + " / 1000";
+}
+
+
+/* =========================================================
+   QUICK QUESTIONS
+   ========================================================= */
+
 function askNuxesQuick(question) {
 
     const input =
-        document.getElementById("nuxes-ai-input");
+        document.getElementById(
+            "nuxes-ai-input"
+        );
 
     if (!input) return;
 
     input.value = question;
 
+    updateNuxesCharCount();
+
+    autoResizeNuxesInput(input);
+
     sendNuxesAI();
 }
 
 
-/* Add message */
-function addNuxesMessage(message, type) {
+/* =========================================================
+   ADD USER MESSAGE
+   ========================================================= */
+
+function addNuxesUserMessage(text) {
 
     const container =
-        document.getElementById("nuxes-ai-messages");
+        document.getElementById(
+            "nuxes-ai-messages"
+        );
 
-    if (!container) return null;
+    if (!container) return;
 
     const wrapper =
         document.createElement("div");
 
     wrapper.className =
-        "nuxes-ai-message " + type;
+        "nuxes-message user";
+
+
+    const content =
+        document.createElement("div");
+
+    content.className =
+        "nuxes-message-content";
+
 
     const bubble =
         document.createElement("div");
 
     bubble.className =
-        "nuxes-ai-bubble";
+        "nuxes-bubble";
 
-    bubble.textContent = message;
+    bubble.textContent = text;
 
-    wrapper.appendChild(bubble);
+
+    content.appendChild(bubble);
+
+    wrapper.appendChild(content);
 
     container.appendChild(wrapper);
 
-    container.scrollTop =
-        container.scrollHeight;
-
-    return wrapper;
+    scrollNuxesToBottom();
 }
 
 
-/* Loading message */
-function addNuxesLoading() {
+/* =========================================================
+   ADD AI MESSAGE
+   ========================================================= */
+
+function addNuxesAIMessage(text) {
 
     const container =
-        document.getElementById("nuxes-ai-messages");
+        document.getElementById(
+            "nuxes-ai-messages"
+        );
+
+    if (!container) return;
+
 
     const wrapper =
         document.createElement("div");
 
     wrapper.className =
-        "nuxes-ai-message bot";
+        "nuxes-message ai";
+
+
+    const avatar =
+        document.createElement("div");
+
+    avatar.className =
+        "nuxes-avatar";
+
+    avatar.innerHTML =
+        '<i class="fas fa-brain"></i>';
+
+
+    const content =
+        document.createElement("div");
+
+    content.className =
+        "nuxes-message-content";
+
 
     const bubble =
         document.createElement("div");
 
     bubble.className =
-        "nuxes-ai-bubble";
+        "nuxes-bubble";
+
+    bubble.textContent = text;
+
+
+    const tools =
+        document.createElement("div");
+
+    tools.className =
+        "nuxes-message-tools";
+
+
+    const copy =
+        document.createElement("button");
+
+    copy.className =
+        "nuxes-tool";
+
+    copy.title =
+        "Copy response";
+
+    copy.innerHTML =
+        '<i class="far fa-copy"></i>';
+
+    copy.onclick =
+        function() {
+
+            copyTextToClipboard(text);
+
+            copy.innerHTML =
+                '<i class="fas fa-check"></i>';
+
+            setTimeout(() => {
+
+                copy.innerHTML =
+                    '<i class="far fa-copy"></i>';
+
+            }, 1200);
+
+        };
+
+
+    const regenerate =
+        document.createElement("button");
+
+    regenerate.className =
+        "nuxes-tool";
+
+    regenerate.title =
+        "Regenerate";
+
+    regenerate.innerHTML =
+        '<i class="fas fa-redo"></i>';
+
+    regenerate.onclick =
+        function() {
+
+            if (nuxesLastQuestion) {
+
+                sendNuxesQuestion(
+                    nuxesLastQuestion,
+                    true
+                );
+
+            }
+
+        };
+
+
+    tools.appendChild(copy);
+    tools.appendChild(regenerate);
+
+    content.appendChild(bubble);
+    content.appendChild(tools);
+
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(content);
+
+    container.appendChild(wrapper);
+
+    nuxesLastAnswer = text;
+
+    scrollNuxesToBottom();
+}
+
+
+/* =========================================================
+   TYPING
+   ========================================================= */
+
+function showNuxesTyping() {
+
+    const container =
+        document.getElementById(
+            "nuxes-ai-messages"
+        );
+
+    if (!container) return null;
+
+
+    const wrapper =
+        document.createElement("div");
+
+    wrapper.className =
+        "nuxes-message ai";
+
+    wrapper.id =
+        "nuxes-typing-message";
+
+
+    const avatar =
+        document.createElement("div");
+
+    avatar.className =
+        "nuxes-avatar";
+
+    avatar.innerHTML =
+        '<i class="fas fa-brain"></i>';
+
+
+    const content =
+        document.createElement("div");
+
+    content.className =
+        "nuxes-message-content";
+
+
+    const bubble =
+        document.createElement("div");
+
+    bubble.className =
+        "nuxes-bubble";
+
 
     bubble.innerHTML = `
-        <div class="nuxes-ai-loading">
+        <div class="nuxes-typing">
             <span></span>
             <span></span>
             <span></span>
         </div>
     `;
 
-    wrapper.appendChild(bubble);
+
+    content.appendChild(bubble);
+
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(content);
 
     container.appendChild(wrapper);
 
-    container.scrollTop =
-        container.scrollHeight;
+    scrollNuxesToBottom();
 
     return wrapper;
 }
 
 
-/* Send AI request */
+/* =========================================================
+   REMOVE TYPING
+   ========================================================= */
+
+function removeNuxesTyping() {
+
+    const typing =
+        document.getElementById(
+            "nuxes-typing-message"
+        );
+
+    if (typing) {
+        typing.remove();
+    }
+}
+
+
+/* =========================================================
+   SEND BUTTON
+   ========================================================= */
+
 async function sendNuxesAI() {
 
     if (nuxesAILoading) return;
 
-    const input =
-        document.getElementById("nuxes-ai-input");
 
-    const sendButton =
-        document.getElementById("nuxes-ai-send");
+    const input =
+        document.getElementById(
+            "nuxes-ai-input"
+        );
 
     if (!input) return;
+
 
     const question =
         input.value.trim();
@@ -6380,88 +7523,165 @@ async function sendNuxesAI() {
     if (!question) return;
 
 
-    /* User message */
-    addNuxesMessage(
+    await sendNuxesQuestion(
         question,
-        "user"
+        false
     );
+}
 
-    input.value = "";
+
+/* =========================================================
+   CORE AI REQUEST
+   ========================================================= */
+
+async function sendNuxesQuestion(
+    question,
+    regenerate
+) {
+
+    if (nuxesAILoading) return;
+
+
+    const input =
+        document.getElementById(
+            "nuxes-ai-input"
+        );
+
+    const sendButton =
+        document.getElementById(
+            "nuxes-ai-send"
+        );
+
+
+    /*
+     * Normal question par user bubble show karo.
+     * Regenerate par duplicate user bubble nahi.
+     */
+
+    if (!regenerate) {
+
+        addNuxesUserMessage(
+            question
+        );
+
+        nuxesLastQuestion =
+            question;
+
+    }
+
+
+    if (input && !regenerate) {
+
+        input.value = "";
+
+        updateNuxesCharCount();
+
+        input.style.height = "auto";
+
+    }
+
 
     nuxesAILoading = true;
+
 
     if (sendButton) {
         sendButton.disabled = true;
     }
 
-    const loadingMessage =
-        addNuxesLoading();
+
+    const typing =
+        showNuxesTyping();
 
 
     try {
 
         /*
-         * Existing IoT page ka selectedDeviceId
-         * use kiya ja raha hai.
+         * Existing IoT variable.
          */
+
         let currentDeviceId = "";
 
-        if (typeof selectedDeviceId !== "undefined") {
+
+        if (
+            typeof selectedDeviceId !== "undefined"
+        ) {
+
             currentDeviceId =
                 selectedDeviceId || "";
+
         }
 
+
+        /*
+         * Send request to existing
+         * Nexus Core backend.
+         */
 
         const response =
-            await fetch("/api/ai", {
+            await fetch(
+                "/api/ai",
+                {
+                    method: "POST",
 
-                method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
+                    body: JSON.stringify({
 
-                body: JSON.stringify({
+                        question:
+                            question,
 
-                    question: question,
+                        language:
+                            nuxesAILanguage,
 
-                    language:
-                        nuxesAILanguage,
+                        device_id:
+                            currentDeviceId
 
-                    device_id:
-                        currentDeviceId
-
-                })
-
-            });
-
-
-        const result =
-            await response.json();
+                    })
+                }
+            );
 
 
-        /* Remove loading */
-        if (loadingMessage) {
-            loadingMessage.remove();
+        let result = null;
+
+
+        try {
+
+            result =
+                await response.json();
+
+        }
+        catch (jsonError) {
+
+            throw new Error(
+                "Invalid server response"
+            );
+
         }
 
 
-        if (result.success) {
+        removeNuxesTyping();
 
-            addNuxesMessage(
+
+        if (
+            response.ok &&
+            result &&
+            result.success
+        ) {
+
+            addNuxesAIMessage(
                 result.answer ||
-                "AI ne koi response nahi diya.",
-                "bot"
+                "No answer received from Nuxes AI."
             );
 
         }
         else {
 
-            addNuxesMessage(
-                result.error ||
-                "Nuxes AI response nahi de paaya.",
-                "bot"
+            addNuxesAIMessage(
+                result?.error ||
+                "Nuxes AI could not process your request."
             );
 
         }
@@ -6469,18 +7689,16 @@ async function sendNuxesAI() {
     }
     catch (error) {
 
-        if (loadingMessage) {
-            loadingMessage.remove();
-        }
-
         console.error(
-            "Nuxes AI Error:",
+            "Nuxes AI:",
             error
         );
 
-        addNuxesMessage(
-            "Nuxes AI se connection nahi ho paaya. Please try again.",
-            "bot"
+        removeNuxesTyping();
+
+
+        addNuxesAIMessage(
+            "Nuxes AI se connection nahi ho paaya. Please try again."
         );
 
     }
@@ -6488,13 +7706,198 @@ async function sendNuxesAI() {
 
         nuxesAILoading = false;
 
+
         if (sendButton) {
             sendButton.disabled = false;
         }
 
-        input.focus();
+
+        if (input) {
+            input.focus();
+        }
+
     }
 }
+
+
+/* =========================================================
+   CLEAR CHAT
+   ========================================================= */
+
+function clearNuxesChat() {
+
+    const container =
+        document.getElementById(
+            "nuxes-ai-messages"
+        );
+
+    if (!container) return;
+
+
+    container.innerHTML = `
+
+        <div class="nuxes-welcome">
+
+            <div class="nuxes-welcome-title">
+                ✨ New conversation
+            </div>
+
+            <div class="nuxes-welcome-text">
+                Chat cleared. Ask me about your
+                Nexus Core IoT system.
+            </div>
+
+        </div>
+
+    `;
+
+
+    nuxesLastQuestion = "";
+    nuxesLastAnswer = "";
+
+    updateNuxesDeviceContext();
+}
+
+
+/* =========================================================
+   COPY MESSAGE
+   ========================================================= */
+
+function copyNuxesText(button) {
+
+    const message =
+        button
+            .closest(".nuxes-message")
+            ?.querySelector(
+                ".nuxes-bubble"
+            );
+
+    if (!message) return;
+
+    copyTextToClipboard(
+        message.textContent
+    );
+
+    const original =
+        button.innerHTML;
+
+    button.innerHTML =
+        '<i class="fas fa-check"></i>';
+
+    setTimeout(() => {
+
+        button.innerHTML =
+            original;
+
+    }, 1200);
+}
+
+
+/* =========================================================
+   CLIPBOARD
+   ========================================================= */
+
+async function copyTextToClipboard(text) {
+
+    try {
+
+        await navigator.clipboard.writeText(
+            text
+        );
+
+    }
+    catch (error) {
+
+        const textarea =
+            document.createElement(
+                "textarea"
+            );
+
+        textarea.value = text;
+
+        textarea.style.position =
+            "fixed";
+
+        textarea.style.opacity =
+            "0";
+
+        document.body.appendChild(
+            textarea
+        );
+
+        textarea.select();
+
+        document.execCommand(
+            "copy"
+        );
+
+        textarea.remove();
+
+    }
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+   ========================================================= */
+
+function escapeNuxesHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* =========================================================
+   SCROLL
+   ========================================================= */
+
+function scrollNuxesToBottom() {
+
+    const container =
+        document.getElementById(
+            "nuxes-ai-messages"
+        );
+
+    if (!container) return;
+
+    requestAnimationFrame(() => {
+
+        container.scrollTop =
+            container.scrollHeight;
+
+    });
+}
+
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        updateNuxesDeviceContext();
+
+        updateNuxesCharCount();
+
+        /*
+         * Agar IoT page selected device change kare,
+         * AI context ko bhi update karte raho.
+         */
+
+        setInterval(
+            updateNuxesDeviceContext,
+            1500
+        );
+
+    }
+);
 </script>
 
 </body>
