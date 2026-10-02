@@ -1109,7 +1109,7 @@
         "id": {{ item.computer.id|default(0)|int }},
         "name": {{ item.computer.computer_name|default('Unknown')|tojson }},
         "ip": {{ item.computer.ip_address|default('Unknown')|tojson }},
-        "status": {{ item.computer.status|default('offline')|tojson }},
+        "status": {{ item.computer.connection_status|default('offline')|tojson }},
         "cpu": {{ item.computer.cpu_usage|default(0)|float }},
         "ram": {{ item.computer.ram_usage|default(0)|float }},
         "disk": {{ item.computer.disk_usage|default(0)|float }},
@@ -1387,8 +1387,8 @@
                                         <div class="pred-info">
                                             <div class="pred-name">{{ item.computer.computer_name }}</div>
                                             <div class="pred-ip">{{ item.computer.ip_address }}</div>
-                                            <span class="pred-status-badge {{ item.computer.status }}">
-                                                <span class="dot"></span>{{ item.computer.status|upper }}
+                                            <span class="pred-status-badge {{ item.computer.connection_status }}">
+                                              <span class="dot"></span>{{ item.computer.connection_status|upper }}
                                             </span>
                                         </div>
                                     </div>
