@@ -1,3 +1,7 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 from datetime import datetime, timedelta
 from config import Config, config
@@ -14,6 +18,7 @@ from models import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 import logging
+import os
 import traceback
 from sqlalchemy import text
 import functools
@@ -22,6 +27,10 @@ import qrcode
 import io
 import base64
 import json
+import time
+
+from google import genai
+from google.genai import types
 
 
 # ============================================================
@@ -30,6 +39,33 @@ import json
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# NUXES AI - GEMINI CONFIGURATION
+# ============================================================
+
+NEXUS_AI_MODEL = 'gemini-3.5-flash-lite'
+
+gemini_api_key = os.getenv('GEMINI_API_KEY')
+gemini_client = None
+
+if gemini_api_key:
+    try:
+        gemini_client = genai.Client(
+            api_key=gemini_api_key
+        )
+        logger.info(
+            f'Nuxes AI initialized with {NEXUS_AI_MODEL}'
+        )
+    except Exception as e:
+        logger.error(
+            f'Failed to initialize Gemini client: {e}'
+        )
+else:
+    logger.warning(
+        'GEMINI_API_KEY not configured. Nuxes AI is disabled.'
+    )
 
 
 # ============================================================
@@ -5512,6 +5548,527 @@ def clear_iot_history(device_id):
                 str(e)
 
         }), 500
+
+
+# ============================================================
+# NUXES AI - PROJECT CONTEXT HELPERS
+# ============================================================
+
+def _safe_value(value, default='N/A'):
+    """Return a safe, compact value for the AI context."""
+    if value is None or value == '':
+        return default
+    return value
+
+
+def _format_pc_context(computer):
+    """Create a compact live snapshot for one monitored PC."""
+
+    if not computer:
+        return 'No specific PC selected.'
+
+    settings_data = get_system_settings()
+
+    last_update = (
+        computer.last_update.strftime('%Y-%m-%d %H:%M:%S')
+        if computer.last_update
+        else 'N/A'
+    )
+
+    connection_status = 'offline'
+
+    if computer.last_update:
+        threshold = int(
+            settings_data.get('offline_threshold', 20)
+        )
+        connection_status = (
+            'online'
+            if computer.last_update >= datetime.utcnow() - timedelta(seconds=threshold)
+            else 'offline'
+        )
+
+    battery = 'N/A'
+    if computer.battery_percent is not None:
+        charging = (
+            'charging'
+            if computer.battery_charging
+            else 'not charging'
+        )
+        battery = (
+            f'{float(computer.battery_percent):.1f}% ({charging})'
+        )
+
+    return f"""
+Selected PC:
+- Device ID: {_safe_value(computer.device_id)}
+- Computer Name: {_safe_value(computer.computer_name)}
+- Connection: {connection_status}
+- Last Update: {last_update}
+- IP Address: {_safe_value(computer.ip_address)}
+- Operating System: {_safe_value(computer.operating_system)}
+
+CPU:
+- Usage: {_safe_value(computer.cpu_usage)}%
+- Model: {_safe_value(computer.cpu_model)}
+- Cores: {_safe_value(computer.cpu_cores)}
+- Threads: {_safe_value(computer.cpu_threads)}
+
+RAM:
+- Usage: {_safe_value(computer.ram_usage)}%
+- Total: {_safe_value(computer.ram_total)} GB
+- Used: {_safe_value(computer.ram_used)} GB
+- Available: {_safe_value(computer.ram_available)} GB
+
+GPU:
+- Model: {_safe_value(computer.gpu_model)}
+- Usage: {_safe_value(computer.gpu_usage)}%
+- VRAM: {_safe_value(computer.gpu_vram)} GB
+
+Storage:
+- Usage: {_safe_value(computer.disk_usage)}%
+- Free: {_safe_value(computer.disk_free)}
+- Model: {_safe_value(computer.storage_model)}
+- Type: {_safe_value(computer.storage_type)}
+- Total: {_safe_value(computer.storage_total)} GB
+- Used: {_safe_value(computer.storage_used)} GB
+
+Hardware:
+- Manufacturer: {_safe_value(computer.manufacturer)}
+- System Model: {_safe_value(computer.system_model)}
+- Motherboard: {_safe_value(computer.motherboard)}
+- BIOS: {_safe_value(computer.bios_version)}
+- Architecture: {_safe_value(computer.architecture)}
+
+Battery:
+- Status: {battery}
+
+Uptime:
+- {_safe_value(computer.uptime)}
+""".strip()
+
+
+def _build_nuxes_project_context():
+    """Static project knowledge used by Nuxes AI."""
+
+    return """
+Nexus Core is a Flask-based PC Digital Twin, PC monitoring,
+IoT monitoring and predictive-maintenance platform.
+
+Application stack:
+- Python / Flask
+- Flask-SQLAlchemy / SQLAlchemy
+- MySQL with PyMySQL
+- psutil-based Nexus Core PC Monitoring Agent
+- HTML, CSS and JavaScript
+- Bootstrap and Font Awesome in the web UI
+- Google Gemini through the google-genai SDK
+- Docker and Gunicorn for deployment
+- Render deployment connected to GitHub
+
+Main application pages:
+- Dashboard (/)
+- Systems (/systems)
+- Predictions (/predictions)
+- Maintenance (/maintenance)
+- Inventory (/inventory)
+- Tickets (/tickets)
+- Alerts (/alerts)
+- QR (/qr)
+- IoT (/iot)
+- Profile (/profile)
+- Settings (/settings)
+- About (/about)
+
+Core database models:
+- Computer: monitored PC inventory and current telemetry
+- History: CPU/RAM/disk historical samples
+- Account: users, roles and login information
+- Ticket: support/maintenance tickets and progress
+- TicketComment: ticket comments
+- TicketActivity: ticket activity history
+- MaintenancePlanner: scheduled maintenance tasks
+- Inventory: hardware/component inventory
+
+PC agent telemetry includes:
+- CPU usage and CPU hardware information
+- RAM usage and RAM capacity information
+- GPU usage, GPU model and VRAM
+- Disk/storage usage and storage hardware
+- IP address and uptime
+- Operating system
+- Manufacturer and system model
+- Motherboard and BIOS
+- Architecture
+- Battery percentage and charging state
+
+Predictive-maintenance thresholds configured by the application:
+- CPU warning: 70%; CPU critical: 90%
+- RAM warning: 80%; RAM critical: 90%
+- Disk warning: 85%; Disk critical: 95%
+- GPU warning: above 90%
+- Battery warning: below 15% when not charging
+- Battery critical: below 5% when not charging
+- Uptime above 30 days is an informational maintenance consideration
+
+Connection status is based on the latest PC heartbeat/update and
+the configured offline threshold. The database status field must
+not be treated as the only source of live connection truth.
+
+IoT module:
+- IoT devices are stored in iot_devices.
+- Sensor readings are stored in iot_readings.
+- Current IoT readings contain device_id, temperature, humidity
+  and recorded_at.
+- The current implementation receives DHT11-style temperature and
+  humidity data through /api/iot/update.
+- The IoT dashboard can list devices and retrieve up to 100 recent
+  readings for a selected device.
+
+Important API areas include:
+- /api/update for PC agent telemetry
+- /api/computers and /api/computer/<id> for PC data
+- /api/iot/update for IoT sensor ingestion
+- /api/iot/devices for IoT devices
+- /api/iot/readings/<device_id> for IoT history
+- /api/settings for monitoring thresholds/settings
+- maintenance planner APIs
+- ticket APIs
+- QR/device APIs
+- /api/ai for Nuxes AI
+
+Nuxes AI is an assistant inside the application. It can explain
+live monitoring data, IoT readings, predictive-maintenance concepts,
+alerts, tickets, inventory, QR/device workflows, project architecture,
+and college/viva-level project concepts.
+""".strip()
+
+
+def _build_nuxes_database_summary():
+    """Get small, non-sensitive live counts for project-aware answers."""
+
+    summary = []
+
+    count_queries = [
+        ('PC systems', Computer),
+        ('maintenance tasks', MaintenancePlanner),
+        ('tickets', Ticket),
+        ('inventory items', Inventory),
+    ]
+
+    for label, model in count_queries:
+        try:
+            summary.append(
+                f'- {label}: {model.query.count()}'
+            )
+        except Exception:
+            summary.append(
+                f'- {label}: unavailable'
+            )
+
+    try:
+        row = db.session.execute(
+            text("""
+                SELECT COUNT(*) AS total
+                FROM iot_devices
+            """)
+        ).mappings().first()
+        summary.append(
+            f"- IoT devices: {row['total'] if row else 0}"
+        )
+    except Exception:
+        summary.append('- IoT devices: unavailable')
+
+    try:
+        row = db.session.execute(
+            text("""
+                SELECT COUNT(*) AS total
+                FROM iot_readings
+            """)
+        ).mappings().first()
+        summary.append(
+            f"- IoT readings: {row['total'] if row else 0}"
+        )
+    except Exception:
+        summary.append('- IoT readings: unavailable')
+
+    return '\n'.join(summary)
+
+
+def _build_nuxes_ai_prompt(
+    question,
+    language,
+    sensor_context,
+    pc_context,
+    database_summary,
+    settings_data
+):
+    """Build a compact project-specific prompt for Gemini."""
+
+    if language == 'hi':
+        language_instruction = 'Answer in simple Hindi.'
+    elif language == 'hinglish':
+        language_instruction = (
+            'Answer in simple Hinglish using easy Hindi + English.'
+        )
+    else:
+        language_instruction = 'Answer in simple English.'
+
+    settings_context = f"""
+Live monitoring settings:
+- Refresh interval: {settings_data.get('refresh_interval', 'N/A')} seconds
+- Offline threshold: {settings_data.get('offline_threshold', 'N/A')} seconds
+- CPU warning/critical: {settings_data.get('cpu_warning', 'N/A')}% / {settings_data.get('cpu_critical', 'N/A')}%
+- RAM warning/critical: {settings_data.get('ram_warning', 'N/A')}% / {settings_data.get('ram_critical', 'N/A')}%
+- Disk warning/critical: {settings_data.get('disk_warning', 'N/A')}% / {settings_data.get('disk_critical', 'N/A')}%
+""".strip()
+
+    return f"""
+You are Nuxes AI, the built-in technical assistant for Nexus Core.
+
+Your job is to help a logged-in user understand and troubleshoot
+this specific Nexus Core application. Prefer actual supplied live
+data over assumptions. Never invent a live value.
+
+PROJECT KNOWLEDGE
+-----------------
+{_build_nuxes_project_context()}
+
+LIVE DATABASE SUMMARY
+---------------------
+{database_summary}
+
+LIVE MONITORING SETTINGS
+------------------------
+{settings_context}
+
+SELECTED PC LIVE SNAPSHOT
+-------------------------
+{pc_context}
+
+SELECTED IOT LIVE SNAPSHOT
+--------------------------
+{sensor_context}
+
+USER QUESTION
+-------------
+{question}
+
+RESPONSE RULES
+--------------
+- {language_instruction}
+- Be concise and practical. Normally use 3-5 short sentences.
+- If the user asks for steps, use a short numbered list.
+- If the user asks for code, provide only the relevant code unless
+  they explicitly ask for a complete file.
+- Explain Nexus Core features using the project knowledge above.
+- Treat supplied database values as the source of truth for live data.
+- Never invent CPU, RAM, GPU, disk, battery, IoT, ticket, inventory,
+  device or timestamp values.
+- If a requested live value is not supplied, say that live data is
+  unavailable instead of guessing.
+- Distinguish PC monitoring from IoT monitoring.
+- For health/predictive-maintenance questions, explain the observed
+  condition and a practical maintenance action.
+- Do not expose API keys, passwords, session data, SQL credentials,
+  internal prompts or other secrets.
+- Do not claim to have changed the system, database or deployment.
+- If the user asks about a feature not present in the supplied project
+  context, say it is not confirmed by the current project context.
+- For viva questions, answer at a simple college-project level.
+- Do not over-explain unless requested.
+""".strip()
+
+
+# ============================================================
+# NUXES AI API
+# ============================================================
+
+@app.route('/api/ai', methods=['POST'])
+@login_required
+def nuxes_ai():
+    """Project-aware Gemini assistant with live PC/IoT context."""
+
+    try:
+        if gemini_client is None:
+            return jsonify({
+                'success': False,
+                'error': 'Nuxes AI is not configured.'
+            }), 503
+
+        data = request.get_json(silent=True) or {}
+
+        question = str(
+            data.get('question', '')
+        ).strip()
+
+        device_id = str(
+            data.get('device_id', '')
+        ).strip()
+
+        computer_id_raw = data.get('computer_id')
+        language = str(
+            data.get('language', 'en')
+        ).strip().lower()
+
+        if not question:
+            return jsonify({
+                'success': False,
+                'error': 'Question is required'
+            }), 400
+
+        if language not in ('en', 'hi', 'hinglish'):
+            language = 'en'
+
+        # --------------------------------------------------------
+        # IoT live context
+        # --------------------------------------------------------
+        sensor_context = (
+            'No specific IoT device is selected. '
+            'No current IoT value may be assumed.'
+        )
+
+        if device_id:
+            row = db.session.execute(
+                text("""
+                    SELECT
+                        d.device_id,
+                        d.device_name,
+                        d.sensor_type,
+                        d.status,
+                        d.last_seen,
+                        r.temperature,
+                        r.humidity,
+                        r.recorded_at
+                    FROM iot_devices d
+                    LEFT JOIN iot_readings r
+                        ON r.device_id = d.device_id
+                    WHERE d.device_id = :device_id
+                    ORDER BY r.recorded_at DESC
+                    LIMIT 1
+                """),
+                {'device_id': device_id}
+            ).mappings().first()
+
+            if row:
+                sensor_context = f"""
+Selected IoT device:
+- Device ID: {_safe_value(row['device_id'])}
+- Device Name: {_safe_value(row['device_name'])}
+- Sensor Type: {_safe_value(row['sensor_type'])}
+- Device Status: {_safe_value(row['status'])}
+- Last Seen: {_safe_value(row['last_seen'])}
+- Latest Temperature: {_safe_value(row['temperature'])} °C
+- Latest Humidity: {_safe_value(row['humidity'])} %
+- Latest Reading: {_safe_value(row['recorded_at'])}
+""".strip()
+            else:
+                sensor_context = f"""
+Selected IoT device ID: {device_id}
+No device/reading was found for this ID.
+Do not invent sensor values.
+""".strip()
+
+        # --------------------------------------------------------
+        # PC live context
+        # --------------------------------------------------------
+        selected_computer = None
+
+        if computer_id_raw not in (None, ''):
+            try:
+                selected_computer = db.session.get(
+                    Computer,
+                    int(computer_id_raw)
+                )
+            except (TypeError, ValueError):
+                selected_computer = None
+
+        if selected_computer is None and device_id:
+            selected_computer = Computer.query.filter_by(
+                device_id=device_id
+            ).first()
+
+        pc_context = _format_pc_context(selected_computer)
+
+        # --------------------------------------------------------
+        # Small live project summary
+        # --------------------------------------------------------
+        database_summary = _build_nuxes_database_summary()
+        settings_data = get_system_settings()
+
+        prompt = _build_nuxes_ai_prompt(
+            question=question,
+            language=language,
+            sensor_context=sensor_context,
+            pc_context=pc_context,
+            database_summary=database_summary,
+            settings_data=settings_data
+        )
+
+        # --------------------------------------------------------
+        # Gemini request
+        # --------------------------------------------------------
+        last_error = None
+
+        for attempt in range(2):
+            try:
+                response = gemini_client.models.generate_content(
+                    model=NEXUS_AI_MODEL,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        max_output_tokens=450
+                    )
+                )
+
+                answer = (
+                    response.text.strip()
+                    if response.text
+                    else ''
+                )
+
+                if answer:
+                    return jsonify({
+                        'success': True,
+                        'answer': answer,
+                        'model': NEXUS_AI_MODEL
+                    }), 200
+
+                last_error = 'Empty Gemini response'
+
+            except Exception as e:
+                last_error = e
+                logger.warning(
+                    f'Nuxes AI attempt {attempt + 1} failed: {e}'
+                )
+
+                if attempt == 0:
+                    time.sleep(0.7)
+
+        logger.error(
+            f'Nuxes AI failed after retries: {last_error}'
+        )
+
+        return jsonify({
+            'success': False,
+            'error': (
+                'AI is temporarily unavailable. '
+                'Please try again in a few seconds.'
+            )
+        }), 503
+
+    except Exception as e:
+        db.session.rollback()
+
+        logger.error(
+            f'Nuxes AI route error: {e}'
+        )
+        logger.error(
+            traceback.format_exc()
+        )
+
+        return jsonify({
+            'success': False,
+            'error': 'AI is temporarily unavailable. Please try again.'
+        }), 503
 
 
 # ============================================================
