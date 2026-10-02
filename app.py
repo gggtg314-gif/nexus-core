@@ -5316,19 +5316,66 @@ def iot_dashboard():
     return render_template('iot.html')
 
 
-# ============================================================
-# IOT READINGS API
-# ============================================================
+@app.route('/api/iot/devices', methods=['GET'])
+@login_required
+def get_iot_devices():
 
-@app.route(
-    '/api/iot/readings/<string:device_id>',
-    methods=['GET']
-)
+    try:
+        rows = db.session.execute(
+            text("""
+                SELECT
+                    id,
+                    device_id,
+                    device_name,
+                    sensor_type,
+                    status,
+                    last_seen,
+                    created_at
+                FROM iot_devices
+                ORDER BY id DESC
+            """)
+        ).mappings().all()
+
+        devices = []
+
+        for row in rows:
+            devices.append({
+                'id': row['id'],
+                'device_id': row['device_id'],
+                'device_name': row['device_name'],
+                'sensor_type': row['sensor_type'],
+                'status': row['status'],
+                'last_seen': (
+                    row['last_seen'].isoformat()
+                    if row['last_seen']
+                    else None
+                ),
+                'created_at': (
+                    row['created_at'].isoformat()
+                    if row['created_at']
+                    else None
+                )
+            })
+
+        return jsonify({
+            'success': True,
+            'devices': devices
+        }), 200
+
+    except Exception as e:
+        logger.error(f"IoT devices error: {e}")
+
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/iot/readings/<string:device_id>', methods=['GET'])
 @login_required
 def get_iot_readings(device_id):
 
     try:
-
         rows = db.session.execute(
             text("""
                 SELECT
@@ -5350,60 +5397,158 @@ def get_iot_readings(device_id):
         readings = []
 
         for row in rows:
-
             readings.append({
-
-                'id':
-                    row['id'],
-
-                'device_id':
-                    row['device_id'],
-
+                'id': row['id'],
+                'device_id': row['device_id'],
                 'temperature': (
                     float(row['temperature'])
                     if row['temperature'] is not None
                     else None
                 ),
-
                 'humidity': (
                     float(row['humidity'])
                     if row['humidity'] is not None
                     else None
                 ),
-
                 'recorded_at': (
                     row['recorded_at'].isoformat()
                     if row['recorded_at']
                     else None
                 )
-
             })
+
+        return jsonify({
+            'success': True,
+            'readings': readings
+        }), 200
+
+    except Exception as e:
+        logger.error(f"IoT readings error: {e}")
+
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ============================================================
+# IOT HISTORY - CLEAR SELECTED DEVICE
+# ============================================================
+
+@app.route(
+    '/api/iot/history/clear/<string:device_id>',
+    methods=['DELETE']
+)
+@admin_required
+def clear_iot_history(device_id):
+
+    try:
+
+        device_id = str(
+            device_id
+        ).strip()
+
+        if not device_id:
+
+            return jsonify({
+                'success': False,
+                'error': 'Device ID is required'
+            }), 400
+
+
+        # ----------------------------------------------------
+        # Check device exists
+        # ----------------------------------------------------
+
+        device = db.session.execute(
+            text("""
+                SELECT id
+                FROM iot_devices
+                WHERE device_id = :device_id
+                LIMIT 1
+            """),
+            {
+                'device_id': device_id
+            }
+        ).first()
+
+
+        if not device:
+
+            return jsonify({
+                'success': False,
+                'error': 'IoT device not found'
+            }), 404
+
+
+        # ----------------------------------------------------
+        # Delete readings only
+        # Device itself will remain
+        # ----------------------------------------------------
+
+        result = db.session.execute(
+            text("""
+                DELETE FROM iot_readings
+                WHERE device_id = :device_id
+            """),
+            {
+                'device_id': device_id
+            }
+        )
+
+
+        deleted_count = result.rowcount
+
+
+        db.session.commit()
+
+
+        logger.info(
+            f"IoT history cleared | "
+            f"Device={device_id} | "
+            f"Rows={deleted_count}"
+        )
+
 
         return jsonify({
 
             'success': True,
 
-            'readings': readings
+            'message':
+                'IoT history cleared successfully',
+
+            'device_id':
+                device_id,
+
+            'deleted_count':
+                deleted_count
 
         }), 200
 
+
     except Exception as e:
 
+        db.session.rollback()
+
+
         logger.error(
-            f"IoT readings error: {e}"
+            f"Error clearing IoT history: {e}"
         )
+
 
         logger.error(
             traceback.format_exc()
         )
 
+
         return jsonify({
 
             'success': False,
 
-            'error': str(e)
+            'error':
+                str(e)
 
         }), 500
+
 
 # ============================================================
 # NUXES AI - PROJECT CONTEXT + LANGUAGE + LIVE DATA
