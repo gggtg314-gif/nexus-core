@@ -5321,14 +5321,24 @@ def iot_dashboard():
 # REAL-TIME ONLINE / OFFLINE STATUS
 # ============================================================
 
+# ============================================================
+# IOT DEVICES API
+# REAL-TIME ONLINE / OFFLINE STATUS
+# ============================================================
+
 @app.route('/api/iot/devices', methods=['GET'])
 @login_required
 def get_iot_devices():
 
     try:
 
-        # ESP32 ko itne seconds ke andar data bhejna hoga
-        # tabhi device ONLINE maana jayega.
+        # ----------------------------------------------------
+        # DEVICE ONLINE LIMIT
+        # ESP32 ne last 20 seconds mein data bheja
+        # to ONLINE.
+        # Uske baad OFFLINE.
+        # ----------------------------------------------------
+
         offline_threshold = 20
 
         rows = db.session.execute(
@@ -5338,50 +5348,32 @@ def get_iot_devices():
                     device_id,
                     device_name,
                     sensor_type,
-                    status,
                     last_seen,
-                    created_at
+                    created_at,
+
+                    CASE
+                        WHEN last_seen IS NOT NULL
+                        AND last_seen >=
+                            UTC_TIMESTAMP()
+                            - INTERVAL 20 SECOND
+                        THEN 'online'
+                        ELSE 'offline'
+                    END AS connection_status
+
                 FROM iot_devices
+
                 ORDER BY id DESC
             """)
         ).mappings().all()
-
-        now = datetime.utcnow()
 
         devices = []
 
         for row in rows:
 
-            last_seen = row['last_seen']
-
-            # Default = OFFLINE
-            connection_status = 'offline'
-
-            if last_seen is not None:
-
-                try:
-
-                    age_seconds = (
-                        now - last_seen
-                    ).total_seconds()
-
-                    # Last ESP32 data 20 sec ke andar aaya
-                    if age_seconds <= offline_threshold:
-                        connection_status = 'online'
-
-                except Exception as status_error:
-
-                    logger.warning(
-                        f"Unable to calculate IoT status "
-                        f"for {row['device_id']}: "
-                        f"{status_error}"
-                    )
-
-                    connection_status = 'offline'
-
             devices.append({
 
-                'id': row['id'],
+                'id':
+                    row['id'],
 
                 'device_id':
                     row['device_id'],
@@ -5393,15 +5385,15 @@ def get_iot_devices():
                     row['sensor_type'],
 
                 # IMPORTANT:
-                # DB ka old status directly use nahi karna.
-                # Real-time status last_seen se calculate hoga.
+                # DB ka old status use nahi karna.
+                # SQL real-time status calculate kar raha hai.
                 'status':
-                    connection_status,
+                    row['connection_status'],
 
                 'last_seen':
                     (
-                        last_seen.isoformat()
-                        if last_seen
+                        row['last_seen'].isoformat()
+                        if row['last_seen']
                         else None
                     ),
 
@@ -5414,9 +5406,16 @@ def get_iot_devices():
             })
 
         return jsonify({
-            'success': True,
-            'devices': devices,
-            'offline_threshold': offline_threshold
+
+            'success':
+                True,
+
+            'devices':
+                devices,
+
+            'offline_threshold':
+                offline_threshold
+
         }), 200
 
     except Exception as e:
@@ -5430,10 +5429,14 @@ def get_iot_devices():
         )
 
         return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
 
+            'success':
+                False,
+
+            'error':
+                str(e)
+
+        }), 500
 
 @# ============================================================
 # IOT READINGS API
