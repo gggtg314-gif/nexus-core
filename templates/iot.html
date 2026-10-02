@@ -4510,10 +4510,9 @@ async function loadDevices(){
         el('onlineCount').textContent =
             devices.filter(function(d){
 
-                return String(
-                    d.status || ''
-                ).toLowerCase()
-                === 'online';
+             return String(
+                 d.status || 'offline'
+             ).toLowerCase() === 'online';
 
             }).length;
 
