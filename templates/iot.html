@@ -5758,1370 +5758,1487 @@ window.addEventListener(
 
 </script>
 <!-- =========================================================
-     NUXES AI v2.2 — PROFESSIONAL AI ASSISTANT
-     7 Languages | Voice Input | TTS | Speed Control
-     Nexus Core Theme Matched
+     NUXES AI v3.0
+     Nexus Core AI Assistant
+     7 Languages + Voice Input + TTS + Live IoT Context
      ========================================================= -->
 
 <style>
 /* =========================================================
-   NUXES AI ROOT — NEXUS CORE THEME MATCHED
+   ROOT
    ========================================================= */
-
 #nuxes-ai-root {
-    --nuxes-purple: var(--purple);
-    --nuxes-accent: var(--accent);
-    --nuxes-pink: #ec4899;
-    --nuxes-info: var(--info);
-    --nuxes-green: var(--success);
-    --nuxes-bg: var(--bg-surface);
-    --nuxes-bg-2: var(--bg-elevated);
-    --nuxes-border: var(--border-subtle);
-    --nuxes-border-2: var(--border-default);
-    --nuxes-text: var(--text-primary);
-    --nuxes-muted: var(--text-tertiary);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --nx-accent: var(--accent, #3b82f6);
+    --nx-purple: var(--purple, #7c3aed);
+    --nx-pink: #ec4899;
+    --nx-success: var(--success, #22c55e);
+    --nx-danger: var(--danger, #ef4444);
+    --nx-warning: var(--warning, #f59e0b);
+
+    --nx-surface: var(--bg-surface, #111827);
+    --nx-elevated: var(--bg-elevated, #182033);
+    --nx-canvas: var(--bg-canvas, #0b1120);
+    --nx-hover: var(--bg-hover, #202a3d);
+
+    --nx-border: var(--border-subtle, rgba(255,255,255,.08));
+    --nx-border-strong: var(--border-default, rgba(255,255,255,.14));
+
+    --nx-text: var(--text-primary, #f8fafc);
+    --nx-text-2: var(--text-secondary, #cbd5e1);
+    --nx-muted: var(--text-tertiary, #94a3b8);
+
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-#nuxes-ai-root * { box-sizing: border-box; }
+#nuxes-ai-root *,
+#nuxes-ai-root *::before,
+#nuxes-ai-root *::after {
+    box-sizing: border-box;
+}
 
 /* =========================================================
-   FLOATING LAUNCHER
+   FLOATING BUTTON
    ========================================================= */
-
 #nuxes-ai-launcher {
     position: fixed;
     right: 22px;
     bottom: 22px;
-    width: 52px;
-    height: 52px;
+
+    width: 54px;
+    height: 54px;
+
     border: 0;
-    border-radius: 16px;
-    cursor: pointer;
-    z-index: 99990;
+    border-radius: 17px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
+    cursor: pointer;
+    z-index: 99990;
+
     color: #fff;
-    background: linear-gradient(135deg, var(--accent), var(--purple));
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--nx-accent),
+            var(--nx-purple)
+        );
+
     box-shadow:
-        0 10px 30px rgba(59,130,246,.35),
-        0 4px 14px rgba(0,0,0,.3),
-        inset 0 1px 0 rgba(255,255,255,.15);
-    transition: transform .25s cubic-bezier(.34,1.56,.64,1),
-                box-shadow .25s ease;
+        0 12px 32px rgba(59,130,246,.35),
+        0 5px 18px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.2);
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
 }
 
 #nuxes-ai-launcher:hover {
-    transform: translateY(-3px) scale(1.06);
+    transform: translateY(-3px) scale(1.04);
+
     box-shadow:
-        0 16px 40px rgba(59,130,246,.5),
-        0 6px 20px rgba(0,0,0,.35);
+        0 18px 42px rgba(59,130,246,.45),
+        0 7px 22px rgba(0,0,0,.4);
 }
 
-#nuxes-ai-launcher:active { transform: scale(.94); }
+#nuxes-ai-launcher:active {
+    transform: scale(.94);
+}
 
 .nuxes-orb-icon {
     position: relative;
     z-index: 2;
-    font-size: 18px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,.3));
+
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 17px;
+
+    filter:
+        drop-shadow(0 2px 5px rgba(0,0,0,.35));
 }
 
 .nuxes-orb-pulse {
     position: absolute;
     inset: -4px;
-    border-radius: 20px;
-    border: 1px solid var(--accent);
-    opacity: .6;
-    animation: nuxesPulse 2.4s infinite;
+
+    border: 1px solid var(--nx-accent);
+    border-radius: 21px;
+
+    opacity: .55;
+
+    animation: nxPulse 2.5s infinite;
     pointer-events: none;
 }
 
-@keyframes nuxesPulse {
-    0%   { transform: scale(.94); opacity: .7; }
-    70%  { transform: scale(1.18); opacity: 0; }
-    100% { opacity: 0; }
+@keyframes nxPulse {
+    0% {
+        transform: scale(.94);
+        opacity: .7;
+    }
+
+    70% {
+        transform: scale(1.18);
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 0;
+    }
 }
 
 .nuxes-launcher-status {
     position: absolute;
-    right: -1px;
     top: -1px;
+    right: -1px;
+
     width: 11px;
     height: 11px;
+
     border-radius: 50%;
-    background: var(--success);
-    border: 2.5px solid var(--bg-surface);
+
+    background: var(--nx-success);
+
+    border: 2px solid var(--nx-surface);
+
+    box-shadow:
+        0 0 9px var(--nx-success);
+
     z-index: 5;
-    box-shadow: 0 0 8px var(--success);
 }
 
 /* =========================================================
-   MAIN PANEL
+   PANEL
    ========================================================= */
-
 #nuxes-ai-panel {
     position: fixed;
+
     right: 22px;
-    bottom: 86px;
-    width: 380px;
-    height: 600px;
+    bottom: 88px;
+
+    width: 390px;
+    height: 610px;
+
     max-height: calc(100vh - 110px);
-    z-index: 99999;
+
     display: none;
     flex-direction: column;
+
     overflow: hidden;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-default);
-    border-radius: 16px;
+
+    z-index: 99999;
+
+    background: var(--nx-surface);
+
+    border: 1px solid var(--nx-border-strong);
+
+    border-radius: 18px;
+
     box-shadow:
-        0 24px 60px rgba(0,0,0,.35),
-        0 8px 24px rgba(0,0,0,.25),
-        0 0 0 1px rgba(59,130,246,.06);
+        0 28px 70px rgba(0,0,0,.42),
+        0 10px 28px rgba(0,0,0,.25);
+
     transform-origin: bottom right;
-    animation: nuxesOpen .24s cubic-bezier(.34,1.56,.64,1);
 }
 
-#nuxes-ai-panel.active { display: flex; }
+#nuxes-ai-panel.active {
+    display: flex;
+    animation: nxPanelOpen .22s ease;
+}
 
-@keyframes nuxesOpen {
-    from { opacity: 0; transform: translateY(12px) scale(.96); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes nxPanelOpen {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* =========================================================
    HEADER
    ========================================================= */
-
 .nuxes-header {
-    height: 58px;
-    min-height: 58px;
+    min-height: 60px;
+
     padding: 0 12px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-surface);
-    position: relative;
-    flex-shrink: 0;
-}
 
-.nuxes-header::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 15%;
-    right: 15%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: .5;
+    gap: 8px;
+
+    border-bottom: 1px solid var(--nx-border);
+
+    flex-shrink: 0;
 }
 
 .nuxes-brand {
+    min-width: 0;
+
     display: flex;
     align-items: center;
+
     gap: 9px;
-    min-width: 0;
 }
 
 .nuxes-brand-logo {
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-md);
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     color: #fff;
-    font-size: 13px;
-    background: linear-gradient(135deg, var(--accent), var(--purple));
-    box-shadow: 0 4px 12px rgba(59,130,246,.25);
-    flex-shrink: 0;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--nx-accent),
+            var(--nx-purple)
+        );
+
+    box-shadow:
+        0 5px 14px rgba(59,130,246,.25);
 }
 
 .nuxes-brand-title {
-    color: var(--text-primary);
+    color: var(--nx-text);
+
     font-size: 12px;
-    font-weight: 700;
-    letter-spacing: -.01em;
+    font-weight: 750;
+
     display: flex;
     align-items: center;
+
     gap: 5px;
-    white-space: nowrap;
 }
 
 .nuxes-version {
-    font-size: 7.5px;
-    padding: 1px 4px;
-    border-radius: 4px;
-    background: var(--accent-subtle);
-    color: var(--accent);
+    padding: 2px 5px;
+
+    border-radius: 5px;
+
+    color: var(--nx-accent);
+
+    background: rgba(59,130,246,.1);
+
+    font-size: 7px;
     font-weight: 700;
-    letter-spacing: .02em;
 }
 
 .nuxes-brand-subtitle {
-    margin-top: 1px;
-    color: var(--text-tertiary);
-    font-size: 9px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
+    margin-top: 2px;
+
+    color: var(--nx-muted);
+
+    font-size: 8.5px;
 }
 
 .nuxes-online {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    color: var(--success);
-    font-weight: 600;
+    margin-left: 4px;
+
+    color: var(--nx-success);
+
+    font-weight: 700;
 }
 
 .nuxes-online-dot {
+    display: inline-block;
+
     width: 5px;
     height: 5px;
-    border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 6px var(--success);
-    animation: nuxesOnlineDot 2s ease-in-out infinite;
-}
 
-@keyframes nuxesOnlineDot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: .35; }
+    margin-right: 3px;
+
+    border-radius: 50%;
+
+    background: var(--nx-success);
+
+    box-shadow:
+        0 0 6px var(--nx-success);
 }
 
 .nuxes-header-controls {
     display: flex;
     align-items: center;
     gap: 4px;
-    flex-shrink: 0;
 }
 
 .nuxes-icon-btn {
-    width: 28px;
-    height: 28px;
+    width: 29px;
+    height: 29px;
+
     border: 1px solid transparent;
-    border-radius: var(--radius-md);
+    border-radius: 8px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     background: transparent;
-    color: var(--text-tertiary);
+    color: var(--nx-muted);
+
     cursor: pointer;
-    transition: .15s ease;
+
     font-size: 11px;
-    position: relative;
+
+    transition: .15s ease;
 }
 
-.nuxes-icon-btn:hover {
-    color: var(--text-primary);
-    background: var(--bg-hover);
-    border-color: var(--border-subtle);
-}
-
+.nuxes-icon-btn:hover,
 .nuxes-icon-btn.active {
-    color: var(--accent);
-    background: var(--accent-subtle);
-    border-color: var(--accent);
-}
-
-.nuxes-icon-btn[data-tip]:hover::after {
-    content: attr(data-tip);
-    position: absolute;
-    bottom: -26px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--text-primary);
-    color: var(--bg-surface);
-    font-size: 9px;
-    padding: 3px 7px;
-    border-radius: 5px;
-    white-space: nowrap;
-    z-index: 100;
-    pointer-events: none;
-    font-weight: 500;
+    color: var(--nx-accent);
+    background: rgba(59,130,246,.1);
+    border-color: var(--nx-border);
 }
 
 .nuxes-language {
-    height: 28px;
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 0 5px;
-    background: var(--bg-canvas);
-    color: var(--text-secondary);
-    font-size: 9px;
+    height: 29px;
+
+    padding: 0 6px;
+
+    border: 1px solid var(--nx-border);
+
+    border-radius: 8px;
+
     outline: none;
+
+    background: var(--nx-canvas);
+    color: var(--nx-text-2);
+
     cursor: pointer;
-    font-family: inherit;
-    font-weight: 600;
-    transition: .15s ease;
+
+    font-size: 9px;
+    font-weight: 700;
 }
 
-.nuxes-language:hover {
-    border-color: var(--accent);
-    color: var(--text-primary);
-}
-
-.nuxes-language option {
-    background: var(--bg-surface);
-    color: var(--text-primary);
+.nuxes-language:focus {
+    border-color: var(--nx-accent);
 }
 
 /* =========================================================
-   DEVICE CONTEXT BAR
+   CONTEXT
    ========================================================= */
-
 .nuxes-context {
+    min-height: 34px;
+
     margin: 8px 10px 0;
-    min-height: 32px;
     padding: 0 10px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    background: var(--bg-elevated);
-    flex-shrink: 0;
-    transition: .15s ease;
-}
 
-.nuxes-context:hover {
-    border-color: var(--accent);
-    background: var(--accent-subtle);
+    gap: 8px;
+
+    border: 1px solid var(--nx-border);
+
+    border-radius: 9px;
+
+    background: var(--nx-elevated);
+
+    flex-shrink: 0;
 }
 
 .nuxes-context-left {
+    min-width: 0;
+
     display: flex;
     align-items: center;
     gap: 7px;
-    min-width: 0;
 }
 
-.nuxes-context-icon { color: var(--accent); font-size: 11px; }
+.nuxes-context-icon {
+    color: var(--nx-accent);
+}
 
 .nuxes-context-text {
-    color: var(--text-secondary);
-    font-size: 9.5px;
-    white-space: nowrap;
+    min-width: 0;
+
     overflow: hidden;
     text-overflow: ellipsis;
-    font-weight: 500;
+    white-space: nowrap;
+
+    color: var(--nx-text-2);
+
+    font-size: 9px;
 }
 
 .nuxes-context-value {
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    padding: 1px 5px;
+    padding: 2px 5px;
+
     border-radius: 4px;
-    background: var(--accent-subtle);
-    color: var(--accent);
+
+    background: rgba(59,130,246,.1);
+
+    color: var(--nx-accent);
+
+    font-family: "JetBrains Mono", monospace;
+
+    font-size: 8px;
+    font-weight: 700;
 }
 
 .nuxes-context-live {
-    color: var(--success);
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    display: flex;
-    align-items: center;
-    gap: 4px;
     flex-shrink: 0;
+
+    color: var(--nx-success);
+
+    font-size: 7.5px;
+    font-weight: 800;
 }
 
 .nuxes-context-live::before {
-    content: '';
+    content: "";
+
+    display: inline-block;
+
     width: 4px;
     height: 4px;
+
+    margin-right: 4px;
+
     border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 5px var(--success);
-    animation: nuxesOnlineDot 1.6s infinite;
+
+    background: var(--nx-success);
 }
 
 /* =========================================================
-   CHAT AREA
+   CHAT
    ========================================================= */
-
 #nuxes-ai-messages {
     flex: 1;
-    overflow-y: auto;
-    padding: 12px 12px 8px;
-    scroll-behavior: smooth;
-    overscroll-behavior: contain;
+
     min-height: 0;
+
+    overflow-y: auto;
+
+    padding: 12px;
+
+    scroll-behavior: smooth;
 }
 
-#nuxes-ai-messages::-webkit-scrollbar { width: 4px; }
-#nuxes-ai-messages::-webkit-scrollbar-thumb {
-    background: var(--border-default);
-    border-radius: 20px;
+#nuxes-ai-messages::-webkit-scrollbar {
+    width: 4px;
 }
-#nuxes-ai-messages::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+#nuxes-ai-messages::-webkit-scrollbar-thumb {
+    background: var(--nx-border-strong);
+    border-radius: 10px;
+}
+
+.nuxes-welcome {
+    padding: 12px;
+
+    margin-bottom: 12px;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(59,130,246,.08),
+            rgba(124,58,237,.08)
+        );
+
+    border: 1px solid var(--nx-border);
+}
+
+.nuxes-welcome-title {
+    color: var(--nx-text);
+
+    font-size: 11px;
+    font-weight: 750;
+
+    margin-bottom: 4px;
+}
+
+.nuxes-welcome-text {
+    color: var(--nx-muted);
+
+    font-size: 9px;
+
+    line-height: 1.55;
+}
 
 .nuxes-message {
     display: flex;
+
     margin-bottom: 11px;
-    animation: nuxesMessageIn .2s cubic-bezier(.34,1.56,.64,1);
 }
 
-@keyframes nuxesMessageIn {
-    from { opacity: 0; transform: translateY(5px) scale(.98); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+.nuxes-message.user {
+    justify-content: flex-end;
 }
 
-.nuxes-message.user { justify-content: flex-end; }
-.nuxes-message.ai   { justify-content: flex-start; }
+.nuxes-message.ai {
+    justify-content: flex-start;
+}
 
 .nuxes-avatar {
-    flex: 0 0 auto;
-    width: 24px;
-    height: 24px;
+    width: 25px;
+    height: 25px;
+
+    flex: 0 0 25px;
+
     margin-right: 7px;
-    margin-top: 1px;
-    border-radius: 7px;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--accent), var(--purple));
+
+    border-radius: 8px;
+
     color: #fff;
-    font-size: 10px;
-    box-shadow: 0 3px 8px rgba(59,130,246,.25);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--nx-accent),
+            var(--nx-purple)
+        );
+
+    font-size: 9px;
 }
 
-.nuxes-message-content { max-width: 84%; min-width: 0; }
+.nuxes-message-content {
+    max-width: 84%;
+    min-width: 0;
+}
 
 .nuxes-bubble {
-    padding: 8px 11px;
-    border-radius: 12px;
-    font-size: 11.5px;
-    line-height: 1.55;
-    white-space: pre-wrap;
-    word-break: break-word;
-}
-
-.nuxes-bubble strong { color: var(--text-primary); font-weight: 700; }
-.nuxes-bubble em { color: var(--accent); font-style: italic; }
-.nuxes-bubble code {
-    background: var(--bg-canvas);
-    padding: 1px 5px;
-    border-radius: 4px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    color: var(--accent);
-    border: 1px solid var(--border-subtle);
-}
-.nuxes-bubble pre {
-    background: var(--bg-canvas);
     padding: 8px 10px;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin: 6px 0;
-    border: 1px solid var(--border-subtle);
+
+    border-radius: 12px;
+
+    font-size: 11px;
+
+    line-height: 1.55;
+
+    word-break: break-word;
+
+    white-space: pre-wrap;
 }
-.nuxes-bubble pre code {
-    background: transparent;
-    border: 0;
-    padding: 0;
-    color: var(--text-primary);
-    font-size: 10px;
-}
-.nuxes-bubble ul, .nuxes-bubble ol { margin: 4px 0; padding-left: 18px; }
-.nuxes-bubble li { margin: 2px 0; }
-.nuxes-bubble a { color: var(--accent); text-decoration: underline; }
 
 .nuxes-message.ai .nuxes-bubble {
-    color: var(--text-secondary);
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
+    color: var(--nx-text-2);
+
+    background: var(--nx-elevated);
+
+    border: 1px solid var(--nx-border);
+
     border-top-left-radius: 4px;
 }
 
 .nuxes-message.user .nuxes-bubble {
     color: #fff;
-    background: linear-gradient(135deg, var(--accent), var(--purple));
-    border: 1px solid var(--accent);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--nx-accent),
+            var(--nx-purple)
+        );
+
     border-top-right-radius: 4px;
-    box-shadow: 0 4px 12px rgba(59,130,246,.2);
+}
+
+.nuxes-bubble code {
+    padding: 1px 4px;
+
+    border-radius: 4px;
+
+    color: var(--nx-accent);
+
+    background: var(--nx-canvas);
+
+    font-family: "JetBrains Mono", monospace;
+
+    font-size: 9px;
+}
+
+.nuxes-bubble pre {
+    margin: 6px 0;
+
+    padding: 8px;
+
+    overflow-x: auto;
+
+    border-radius: 7px;
+
+    background: var(--nx-canvas);
+
+    border: 1px solid var(--nx-border);
 }
 
 .nuxes-message-tools {
     display: flex;
     gap: 3px;
-    margin-top: 5px;
+
+    margin-top: 4px;
+
     opacity: 0;
-    transition: opacity .18s ease;
+
+    transition: opacity .15s ease;
 }
 
-.nuxes-message:hover .nuxes-message-tools { opacity: 1; }
+.nuxes-message:hover .nuxes-message-tools {
+    opacity: 1;
+}
 
 .nuxes-tool {
     width: 22px;
     height: 21px;
+
     border: 1px solid transparent;
+
     border-radius: 5px;
+
     background: transparent;
-    color: var(--text-tertiary);
+    color: var(--nx-muted);
+
     cursor: pointer;
+
     font-size: 9px;
-    transition: .15s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .nuxes-tool:hover {
-    background: var(--bg-hover);
-    color: var(--accent);
-    border-color: var(--border-subtle);
-}
-
-.nuxes-tool.active { color: var(--success); }
-
-/* =========================================================
-   WELCOME CARD
-   ========================================================= */
-
-.nuxes-welcome {
-    margin: 0 0 12px;
-    padding: 12px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, var(--accent-subtle), var(--purple-subtle));
-    border: 1px solid var(--border-subtle);
-    position: relative;
-    overflow: hidden;
-}
-
-.nuxes-welcome::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--purple), var(--info));
-}
-
-.nuxes-welcome-title {
-    color: var(--text-primary);
-    font-size: 11.5px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.nuxes-welcome-text {
-    color: var(--text-tertiary);
-    font-size: 9.5px;
-    line-height: 1.55;
+    color: var(--nx-accent);
+    background: var(--nx-hover);
 }
 
 /* =========================================================
    TYPING
    ========================================================= */
-
 .nuxes-typing {
     display: flex;
-    align-items: center;
     gap: 3px;
-    height: 16px;
 }
 
 .nuxes-typing span {
     width: 5px;
     height: 5px;
+
     border-radius: 50%;
-    background: var(--accent);
-    animation: nuxesTyping 1.2s infinite;
+
+    background: var(--nx-accent);
+
+    animation: nxTyping 1.1s infinite;
 }
 
-.nuxes-typing span:nth-child(2) { animation-delay: .15s; }
-.nuxes-typing span:nth-child(3) { animation-delay: .30s; }
+.nuxes-typing span:nth-child(2) {
+    animation-delay: .15s;
+}
 
-@keyframes nuxesTyping {
-    0%, 60%, 100% { transform: translateY(0); opacity: .35; }
-    30% { transform: translateY(-4px); opacity: 1; }
+.nuxes-typing span:nth-child(3) {
+    animation-delay: .3s;
+}
+
+@keyframes nxTyping {
+    0%, 60%, 100% {
+        opacity: .3;
+        transform: translateY(0);
+    }
+
+    30% {
+        opacity: 1;
+        transform: translateY(-4px);
+    }
 }
 
 /* =========================================================
    QUICK ACTIONS
    ========================================================= */
+.nuxes-quick-section {
+    padding: 0 10px 8px;
 
-.nuxes-quick-section { padding: 0 10px 8px; }
+    flex-shrink: 0;
+}
 
 .nuxes-quick-label {
-    margin-bottom: 6px;
-    color: var(--text-quaternary);
-    font-size: 8.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
+    margin-bottom: 5px;
 
-.nuxes-quick-toggle {
-    cursor: pointer;
-    color: var(--accent);
+    color: var(--nx-muted);
+
     font-size: 8px;
-    text-transform: none;
-    letter-spacing: 0;
-    font-weight: 600;
-    transition: .15s;
-}
+    font-weight: 800;
 
-.nuxes-quick-toggle:hover { color: var(--purple); }
-
-.nuxes-quick {
-    display: flex;
-    gap: 5px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-    -webkit-overflow-scrolling: touch;
-}
-
-.nuxes-quick::-webkit-scrollbar { display: none; }
-
-.nuxes-quick-btn {
-    flex: 0 0 auto;
-    height: 28px;
-    padding: 0 9px;
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 9px;
-    font-weight: 500;
-    transition: .15s ease;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-family: inherit;
-    white-space: nowrap;
-}
-
-.nuxes-quick-btn i { font-size: 9px; color: var(--accent); }
-
-.nuxes-quick-btn:hover {
-    color: var(--text-primary);
-    background: var(--accent-subtle);
-    border-color: var(--accent);
-    transform: translateY(-1px);
-}
-
-.nuxes-quick-btn:hover i { color: var(--purple); }
-
-/* =========================================================
-   INPUT AREA
-   ========================================================= */
-
-.nuxes-input-area {
-    padding: 8px 10px 10px;
-    border-top: 1px solid var(--border-subtle);
-    background: var(--bg-surface);
-    flex-shrink: 0;
-    position: relative;
-}
-
-.nuxes-input-wrapper {
-    display: flex;
-    align-items: flex-end;
-    gap: 5px;
-    padding: 5px;
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    background: var(--bg-canvas);
-    transition: .2s ease;
-}
-
-.nuxes-input-wrapper:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-subtle);
-}
-
-.nuxes-input-wrapper.recording {
-    border-color: var(--danger);
-    box-shadow: 0 0 0 3px var(--danger-subtle);
-}
-
-#nuxes-ai-input {
-    flex: 1;
-    min-width: 0;
-    max-height: 80px;
-    resize: none;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    color: var(--text-primary);
-    padding: 6px 5px;
-    font-family: inherit;
-    font-size: 11.5px;
-    line-height: 1.5;
-}
-
-#nuxes-ai-input::placeholder { color: var(--text-quaternary); }
-
-.nuxes-voice-wave {
-    display: none;
-    align-items: center;
-    gap: 2px;
-    height: 14px;
-    margin-right: 4px;
-}
-
-.nuxes-voice-wave.active { display: flex; }
-
-.nuxes-voice-wave span {
-    width: 2.5px;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--danger);
-    animation: nuxesWave .8s ease-in-out infinite;
-}
-
-.nuxes-voice-wave span:nth-child(2) { animation-delay: .1s; }
-.nuxes-voice-wave span:nth-child(3) { animation-delay: .2s; }
-.nuxes-voice-wave span:nth-child(4) { animation-delay: .3s; }
-.nuxes-voice-wave span:nth-child(5) { animation-delay: .4s; }
-
-@keyframes nuxesWave {
-    0%, 100% { height: 4px; }
-    50% { height: 14px; }
-}
-
-.nuxes-mic {
-    flex: 0 0 auto;
-    width: 30px;
-    height: 30px;
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-surface);
-    color: var(--text-tertiary);
-    cursor: pointer;
-    transition: .15s ease;
-    font-size: 11px;
-}
-
-.nuxes-mic:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-    background: var(--accent-subtle);
-}
-
-.nuxes-mic.recording {
-    background: var(--danger);
-    color: #fff;
-    border-color: var(--danger);
-    animation: nuxesMicPulse 1s infinite;
-}
-
-@keyframes nuxesMicPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(240,68,56,.5); }
-    50% { box-shadow: 0 0 0 6px rgba(240,68,56,0); }
-}
-
-.nuxes-send {
-    flex: 0 0 auto;
-    width: 30px;
-    height: 30px;
-    border: 0;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--accent), var(--purple));
-    color: #fff;
-    cursor: pointer;
-    transition: .15s ease;
-    font-size: 11px;
-    box-shadow: 0 3px 8px rgba(59,130,246,.25);
-}
-
-.nuxes-send:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 14px rgba(59,130,246,.4);
-}
-
-.nuxes-send:active { transform: scale(.95); }
-
-.nuxes-send:disabled {
-    opacity: .45;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-.nuxes-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 6px;
-    padding: 0 2px;
-    color: var(--text-quaternary);
-    font-size: 8px;
-    gap: 8px;
-}
-
-.nuxes-meta-left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    overflow: hidden;
-}
-
-.nuxes-meta-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    padding: 1px 5px;
-    border-radius: 4px;
-    background: var(--bg-elevated);
-    color: var(--text-tertiary);
-    font-size: 7.5px;
-    font-weight: 600;
-    border: 1px solid var(--border-subtle);
-    white-space: nowrap;
-}
-
-.nuxes-meta-badge i { font-size: 7px; color: var(--accent); }
-
-#nuxes-char-count {
-    font-variant-numeric: tabular-nums;
-    transition: .15s;
-    font-family: 'JetBrains Mono', monospace;
-    flex-shrink: 0;
-}
-
-#nuxes-char-count.warning { color: var(--warning); }
-#nuxes-char-count.danger { color: var(--danger); }
-
-/* =========================================================
-   POPOVER (Voice Language + Speed)
-   ========================================================= */
-
-.nuxes-popover {
-    position: absolute;
-    bottom: 100%;
-    right: 10px;
-    margin-bottom: 10px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    padding: 12px 14px;
-    box-shadow: 0 12px 36px rgba(0,0,0,.35);
-    width: 240px;
-    z-index: 100;
-    display: none;
-    animation: nuxesPopIn .2s cubic-bezier(.34,1.56,.64,1);
-}
-
-.nuxes-popover.show { display: block; }
-
-@keyframes nuxesPopIn {
-    from { opacity: 0; transform: translateY(8px) scale(.96); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.nuxes-popover-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    color: var(--text-tertiary);
-    font-size: 9px;
-    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .06em;
-    margin-bottom: 10px;
-    padding-bottom: 7px;
-    border-bottom: 1px solid var(--border-subtle);
 }
 
-.nuxes-popover-title i { color: var(--accent); margin-right: 4px; }
-
-.nuxes-popover-close {
-    cursor: pointer;
-    color: var(--text-quaternary);
-    font-size: 11px;
-    padding: 2px 4px;
-    border-radius: 4px;
-    transition: .15s;
-}
-
-.nuxes-popover-close:hover {
-    color: var(--danger);
-    background: var(--danger-subtle);
-}
-
-.nuxes-popover-label {
-    color: var(--text-tertiary);
-    font-size: 9px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.nuxes-popover-value {
-    color: var(--accent);
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-}
-
-/* Voice language grid */
-.nuxes-voice-lang-grid {
+.nuxes-quick {
     display: grid;
+
     grid-template-columns: 1fr 1fr;
-    gap: 4px;
-    margin-bottom: 10px;
+
+    gap: 5px;
 }
 
-.nuxes-voice-lang-btn {
-    padding: 6px 8px;
-    border: 1px solid var(--border-subtle);
-    border-radius: 6px;
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 9px;
-    font-weight: 600;
-    font-family: inherit;
-    transition: .15s ease;
-    text-align: left;
+.nuxes-quick-btn {
+    min-width: 0;
+
+    height: 29px;
+
+    padding: 0 8px;
+
+    border: 1px solid var(--nx-border);
+
+    border-radius: 8px;
+
     display: flex;
     align-items: center;
     gap: 5px;
+
+    background: var(--nx-elevated);
+    color: var(--nx-text-2);
+
+    cursor: pointer;
+
+    font-family: inherit;
+    font-size: 8.5px;
+    font-weight: 600;
+
+    transition: .15s ease;
+
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.nuxes-voice-lang-btn:hover {
-    background: var(--bg-hover);
-    border-color: var(--accent);
-    color: var(--text-primary);
+.nuxes-quick-btn i {
+    flex-shrink: 0;
+
+    color: var(--nx-accent);
 }
 
-.nuxes-voice-lang-btn.active {
-    background: var(--accent-subtle);
-    border-color: var(--accent);
-    color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent);
+.nuxes-quick-btn:hover {
+    color: var(--nx-text);
+
+    background: rgba(59,130,246,.08);
+
+    border-color: var(--nx-accent);
+
+    transform: translateY(-1px);
 }
 
-.nuxes-voice-lang-btn .flag {
-    font-size: 11px;
-    line-height: 1;
+/* =========================================================
+   INPUT
+   ========================================================= */
+.nuxes-input-area {
+    padding: 8px 10px 9px;
+
+    border-top: 1px solid var(--nx-border);
+
+    background: var(--nx-surface);
+
+    flex-shrink: 0;
 }
 
-/* Speed slider */
-.nuxes-speed-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 4px;
-    border-radius: 4px;
-    background: var(--bg-hover);
-    outline: none;
-    cursor: pointer;
-    margin: 4px 0;
-}
+.nuxes-input-wrapper {
+    display: flex;
+    align-items: flex-end;
 
-.nuxes-speed-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    border: 2px solid var(--bg-surface);
-    box-shadow: 0 2px 6px rgba(59,130,246,.4);
+    gap: 5px;
+
+    padding: 5px;
+
+    border: 1px solid var(--nx-border-strong);
+
+    border-radius: 10px;
+
+    background: var(--nx-canvas);
+
     transition: .15s ease;
 }
 
-.nuxes-speed-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.15);
-    background: var(--purple);
+.nuxes-input-wrapper:focus-within {
+    border-color: var(--nx-accent);
+
+    box-shadow:
+        0 0 0 3px rgba(59,130,246,.08);
 }
 
-.nuxes-speed-slider::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--accent);
+#nuxes-ai-input {
+    flex: 1;
+
+    min-width: 0;
+
+    max-height: 80px;
+
+    resize: none;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--nx-text);
+
+    padding: 6px 5px;
+
+    font-family: inherit;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+#nuxes-ai-input::placeholder {
+    color: var(--nx-muted);
+}
+
+.nuxes-mic,
+.nuxes-send {
+    width: 30px;
+    height: 30px;
+
+    flex: 0 0 30px;
+
+    border-radius: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     cursor: pointer;
-    border: 2px solid var(--bg-surface);
 }
 
-.nuxes-speed-ticks {
+.nuxes-mic {
+    border: 1px solid var(--nx-border);
+
+    background: var(--nx-surface);
+    color: var(--nx-muted);
+}
+
+.nuxes-mic:hover {
+    color: var(--nx-accent);
+    border-color: var(--nx-accent);
+}
+
+.nuxes-mic.recording {
+    color: #fff;
+    background: var(--nx-danger);
+    border-color: var(--nx-danger);
+}
+
+.nuxes-send {
+    border: 0;
+
+    color: #fff;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--nx-accent),
+            var(--nx-purple)
+        );
+}
+
+.nuxes-send:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.nuxes-meta {
+    margin-top: 5px;
+
     display: flex;
     justify-content: space-between;
-    margin-top: 4px;
+
+    color: var(--nx-muted);
+
     font-size: 7.5px;
-    color: var(--text-quaternary);
-    font-family: 'JetBrains Mono', monospace;
+}
+
+.nuxes-badge {
+    padding: 2px 5px;
+
+    margin-right: 4px;
+
+    border-radius: 4px;
+
+    background: var(--nx-elevated);
+
+    border: 1px solid var(--nx-border);
+
+    font-size: 7px;
+}
+
+/* =========================================================
+   VOICE SETTINGS
+   ========================================================= */
+.nuxes-popover {
+    position: absolute;
+
+    right: 10px;
+    bottom: 100%;
+
+    width: 250px;
+
+    padding: 12px;
+
+    margin-bottom: 8px;
+
+    display: none;
+
+    background: var(--nx-surface);
+
+    border: 1px solid var(--nx-border-strong);
+
+    border-radius: 11px;
+
+    box-shadow:
+        0 15px 40px rgba(0,0,0,.4);
+
+    z-index: 100;
+}
+
+.nuxes-popover.show {
+    display: block;
+}
+
+.nuxes-popover-title {
+    display: flex;
+    justify-content: space-between;
+
+    color: var(--nx-text);
+
+    font-size: 9px;
+    font-weight: 750;
+
+    margin-bottom: 10px;
+}
+
+.nuxes-voice-grid {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 4px;
+}
+
+.nuxes-voice-btn {
+    padding: 6px;
+
+    border: 1px solid var(--nx-border);
+
+    border-radius: 6px;
+
+    background: var(--nx-elevated);
+
+    color: var(--nx-text-2);
+
+    cursor: pointer;
+
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.nuxes-voice-btn.active {
+    color: var(--nx-accent);
+
+    border-color: var(--nx-accent);
+
+    background: rgba(59,130,246,.08);
+}
+
+.nuxes-speed {
+    width: 100%;
+
+    margin-top: 12px;
+}
+
+.nuxes-speed-label {
+    display: flex;
+    justify-content: space-between;
+
+    color: var(--nx-muted);
+
+    font-size: 8px;
+
+    margin-bottom: 5px;
+}
+
+.nuxes-tts {
+    width: 100%;
+    height: 30px;
+
+    margin-top: 10px;
+
+    border: 1px solid var(--nx-border);
+
+    border-radius: 7px;
+
+    background: var(--nx-elevated);
+
+    color: var(--nx-text-2);
+
+    cursor: pointer;
+
+    font-size: 8.5px;
+    font-weight: 700;
+}
+
+.nuxes-tts.active {
+    color: var(--nx-success);
+
+    border-color: var(--nx-success);
 }
 
 /* =========================================================
    TOAST
    ========================================================= */
-
 .nuxes-toast {
     position: fixed;
-    bottom: 86px;
+
     right: 22px;
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    background: var(--bg-surface);
-    border: 1px solid var(--border-default);
-    color: var(--text-primary);
-    font-size: 10.5px;
-    z-index: 100000;
-    box-shadow: 0 10px 30px rgba(0,0,0,.3);
+    bottom: 88px;
+
+    max-width: 280px;
+
+    padding: 9px 12px;
+
     display: flex;
     align-items: center;
-    gap: 7px;
-    animation: nuxesToastIn .25s cubic-bezier(.34,1.56,.64,1);
-    font-family: 'Inter', system-ui, sans-serif;
-    font-weight: 500;
-    max-width: 280px;
-}
+    gap: 6px;
 
-.nuxes-toast.success { border-color: var(--success); }
-.nuxes-toast.error   { border-color: var(--danger); }
-.nuxes-toast.info    { border-color: var(--accent); }
+    z-index: 100001;
 
-.nuxes-toast i { font-size: 12px; }
-.nuxes-toast.success i { color: var(--success); }
-.nuxes-toast.error i   { color: var(--danger); }
-.nuxes-toast.info i    { color: var(--accent); }
+    border: 1px solid var(--nx-border-strong);
 
-@keyframes nuxesToastIn {
-    from { opacity: 0; transform: translateY(16px) scale(.95); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    border-radius: 9px;
+
+    background: var(--nx-surface);
+
+    color: var(--nx-text);
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.35);
+
+    font-size: 9.5px;
 }
 
 /* =========================================================
    MOBILE
    ========================================================= */
-
 @media (max-width: 600px) {
-    #nuxes-ai-panel {
-        left: 8px;
-        right: 8px;
-        bottom: 78px;
-        width: auto;
-        height: min(600px, calc(100vh - 95px));
-        border-radius: 14px;
-    }
 
     #nuxes-ai-launcher {
         right: 14px;
         bottom: 14px;
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
+
+        width: 50px;
+        height: 50px;
     }
 
-    .nuxes-orb-icon { font-size: 16px; }
+    #nuxes-ai-panel {
+        left: 8px;
+        right: 8px;
 
-    .nuxes-header { height: 54px; min-height: 54px; }
+        bottom: 76px;
 
-    .nuxes-brand-subtitle { display: none; }
-
-    .nuxes-popover {
-        right: -5px;
-        left: -5px;
         width: auto;
+
+        height: calc(100vh - 92px);
+
+        max-height: none;
+
+        border-radius: 15px;
+    }
+
+    .nuxes-brand-subtitle {
+        display: none;
     }
 
     .nuxes-toast {
-        right: 8px;
         left: 8px;
-        bottom: 78px;
+        right: 8px;
+        bottom: 74px;
+
+        max-width: none;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #nuxes-ai-panel,
-    .nuxes-message,
-    .nuxes-orb-pulse,
-    .nuxes-typing span,
-    .nuxes-voice-wave span,
-    .nuxes-toast,
-    .nuxes-popover {
+    *,
+    *::before,
+    *::after {
         animation: none !important;
+        transition: none !important;
     }
 }
 </style>
 
 
 <!-- =========================================================
-     FLOATING LAUNCHER + PANEL
+     NUXES AI HTML
      ========================================================= -->
 
 <div id="nuxes-ai-root">
 
+    <!-- Floating launcher -->
     <button
         id="nuxes-ai-launcher"
         type="button"
-        aria-label="Open Nuxes AI (Ctrl+K)"
+        aria-label="Open Nuxes AI"
         onclick="toggleNuxesAI()">
+
         <span class="nuxes-orb-pulse"></span>
-        <span class="nuxes-orb-icon"><i class="fas fa-brain"></i></span>
+
+        <span class="nuxes-orb-icon">
+            <i class="fas fa-brain"></i>
+        </span>
+
         <span class="nuxes-launcher-status"></span>
     </button>
 
-    <div id="nuxes-ai-panel" role="dialog" aria-label="Nuxes AI Assistant">
+
+    <!-- Main panel -->
+    <div
+        id="nuxes-ai-panel"
+        role="dialog"
+        aria-label="Nuxes AI Assistant">
+
 
         <!-- HEADER -->
         <div class="nuxes-header">
 
             <div class="nuxes-brand">
+
                 <div class="nuxes-brand-logo">
                     <i class="fas fa-brain"></i>
                 </div>
+
                 <div>
                     <div class="nuxes-brand-title">
                         Nuxes AI
-                        <span class="nuxes-version">v2.2</span>
+                        <span class="nuxes-version">v3.0</span>
                     </div>
+
                     <div class="nuxes-brand-subtitle">
                         Nexus Core Assistant
+
                         <span class="nuxes-online">
                             <span class="nuxes-online-dot"></span>
                             Online
                         </span>
                     </div>
                 </div>
+
             </div>
+
 
             <div class="nuxes-header-controls">
 
-                <!-- Response Language -->
+                <!-- Response language -->
                 <select
                     id="nuxes-ai-language"
                     class="nuxes-language"
-                    title="Response language"
                     onchange="changeNuxesLanguage(this.value)">
-                    <option value="en" selected>EN</option>
+
+                    <option value="en">EN</option>
                     <option value="hi">हिन्दी</option>
                     <option value="hinglish">Hing</option>
                     <option value="bhojpuri">भोज</option>
-                    <option value="mr">मरा</option>
-                    <option value="gu">ગુજ</option>
-                    <option value="ne">नेपा</option>
+                    <option value="mr">मराठी</option>
+                    <option value="gu">ગુજરાતી</option>
+                    <option value="ne">नेपाली</option>
+
                 </select>
 
-                <!-- Voice Settings (lang + speed) -->
+
+                <!-- Voice settings -->
                 <button
                     type="button"
-                    id="nuxes-voice-settings-toggle"
                     class="nuxes-icon-btn"
-                    data-tip="Voice settings"
+                    id="nuxes-voice-settings-toggle"
+                    title="Voice settings"
                     onclick="toggleNuxesVoiceSettings(event)">
+
                     <i class="fas fa-sliders"></i>
                 </button>
+
 
                 <!-- Clear -->
                 <button
                     type="button"
                     class="nuxes-icon-btn"
-                    data-tip="Clear chat"
+                    title="Clear chat"
                     onclick="clearNuxesChat()">
+
                     <i class="fas fa-trash-alt"></i>
                 </button>
+
 
                 <!-- Close -->
                 <button
                     type="button"
                     class="nuxes-icon-btn"
-                    data-tip="Close (Esc)"
+                    title="Close"
                     onclick="toggleNuxesAI()">
+
                     <i class="fas fa-times"></i>
                 </button>
 
             </div>
+
         </div>
+
 
         <!-- DEVICE CONTEXT -->
         <div class="nuxes-context">
+
             <div class="nuxes-context-left">
+
                 <span class="nuxes-context-icon">
                     <i class="fas fa-microchip"></i>
                 </span>
-                <span id="nuxes-device-context" class="nuxes-context-text">
+
+                <span
+                    id="nuxes-device-context"
+                    class="nuxes-context-text">
+
                     No IoT device selected
+
                 </span>
+
             </div>
-            <span class="nuxes-context-live">LIVE</span>
+
+            <span class="nuxes-context-live">
+                LIVE
+            </span>
+
         </div>
 
-        <!-- MESSAGES -->
+
+        <!-- CHAT -->
         <div id="nuxes-ai-messages">
 
             <div class="nuxes-welcome">
+
                 <div class="nuxes-welcome-title">
                     <i class="fas fa-sparkles"></i>
                     Welcome to Nuxes AI
                 </div>
+
                 <div class="nuxes-welcome-text">
-                    Ask about your Nexus Core project, IoT sensors, live readings, or viva prep.
-                    🎙️ Tap mic to speak • 🔊 Toggle voice to hear replies.
+                    Ask me about your Nexus Core project,
+                    IoT data, maintenance or viva.
                 </div>
+
             </div>
 
+
             <div class="nuxes-message ai">
-                <div class="nuxes-avatar"><i class="fas fa-brain"></i></div>
-                <div class="nuxes-message-content">
-                    <div class="nuxes-bubble">
-                        Hi! I'm Nuxes AI — your Nexus Core assistant. Ask me anything or tap the mic 🎙️ to speak.
-                    </div>
-                    <div class="nuxes-message-tools">
-                        <button class="nuxes-tool" title="Copy" onclick="copyNuxesText(this)">
-                            <i class="far fa-copy"></i>
-                        </button>
-                        <button class="nuxes-tool" title="Speak" onclick="speakNuxesText(this)">
-                            <i class="fas fa-volume-up"></i>
-                        </button>
-                    </div>
+
+                <div class="nuxes-avatar">
+                    <i class="fas fa-brain"></i>
                 </div>
+
+                <div class="nuxes-message-content">
+
+                    <div class="nuxes-bubble">
+                        Hi! I'm Nuxes AI 👋
+                        Ask me anything about your Nexus Core project.
+                    </div>
+
+                </div>
+
             </div>
 
         </div>
+
 
         <!-- QUICK ACTIONS -->
         <div class="nuxes-quick-section">
+
             <div class="nuxes-quick-label">
-                <span>⚡ Quick actions</span>
-                <span class="nuxes-quick-toggle" onclick="toggleNuxesQuick()">hide</span>
+                Quick questions
             </div>
-            <div class="nuxes-quick" id="nuxes-quick-actions">
 
-                <button type="button" class="nuxes-quick-btn"
-                    onclick="askNuxesQuick('🖥️ Tell me about my system health status')">
-                    <i class="fas fa-desktop"></i> System Health
+            <div class="nuxes-quick">
+
+                <button
+                    type="button"
+                    class="nuxes-quick-btn"
+                    onclick="askNuxesQuick('Tell me about my Nexus Core project')">
+
+                    <i class="fas fa-laptop-code"></i>
+                    My Project
+
                 </button>
 
-                <button type="button" class="nuxes-quick-btn"
-                    onclick="askNuxesQuick('🌡️ What is the current IoT sensor status?')">
-                    <i class="fas fa-temperature-half"></i> IoT Status
+
+                <button
+                    type="button"
+                    class="nuxes-quick-btn"
+                    onclick="askNuxesQuick('Tell me about the IoT module in my project')">
+
+                    <i class="fas fa-temperature-half"></i>
+                    About IoT
+
                 </button>
 
-                <button type="button" class="nuxes-quick-btn"
-                    onclick="askNuxesQuick('🔧 Explain the maintenance status of my devices')">
-                    <i class="fas fa-tools"></i> Maintenance
+
+                <button
+                    type="button"
+                    class="nuxes-quick-btn"
+                    onclick="askNuxesQuick('What maintenance is required for my system?')">
+
+                    <i class="fas fa-tools"></i>
+                    Maintenance
+
                 </button>
 
-                <button type="button" class="nuxes-quick-btn"
-                    onclick="askNuxesQuick('💻 Tell me about my Nexus Core project')">
-                    <i class="fas fa-laptop-code"></i> My Project
-                </button>
 
-                <button type="button" class="nuxes-quick-btn"
-                    onclick="askNuxesQuick('Explain how ESP32 sensor data reaches my Nexus Core database')">
-                    <i class="fas fa-database"></i> Data Flow
-                </button>
+                <button
+                    type="button"
+                    class="nuxes-quick-btn"
+                    onclick="askNuxesQuick('Give me important viva questions for my project')">
 
-                <button type="button" class="nuxes-quick-btn"
-                    onclick="askNuxesQuick('Give me important viva questions for my Nexus Core IoT project')">
-                    <i class="fas fa-graduation-cap"></i> Viva
+                    <i class="fas fa-graduation-cap"></i>
+                    Viva Help
+
                 </button>
 
             </div>
+
         </div>
+
 
         <!-- INPUT -->
         <div class="nuxes-input-area">
 
-            <!-- VOICE SETTINGS POPOVER -->
-            <div class="nuxes-popover" id="nuxes-voice-popover">
+            <!-- Voice settings -->
+            <div
+                id="nuxes-voice-popover"
+                class="nuxes-popover">
+
                 <div class="nuxes-popover-title">
-                    <span><i class="fas fa-headphones"></i> Voice Settings</span>
-                    <span class="nuxes-popover-close" onclick="toggleNuxesVoiceSettings(event)">
-                        <i class="fas fa-times"></i>
+
+                    <span>
+                        <i class="fas fa-headphones"></i>
+                        Voice Settings
                     </span>
+
+                    <button
+                        type="button"
+                        class="nuxes-icon-btn"
+                        onclick="closeNuxesVoiceSettings()">
+
+                        <i class="fas fa-times"></i>
+
+                    </button>
+
                 </div>
 
-                <!-- Voice Language -->
-                <div class="nuxes-popover-label">
-                    <span>🎙️ Mic &amp; Speech Language</span>
-                </div>
-                <div class="nuxes-voice-lang-grid" id="nuxes-voice-lang-grid">
-                    <button type="button" class="nuxes-voice-lang-btn" data-vlang="en-US">
-                        <span class="flag">🇬🇧</span> English
+
+                <div class="nuxes-voice-grid">
+
+                    <button
+                        class="nuxes-voice-btn"
+                        data-vlang="en-US">
+                        🇬🇧 English
                     </button>
-                    <button type="button" class="nuxes-voice-lang-btn" data-vlang="hi-IN">
-                        <span class="flag">🇮🇳</span> हिन्दी
+
+                    <button
+                        class="nuxes-voice-btn"
+                        data-vlang="hi-IN">
+                        🇮🇳 हिन्दी
                     </button>
-                    <button type="button" class="nuxes-voice-lang-btn" data-vlang="hi-IN">
-                        <span class="flag">🇮🇳</span> Hinglish
+
+                    <button
+                        class="nuxes-voice-btn"
+                        data-vlang="hi-IN">
+                        🇮🇳 Hinglish
                     </button>
-                    <button type="button" class="nuxes-voice-lang-btn" data-vlang="hi-IN">
-                        <span class="flag">🇮🇳</span> भोजपुरी
+
+                    <button
+                        class="nuxes-voice-btn"
+                        data-vlang="hi-IN">
+                        🇮🇳 भोजपुरी
                     </button>
-                    <button type="button" class="nuxes-voice-lang-btn" data-vlang="mr-IN">
-                        <span class="flag">🇮🇳</span> मराठी
+
+                    <button
+                        class="nuxes-voice-btn"
+                        data-vlang="mr-IN">
+                        🇮🇳 मराठी
                     </button>
-                    <button type="button" class="nuxes-voice-lang-btn" data-vlang="gu-IN">
-                        <span class="flag">🇮🇳</span> ગુજરાતી
+
+                    <button
+                        class="nuxes-voice-btn"
+                        data-vlang="gu-IN">
+                        🇮🇳 ગુજરાતી
                     </button>
-                    <button type="button" class="nuxes-voice-lang-btn" data-vlang="ne-NP">
-                        <span class="flag">🇳🇵</span> नेपाली
+
+                    <button
+                        class="nuxes-voice-btn"
+                        data-vlang="ne-NP">
+                        🇳🇵 नेपाली
                     </button>
+
                 </div>
 
-                <!-- Speech Rate -->
-                <div class="nuxes-popover-label">
-                    <span>🔊 Speech Speed</span>
-                    <span class="nuxes-popover-value" id="nuxes-speed-value">1.0x</span>
-                </div>
-                <input
-                    type="range"
-                    class="nuxes-speed-slider"
-                    id="nuxes-speed-slider"
-                    min="0.5"
-                    max="2"
-                    step="0.1"
-                    value="1"
-                    oninput="updateNuxesSpeed(this.value)">
-                <div class="nuxes-speed-ticks">
-                    <span>0.5x</span>
-                    <span>1x</span>
-                    <span>1.5x</span>
-                    <span>2x</span>
+
+                <div class="nuxes-speed">
+
+                    <div class="nuxes-speed-label">
+
+                        <span>
+                            🔊 Speech Speed
+                        </span>
+
+                        <strong id="nuxes-speed-value">
+                            1.0x
+                        </strong>
+
+                    </div>
+
+                    <input
+                        id="nuxes-speed-slider"
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        value="1"
+                        oninput="updateNuxesSpeed(this.value)">
+
                 </div>
 
-                <!-- Auto speak toggle inside popover too -->
+
                 <button
+                    id="nuxes-tts"
+                    class="nuxes-tts"
                     type="button"
-                    id="nuxes-tts-inline"
-                    class="nuxes-icon-btn"
-                    style="width:100%;height:30px;gap:6px;margin-top:8px;justify-content:center;font-size:10px;border:1px solid var(--border-subtle);"
                     onclick="toggleNuxesTTS()">
-                    <i class="fas fa-volume-mute"></i>
-                    <span id="nuxes-tts-label">Auto-speak: OFF</span>
+
+                    🔇 Auto-speak: OFF
+
                 </button>
+
             </div>
 
-            <div class="nuxes-input-wrapper" id="nuxes-input-wrapper">
 
-                <div class="nuxes-voice-wave" id="nuxes-voice-wave">
-                    <span></span><span></span><span></span><span></span><span></span>
-                </div>
+            <!-- INPUT BOX -->
+            <div class="nuxes-input-wrapper">
 
                 <textarea
                     id="nuxes-ai-input"
@@ -7131,38 +7248,59 @@ window.addEventListener(
                     oninput="updateNuxesCharCount(); autoResizeNuxesInput(this)"
                     onkeydown="handleNuxesEnter(event)"></textarea>
 
+
                 <button
                     id="nuxes-ai-mic"
                     class="nuxes-mic"
                     type="button"
-                    onclick="toggleNuxesVoice()"
-                    title="Voice input (Ctrl+M)">
+                    title="Voice input"
+                    onclick="toggleNuxesVoice()">
+
                     <i class="fas fa-microphone"></i>
+
                 </button>
+
 
                 <button
                     id="nuxes-ai-send"
                     class="nuxes-send"
                     type="button"
-                    onclick="sendNuxesAI()"
-                    title="Send (Enter)">
+                    title="Send"
+                    onclick="sendNuxesAI()">
+
                     <i class="fas fa-paper-plane"></i>
+
                 </button>
 
             </div>
 
+
             <div class="nuxes-meta">
-                <div class="nuxes-meta-left">
-                    <span class="nuxes-meta-badge" id="nuxes-lang-badge">
-                        <i class="fas fa-globe"></i>
-                        <span>EN</span>
+
+                <div>
+
+                    <span
+                        id="nuxes-lang-badge"
+                        class="nuxes-badge">
+
+                        EN
+
                     </span>
-                    <span class="nuxes-meta-badge" id="nuxes-voice-badge">
-                        <i class="fas fa-microphone"></i>
-                        <span>en-US</span>
+
+                    <span
+                        id="nuxes-voice-badge"
+                        class="nuxes-badge">
+
+                        en-US
+
                     </span>
+
                 </div>
-                <span id="nuxes-char-count">0 / 1000</span>
+
+                <span id="nuxes-char-count">
+                    0 / 1000
+                </span>
+
             </div>
 
         </div>
@@ -7174,1102 +7312,2054 @@ window.addEventListener(
 
 <script>
 /* =========================================================
-   NUXES AI v2.2 — PROFESSIONAL JAVASCRIPT
-   7 Languages | Voice Input | TTS | Speed Control
+   NUXES AI v3.0 JAVASCRIPT
    ========================================================= */
 
-(function() {
-'use strict';
+(function () {
 
-/* =========================================================
-   STATE
-   ========================================================= */
+    "use strict";
 
-var NUXES_STATE = {
-    language: 'en',
-    voiceLang: 'en-US',
-    speechRate: 1.0,
-    ttsEnabled: false,
-    loading: false,
-    lastQuestion: '',
-    lastAnswer: '',
-    recognition: null,
-    isRecording: false,
-    quickHidden: false,
-    history: []
-};
 
-var NUXES_STORAGE = {
-    LANG: 'nuxes_ai_lang_v22',
-    VOICE: 'nuxes_ai_voice_lang_v22',
-    RATE: 'nuxes_ai_rate_v22',
-    TTS: 'nuxes_ai_tts_v22',
-    HISTORY: 'nuxes_ai_history_v22'
-};
+    /* =====================================================
+       STATE
+       ===================================================== */
 
-/* =========================================================
-   LANGUAGE MAPS
-   ========================================================= */
+    const STATE = {
 
-var NUXES_PLACEHOLDERS = {
-    en:       'Ask Nuxes AI anything...',
-    hi:       'Nuxes AI से कुछ भी पूछें...',
-    hinglish: 'Nuxes AI se kuch bhi poochho...',
-    bhojpuri: 'Nuxes AI se kuch bhi puchhu...',
-    mr:       'Nuxes AI ला काहीही विचारा...',
-    gu:       'Nuxes AI ने कંઈ પણ પૂછો...',
-    ne:       'Nuxes AI लाई केही पनि सोध्नुहोस्...'
-};
+        language: "en",
 
-var NUXES_LANG_SHORT = {
-    en: 'EN', hi: 'हिन्दी', hinglish: 'Hing',
-    bhojpuri: 'भोज', mr: 'मरा', gu: 'ગુજ', ne: 'नेपा'
-};
+        voiceLang: "en-US",
 
-var NUXES_LANG_DEFAULT_VOICE = {
-    en:       'en-US',
-    hi:       'hi-IN',
-    hinglish: 'hi-IN',
-    bhojpuri: 'hi-IN',
-    mr:       'mr-IN',
-    gu:       'gu-IN',
-    ne:       'ne-NP'
-};
+        speechRate: 1,
 
-/* =========================================================
-   INIT
-   ========================================================= */
+        ttsEnabled: false,
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadNuxesPrefs();
-    updateNuxesDeviceContext();
-    updateNuxesCharCount();
-    initNuxesSpeechRecognition();
-    initNuxesVoiceLangButtons();
-    restoreNuxesHistory();
+        loading: false,
 
-    setInterval(updateNuxesDeviceContext, 1500);
-});
+        recording: false,
 
-/* =========================================================
-   PREFS PERSISTENCE
-   ========================================================= */
+        lastQuestion: "",
 
-function loadNuxesPrefs() {
-    try {
-        var lang = localStorage.getItem(NUXES_STORAGE.LANG);
-        if (lang && NUXES_PLACEHOLDERS[lang]) {
-            NUXES_STATE.language = lang;
-            var sel = document.getElementById('nuxes-ai-language');
-            if (sel) sel.value = lang;
-        }
+        recognition: null,
 
-        var vlang = localStorage.getItem(NUXES_STORAGE.VOICE);
-        if (vlang) NUXES_STATE.voiceLang = vlang;
+        history: []
 
-        var rate = parseFloat(localStorage.getItem(NUXES_STORAGE.RATE));
-        if (!isNaN(rate) && rate >= 0.5 && rate <= 2) {
-            NUXES_STATE.speechRate = rate;
-        }
-
-        var tts = localStorage.getItem(NUXES_STORAGE.TTS);
-        if (tts === 'true') NUXES_STATE.ttsEnabled = true;
-
-    } catch (e) {}
-
-    // Apply to UI
-    changeNuxesLanguage(NUXES_STATE.language, true);
-    updateNuxesSpeedUI(NUXES_STATE.speechRate);
-    updateNuxesVoiceLangButtons();
-    updateNuxesTTSButton();
-    updateNuxesBadges();
-}
-
-function savePref(key, value) {
-    try { localStorage.setItem(key, value); } catch (e) {}
-}
-
-/* =========================================================
-   OPEN / CLOSE
-   ========================================================= */
-
-window.toggleNuxesAI = function() {
-    var panel = document.getElementById('nuxes-ai-panel');
-    if (!panel) return;
-
-    panel.classList.toggle('active');
-
-    if (panel.classList.contains('active')) {
-        updateNuxesDeviceContext();
-        setTimeout(function() {
-            var input = document.getElementById('nuxes-ai-input');
-            if (input) input.focus();
-        }, 140);
-    } else {
-        closeNuxesVoiceSettings();
-    }
-};
-
-/* =========================================================
-   LANGUAGE (Response)
-   ========================================================= */
-
-window.changeNuxesLanguage = function(lang, silent) {
-    if (!NUXES_PLACEHOLDERS[lang]) return;
-
-    NUXES_STATE.language = lang;
-    savePref(NUXES_STORAGE.LANG, lang);
-
-    var input = document.getElementById('nuxes-ai-input');
-    if (input) input.placeholder = NUXES_PLACEHOLDERS[lang];
-
-    updateNuxesBadges();
-
-    if (!silent) {
-        showNuxesToast('Response: ' + NUXES_LANG_SHORT[lang], 'info');
-    }
-};
-
-/* =========================================================
-   VOICE LANGUAGE (Mic + TTS)
-   ========================================================= */
-
-window.changeNuxesVoiceLang = function(vlang) {
-    if (!vlang) return;
-
-    NUXES_STATE.voiceLang = vlang;
-    savePref(NUXES_STORAGE.VOICE, vlang);
-
-    // Update recognition
-    if (NUXES_STATE.recognition) {
-        NUXES_STATE.recognition.lang = vlang;
-    }
-
-    updateNuxesVoiceLangButtons();
-    updateNuxesBadges();
-    showNuxesToast('Voice: ' + vlang, 'info');
-};
-
-function initNuxesVoiceLangButtons() {
-    var grid = document.getElementById('nuxes-voice-lang-grid');
-    if (!grid) return;
-
-    var buttons = grid.querySelectorAll('.nuxes-voice-lang-btn');
-    buttons.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            changeNuxesVoiceLang(btn.dataset.vlang);
-        });
-    });
-}
-
-function updateNuxesVoiceLangButtons() {
-    var grid = document.getElementById('nuxes-voice-lang-grid');
-    if (!grid) return;
-
-    grid.querySelectorAll('.nuxes-voice-lang-btn').forEach(function(btn) {
-        btn.classList.toggle(
-            'active',
-            btn.dataset.vlang === NUXES_STATE.voiceLang
-        );
-    });
-}
-
-/* =========================================================
-   VOICE SETTINGS POPOVER
-   ========================================================= */
-
-window.toggleNuxesVoiceSettings = function(event) {
-    if (event) event.stopPropagation();
-
-    var popover = document.getElementById('nuxes-voice-popover');
-    var toggle = document.getElementById('nuxes-voice-settings-toggle');
-    if (!popover) return;
-
-    var willShow = !popover.classList.contains('show');
-    popover.classList.toggle('show', willShow);
-    if (toggle) toggle.classList.toggle('active', willShow);
-};
-
-function closeNuxesVoiceSettings() {
-    var popover = document.getElementById('nuxes-voice-popover');
-    var toggle = document.getElementById('nuxes-voice-settings-toggle');
-    if (popover) popover.classList.remove('show');
-    if (toggle) toggle.classList.remove('active');
-}
-
-/* =========================================================
-   SPEED
-   ========================================================= */
-
-window.updateNuxesSpeed = function(value) {
-    var rate = parseFloat(value);
-    if (isNaN(rate)) return;
-
-    NUXES_STATE.speechRate = rate;
-    savePref(NUXES_STORAGE.RATE, rate);
-
-    updateNuxesSpeedUI(rate);
-};
-
-function updateNuxesSpeedUI(rate) {
-    var slider = document.getElementById('nuxes-speed-slider');
-    var label = document.getElementById('nuxes-speed-value');
-
-    if (slider) slider.value = rate;
-    if (label) label.textContent = rate.toFixed(1) + 'x';
-}
-
-/* =========================================================
-   BADGES (bottom meta)
-   ========================================================= */
-
-function updateNuxesBadges() {
-    var langBadge = document.getElementById('nuxes-lang-badge');
-    if (langBadge) {
-        langBadge.innerHTML =
-            '<i class="fas fa-globe"></i><span>' +
-            NUXES_LANG_SHORT[NUXES_STATE.language] +
-            '</span>';
-    }
-
-    var voiceBadge = document.getElementById('nuxes-voice-badge');
-    if (voiceBadge) {
-        voiceBadge.innerHTML =
-            '<i class="fas fa-microphone"></i><span>' +
-            NUXES_STATE.voiceLang +
-            '</span>';
-    }
-}
-
-/* =========================================================
-   TTS TOGGLE
-   ========================================================= */
-
-window.toggleNuxesTTS = function() {
-    NUXES_STATE.ttsEnabled = !NUXES_STATE.ttsEnabled;
-    savePref(NUXES_STORAGE.TTS, NUXES_STATE.ttsEnabled);
-
-    updateNuxesTTSButton();
-
-    showNuxesToast(
-        NUXES_STATE.ttsEnabled ? 'Auto-speak ON 🔊' : 'Auto-speak OFF 🔇',
-        'info'
-    );
-
-    if (!NUXES_STATE.ttsEnabled && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-    }
-};
-
-function updateNuxesTTSButton() {
-    var inline = document.getElementById('nuxes-tts-inline');
-    if (inline) {
-        var icon = inline.querySelector('i');
-        var label = document.getElementById('nuxes-tts-label');
-
-        if (icon) {
-            icon.className = NUXES_STATE.ttsEnabled
-                ? 'fas fa-volume-up'
-                : 'fas fa-volume-mute';
-        }
-
-        if (label) {
-            label.textContent = 'Auto-speak: ' +
-                (NUXES_STATE.ttsEnabled ? 'ON' : 'OFF');
-        }
-
-        inline.classList.toggle('active', NUXES_STATE.ttsEnabled);
-    }
-}
-
-/* =========================================================
-   DEVICE CONTEXT
-   ========================================================= */
-
-function updateNuxesDeviceContext() {
-    var context = document.getElementById('nuxes-device-context');
-    if (!context) return;
-
-    var device = '';
-
-    try {
-        if (typeof selectedDeviceId !== 'undefined' && selectedDeviceId) {
-            device = selectedDeviceId;
-        }
-    } catch (e) {}
-
-    if (!device) {
-        var selected = document.querySelector('[data-device-id].active');
-        if (selected) {
-            device = selected.getAttribute('data-device-id') || '';
-        }
-    }
-
-    if (device) {
-        context.innerHTML =
-            '<span class="nuxes-context-value">' +
-            escapeNuxesHTML(device) +
-            '</span>';
-    } else {
-        context.textContent = 'No IoT device selected';
-    }
-}
-
-/* =========================================================
-   ENTER KEY / AUTO RESIZE / CHAR COUNT
-   ========================================================= */
-
-window.handleNuxesEnter = function(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        sendNuxesAI();
-    }
-};
-
-window.autoResizeNuxesInput = function(element) {
-    element.style.height = 'auto';
-    element.style.height = Math.min(element.scrollHeight, 80) + 'px';
-};
-
-window.updateNuxesCharCount = function() {
-    var input = document.getElementById('nuxes-ai-input');
-    var counter = document.getElementById('nuxes-char-count');
-    if (!input || !counter) return;
-
-    var len = input.value.length;
-    counter.textContent = len + ' / 1000';
-    counter.classList.remove('warning', 'danger');
-
-    if (len > 900) counter.classList.add('danger');
-    else if (len > 700) counter.classList.add('warning');
-};
-
-/* =========================================================
-   QUICK ACTIONS
-   ========================================================= */
-
-window.askNuxesQuick = function(question) {
-    var input = document.getElementById('nuxes-ai-input');
-    if (!input) return;
-
-    input.value = question;
-    updateNuxesCharCount();
-    autoResizeNuxesInput(input);
-    sendNuxesAI();
-};
-
-window.toggleNuxesQuick = function() {
-    var quick = document.getElementById('nuxes-quick-actions');
-    var toggle = document.querySelector('.nuxes-quick-toggle');
-    if (!quick || !toggle) return;
-
-    NUXES_STATE.quickHidden = !NUXES_STATE.quickHidden;
-
-    if (NUXES_STATE.quickHidden) {
-        quick.style.display = 'none';
-        toggle.textContent = 'show';
-    } else {
-        quick.style.display = 'flex';
-        toggle.textContent = 'hide';
-    }
-};
-
-/* =========================================================
-   MARKDOWN
-   ========================================================= */
-
-function renderNuxesMarkdown(text) {
-    if (!text) return '';
-
-    var html = escapeNuxesHTML(text);
-
-    html = html.replace(/```([\s\S]*?)```/g, function(m, code) {
-        return '<pre><code>' + code.trim() + '</code></pre>';
-    });
-
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>');
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener">$1</a>');
-
-    html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-
-    return html;
-}
-
-/* =========================================================
-   MESSAGES
-   ========================================================= */
-
-function renderNuxesUserMessage(text, animate) {
-    var container = document.getElementById('nuxes-ai-messages');
-    if (!container) return;
-
-    var wrapper = document.createElement('div');
-    wrapper.className = 'nuxes-message user';
-    if (animate === false) wrapper.style.animation = 'none';
-
-    var content = document.createElement('div');
-    content.className = 'nuxes-message-content';
-
-    var bubble = document.createElement('div');
-    bubble.className = 'nuxes-bubble';
-    bubble.textContent = text;
-
-    content.appendChild(bubble);
-    wrapper.appendChild(content);
-    container.appendChild(wrapper);
-
-    if (animate !== false) scrollNuxesToBottom();
-}
-
-function addNuxesUserMessage(text) {
-    renderNuxesUserMessage(text, true);
-    NUXES_STATE.history.push({ role: 'user', text: text });
-    saveNuxesHistory();
-}
-
-function renderNuxesAIMessage(text, animate) {
-    var container = document.getElementById('nuxes-ai-messages');
-    if (!container) return;
-
-    var wrapper = document.createElement('div');
-    wrapper.className = 'nuxes-message ai';
-    if (animate === false) wrapper.style.animation = 'none';
-
-    var avatar = document.createElement('div');
-    avatar.className = 'nuxes-avatar';
-    avatar.innerHTML = '<i class="fas fa-brain"></i>';
-
-    var content = document.createElement('div');
-    content.className = 'nuxes-message-content';
-
-    var bubble = document.createElement('div');
-    bubble.className = 'nuxes-bubble';
-    bubble.innerHTML = renderNuxesMarkdown(text);
-
-    var tools = document.createElement('div');
-    tools.className = 'nuxes-message-tools';
-
-    // Copy
-    var copy = document.createElement('button');
-    copy.className = 'nuxes-tool';
-    copy.title = 'Copy';
-    copy.innerHTML = '<i class="far fa-copy"></i>';
-    copy.onclick = function() {
-        copyTextToClipboard(text);
-        copy.innerHTML = '<i class="fas fa-check"></i>';
-        copy.classList.add('active');
-        showNuxesToast('Copied', 'success');
-        setTimeout(function() {
-            copy.innerHTML = '<i class="far fa-copy"></i>';
-            copy.classList.remove('active');
-        }, 1200);
     };
 
-    // Speak
-    var speak = document.createElement('button');
-    speak.className = 'nuxes-tool';
-    speak.title = 'Read aloud';
-    speak.innerHTML = '<i class="fas fa-volume-up"></i>';
-    speak.onclick = function() { speakNuxesText(text); };
 
-    // Regenerate
-    var regenerate = document.createElement('button');
-    regenerate.className = 'nuxes-tool';
-    regenerate.title = 'Regenerate';
-    regenerate.innerHTML = '<i class="fas fa-redo"></i>';
-    regenerate.onclick = function() {
-        if (NUXES_STATE.lastQuestion) {
-            sendNuxesQuestion(NUXES_STATE.lastQuestion, true);
-        }
+    /* =====================================================
+       STORAGE
+       ===================================================== */
+
+    const STORAGE = {
+
+        language: "nuxes_language",
+
+        voice: "nuxes_voice",
+
+        rate: "nuxes_rate",
+
+        tts: "nuxes_tts",
+
+        history: "nuxes_history"
+
     };
 
-    tools.appendChild(copy);
-    tools.appendChild(speak);
-    tools.appendChild(regenerate);
 
-    content.appendChild(bubble);
-    content.appendChild(tools);
-    wrapper.appendChild(avatar);
-    wrapper.appendChild(content);
-    container.appendChild(wrapper);
+    /* =====================================================
+       LANGUAGE CONFIG
+       ===================================================== */
 
-    NUXES_STATE.lastAnswer = text;
+    const LANGUAGES = {
 
-    if (animate !== false) scrollNuxesToBottom();
+        en: {
+            short: "EN",
+            placeholder: "Ask Nuxes AI anything...",
+            voice: "en-US"
+        },
 
-    if (NUXES_STATE.ttsEnabled) {
-        speakNuxesText(text);
-    }
-}
+        hi: {
+            short: "हिन्दी",
+            placeholder: "Nuxes AI से कुछ भी पूछें...",
+            voice: "hi-IN"
+        },
 
-function addNuxesAIMessage(text) {
-    renderNuxesAIMessage(text, true);
-    NUXES_STATE.history.push({ role: 'ai', text: text });
-    saveNuxesHistory();
-}
+        hinglish: {
+            short: "Hing",
+            placeholder: "Nuxes AI se kuch bhi poochho...",
+            voice: "hi-IN"
+        },
 
-/* =========================================================
-   HISTORY
-   ========================================================= */
+        bhojpuri: {
+            short: "भोज",
+            placeholder: "Nuxes AI से भोजपुरी में पूछीं...",
+            voice: "hi-IN"
+        },
 
-function saveNuxesHistory() {
-    try {
-        localStorage.setItem(
-            NUXES_STORAGE.HISTORY,
-            JSON.stringify(NUXES_STATE.history.slice(-30))
-        );
-    } catch (e) {}
-}
+        mr: {
+            short: "मराठी",
+            placeholder: "Nuxes AI ला मराठीत काहीही विचारा...",
+            voice: "mr-IN"
+        },
 
-function restoreNuxesHistory() {
-    try {
-        var raw = localStorage.getItem(NUXES_STORAGE.HISTORY);
-        if (!raw) return;
+        gu: {
+            short: "ગુજરાતી",
+            placeholder: "Nuxes AI ને ગુજરાતીમાં પૂછો...",
+            voice: "gu-IN"
+        },
 
-        var history = JSON.parse(raw);
-        if (!Array.isArray(history) || history.length === 0) return;
+        ne: {
+            short: "नेपाली",
+            placeholder: "Nuxes AI लाई नेपालीमा सोध्नुहोस्...",
+            voice: "ne-NP"
+        }
 
-        history.forEach(function(item) {
-            if (item.role === 'user') {
-                renderNuxesUserMessage(item.text, false);
-            } else if (item.role === 'ai') {
-                renderNuxesAIMessage(item.text, false);
-            }
-        });
+    };
 
-        NUXES_STATE.history = history;
-        scrollNuxesToBottom();
-    } catch (e) {}
-}
 
-/* =========================================================
-   TYPING
-   ========================================================= */
+    /* =====================================================
+       INIT
+       ===================================================== */
 
-function showNuxesTyping() {
-    var container = document.getElementById('nuxes-ai-messages');
-    if (!container) return null;
+    document.addEventListener("DOMContentLoaded", function () {
 
-    var wrapper = document.createElement('div');
-    wrapper.className = 'nuxes-message ai';
-    wrapper.id = 'nuxes-typing-message';
+        loadPreferences();
 
-    var avatar = document.createElement('div');
-    avatar.className = 'nuxes-avatar';
-    avatar.innerHTML = '<i class="fas fa-brain"></i>';
+        updateDeviceContext();
 
-    var content = document.createElement('div');
-    content.className = 'nuxes-message-content';
+        updateCharCount();
 
-    var bubble = document.createElement('div');
-    bubble.className = 'nuxes-bubble';
-    bubble.innerHTML =
-        '<div class="nuxes-typing"><span></span><span></span><span></span></div>';
+        initSpeechRecognition();
 
-    content.appendChild(bubble);
-    wrapper.appendChild(avatar);
-    wrapper.appendChild(content);
-    container.appendChild(wrapper);
+        initVoiceButtons();
 
-    scrollNuxesToBottom();
-    return wrapper;
-}
+        restoreHistory();
 
-function removeNuxesTyping() {
-    var typing = document.getElementById('nuxes-typing-message');
-    if (typing) typing.remove();
-}
+        setInterval(updateDeviceContext, 2000);
 
-/* =========================================================
-   SEND
-   ========================================================= */
+    });
 
-window.sendNuxesAI = async function() {
-    if (NUXES_STATE.loading) return;
 
-    var input = document.getElementById('nuxes-ai-input');
-    if (!input) return;
+    /* =====================================================
+       PREFERENCES
+       ===================================================== */
 
-    var question = input.value.trim();
-    if (!question) return;
+    function loadPreferences() {
 
-    await sendNuxesQuestion(question, false);
-};
-
-async function sendNuxesQuestion(question, regenerate) {
-    if (NUXES_STATE.loading) return;
-
-    var input = document.getElementById('nuxes-ai-input');
-    var sendButton = document.getElementById('nuxes-ai-send');
-
-    if (!regenerate) {
-        addNuxesUserMessage(question);
-        NUXES_STATE.lastQuestion = question;
-    }
-
-    if (input && !regenerate) {
-        input.value = '';
-        updateNuxesCharCount();
-        input.style.height = 'auto';
-    }
-
-    NUXES_STATE.loading = true;
-    if (sendButton) sendButton.disabled = true;
-
-    showNuxesTyping();
-
-    try {
-        var currentDeviceId = '';
         try {
-            if (typeof selectedDeviceId !== 'undefined') {
-                currentDeviceId = selectedDeviceId || '';
+
+            const savedLanguage =
+                localStorage.getItem(STORAGE.language);
+
+            if (LANGUAGES[savedLanguage]) {
+
+                STATE.language = savedLanguage;
+
             }
+
+
+            const savedVoice =
+                localStorage.getItem(STORAGE.voice);
+
+            if (savedVoice) {
+
+                STATE.voiceLang = savedVoice;
+
+            }
+
+
+            const savedRate =
+                parseFloat(
+                    localStorage.getItem(STORAGE.rate)
+                );
+
+            if (
+                !isNaN(savedRate) &&
+                savedRate >= .5 &&
+                savedRate <= 2
+            ) {
+
+                STATE.speechRate = savedRate;
+
+            }
+
+
+            STATE.ttsEnabled =
+                localStorage.getItem(STORAGE.tts) === "true";
+
         } catch (e) {}
 
-        var controller = new AbortController();
-        var timeoutId = setTimeout(function() { controller.abort(); }, 30000);
+        applyLanguage(false);
 
-        var response = await fetch('/api/ai', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                question: question,
-                language: NUXES_STATE.language,
-                device_id: currentDeviceId
-            }),
-            signal: controller.signal
-        });
+        updateSpeedUI();
 
-        clearTimeout(timeoutId);
+        updateTTSUI();
 
-        var result = null;
+        updateVoiceButtons();
+
+        updateBadges();
+
+    }
+
+
+    function save(key, value) {
+
         try {
-            result = await response.json();
-        } catch (jsonError) {
-            throw new Error('Invalid server response');
-        }
 
-        removeNuxesTyping();
+            localStorage.setItem(key, value);
 
-        if (response.ok && result && result.success) {
-            addNuxesAIMessage(
-                result.answer || 'No answer received from Nuxes AI.'
-            );
+        } catch (e) {}
+
+    }
+
+
+    /* =====================================================
+       OPEN / CLOSE
+       ===================================================== */
+
+    window.toggleNuxesAI = function () {
+
+        const panel =
+            document.getElementById("nuxes-ai-panel");
+
+        if (!panel) return;
+
+        panel.classList.toggle("active");
+
+        if (panel.classList.contains("active")) {
+
+            updateDeviceContext();
+
+            setTimeout(function () {
+
+                const input =
+                    document.getElementById("nuxes-ai-input");
+
+                if (input) input.focus();
+
+            }, 100);
+
         } else {
-            addNuxesAIMessage(
-                (result && result.error) ||
-                'Nuxes AI could not process your request.'
-            );
-        }
 
-    } catch (error) {
-        console.error('Nuxes AI:', error);
-        removeNuxesTyping();
-
-        var errorMsg =
-            'Nuxes AI se connection nahi ho paaya. Please try again.';
-
-        if (error.name === 'AbortError') {
-            errorMsg = 'Request timeout. Server did not respond.';
-        } else if (!navigator.onLine) {
-            errorMsg = 'You are offline. Please check your internet.';
-        }
-
-        addNuxesAIMessage(errorMsg);
-        showNuxesToast('Connection error', 'error');
-
-    } finally {
-        NUXES_STATE.loading = false;
-        if (sendButton) sendButton.disabled = false;
-        if (input) input.focus();
-    }
-}
-
-/* =========================================================
-   CLEAR
-   ========================================================= */
-
-window.clearNuxesChat = function() {
-    var container = document.getElementById('nuxes-ai-messages');
-    if (!container) return;
-
-    container.innerHTML =
-        '<div class="nuxes-welcome">' +
-            '<div class="nuxes-welcome-title">' +
-                '<i class="fas fa-sparkles"></i> New conversation' +
-            '</div>' +
-            '<div class="nuxes-welcome-text">' +
-                'Chat cleared. Ask me about your Nexus Core IoT system.' +
-            '</div>' +
-        '</div>';
-
-    NUXES_STATE.lastQuestion = '';
-    NUXES_STATE.lastAnswer = '';
-    NUXES_STATE.history = [];
-
-    saveNuxesHistory();
-    updateNuxesDeviceContext();
-    showNuxesToast('Chat cleared', 'info');
-};
-
-/* =========================================================
-   COPY
-   ========================================================= */
-
-window.copyNuxesText = function(button) {
-    var message = button
-        ? button.closest('.nuxes-message').querySelector('.nuxes-bubble')
-        : null;
-
-    if (!message) return;
-
-    copyTextToClipboard(message.textContent);
-
-    var original = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-check"></i>';
-    button.classList.add('active');
-
-    setTimeout(function() {
-        button.innerHTML = original;
-        button.classList.remove('active');
-    }, 1200);
-
-    showNuxesToast('Copied!', 'success');
-};
-
-async function copyTextToClipboard(text) {
-    try {
-        await navigator.clipboard.writeText(text);
-    } catch (error) {
-        var textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        textarea.remove();
-    }
-}
-
-/* =========================================================
-   VOICE INPUT
-   ========================================================= */
-
-function initNuxesSpeechRecognition() {
-    var SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-        var mic = document.getElementById('nuxes-ai-mic');
-        if (mic) {
-            mic.style.opacity = '.4';
-            mic.title = 'Voice not supported';
-        }
-        return;
-    }
-
-    var recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = NUXES_STATE.voiceLang;
-
-    recognition.onstart = function() {
-        NUXES_STATE.isRecording = true;
-        updateNuxesRecordingUI(true);
-    };
-
-    recognition.onresult = function(event) {
-        var finalTranscript = '';
-        var interimTranscript = '';
-
-        for (var i = event.resultIndex; i < event.results.length; i++) {
-            var transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-                finalTranscript += transcript;
-            } else {
-                interimTranscript += transcript;
-            }
-        }
-
-        var input = document.getElementById('nuxes-ai-input');
-        if (input) {
-            input.value = finalTranscript || interimTranscript;
-            updateNuxesCharCount();
-            autoResizeNuxesInput(input);
-        }
-
-        if (finalTranscript) {
-            setTimeout(function() {
-                var finalText = document.getElementById('nuxes-ai-input');
-                if (finalText && finalText.value.trim()) {
-                    sendNuxesAI();
-                }
-            }, 400);
-        }
-    };
-
-    recognition.onerror = function(event) {
-        console.error('Speech error:', event.error);
-        NUXES_STATE.isRecording = false;
-        updateNuxesRecordingUI(false);
-
-        if (event.error === 'not-allowed') {
-            showNuxesToast('Microphone permission denied', 'error');
-        } else if (event.error === 'no-speech') {
-            showNuxesToast('No speech detected', 'info');
-        }
-    };
-
-    recognition.onend = function() {
-        NUXES_STATE.isRecording = false;
-        updateNuxesRecordingUI(false);
-    };
-
-    NUXES_STATE.recognition = recognition;
-}
-
-window.toggleNuxesVoice = function() {
-    if (!NUXES_STATE.recognition) {
-        showNuxesToast('Voice input not supported', 'error');
-        return;
-    }
-
-    if (NUXES_STATE.isRecording) {
-        try { NUXES_STATE.recognition.stop(); } catch (e) {}
-        NUXES_STATE.isRecording = false;
-        updateNuxesRecordingUI(false);
-        return;
-    }
-
-    try {
-        NUXES_STATE.recognition.lang = NUXES_STATE.voiceLang;
-        NUXES_STATE.recognition.start();
-    } catch (e) {
-        console.error('Recognition error:', e);
-        showNuxesToast('Could not start voice input', 'error');
-    }
-};
-
-function updateNuxesRecordingUI(isRecording) {
-    var mic = document.getElementById('nuxes-ai-mic');
-    var wrapper = document.getElementById('nuxes-input-wrapper');
-    var wave = document.getElementById('nuxes-voice-wave');
-
-    if (mic) {
-        mic.classList.toggle('recording', isRecording);
-        mic.innerHTML = isRecording
-            ? '<i class="fas fa-stop"></i>'
-            : '<i class="fas fa-microphone"></i>';
-    }
-
-    if (wrapper) wrapper.classList.toggle('recording', isRecording);
-    if (wave) wave.classList.toggle('active', isRecording);
-
-    if (isRecording) {
-        showNuxesToast('🎙️ Listening (' + NUXES_STATE.voiceLang + ')...', 'info');
-    }
-}
-
-/* =========================================================
-   TEXT-TO-SPEECH
-   ========================================================= */
-
-window.speakNuxesText = function(textOrButton) {
-    var text = '';
-
-    if (typeof textOrButton === 'string') {
-        text = textOrButton;
-    } else if (textOrButton) {
-        var bubble = textOrButton
-            .closest('.nuxes-message')
-            .querySelector('.nuxes-bubble');
-        if (bubble) text = bubble.textContent;
-    }
-
-    if (!text || !window.speechSynthesis) {
-        showNuxesToast('Text-to-speech not supported', 'error');
-        return;
-    }
-
-    if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-        return;
-    }
-
-    var clean = text
-        .replace(/```[\s\S]*?```/g, ' code block ')
-        .replace(/`([^`]+)`/g, '$1')
-        .replace(/\*\*([^*]+)\*\*/g, '$1')
-        .replace(/\*([^*]+)\*/g, '$1')
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-
-    var utterance = new SpeechSynthesisUtterance(clean);
-    utterance.lang = NUXES_STATE.voiceLang;
-    utterance.rate = NUXES_STATE.speechRate;
-    utterance.pitch = 1;
-
-    // Try to find matching voice
-    var voices = window.speechSynthesis.getVoices();
-    if (voices && voices.length) {
-        var match = voices.find(function(v) {
-            return v.lang === NUXES_STATE.voiceLang;
-        });
-        if (!match) {
-            var prefix = NUXES_STATE.voiceLang.split('-')[0];
-            match = voices.find(function(v) {
-                return v.lang.indexOf(prefix) === 0;
-            });
-        }
-        if (match) utterance.voice = match;
-    }
-
-    window.speechSynthesis.speak(utterance);
-    showNuxesToast(
-        '🔊 ' + NUXES_STATE.voiceLang + ' @ ' +
-        NUXES_STATE.speechRate.toFixed(1) + 'x',
-        'info'
-    );
-};
-
-/* =========================================================
-   TOAST
-   ========================================================= */
-
-var nuxesToastTimer = null;
-
-function showNuxesToast(message, type) {
-    var existing = document.querySelector('.nuxes-toast');
-    if (existing) existing.remove();
-
-    var toast = document.createElement('div');
-    toast.className = 'nuxes-toast ' + (type || 'info');
-
-    var icon = 'fa-info-circle';
-    if (type === 'success') icon = 'fa-check-circle';
-    else if (type === 'error') icon = 'fa-exclamation-circle';
-
-    toast.innerHTML =
-        '<i class="fas ' + icon + '"></i><span>' +
-        escapeNuxesHTML(message) + '</span>';
-
-    document.body.appendChild(toast);
-
-    clearTimeout(nuxesToastTimer);
-    nuxesToastTimer = setTimeout(function() {
-        toast.style.transition = 'opacity .3s, transform .3s';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(20px)';
-        setTimeout(function() { toast.remove(); }, 300);
-    }, 2500);
-}
-
-/* =========================================================
-   UTILS
-   ========================================================= */
-
-function escapeNuxesHTML(value) {
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-function scrollNuxesToBottom() {
-    var container = document.getElementById('nuxes-ai-messages');
-    if (!container) return;
-
-    requestAnimationFrame(function() {
-        container.scrollTop = container.scrollHeight;
-    });
-}
-
-/* =========================================================
-   KEYBOARD SHORTCUTS
-   ========================================================= */
-
-document.addEventListener('keydown', function(e) {
-    var panel = document.getElementById('nuxes-ai-panel');
-    var isOpen = panel && panel.classList.contains('active');
-
-    // Ctrl/Cmd + K
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        toggleNuxesAI();
-        return;
-    }
-
-    // Esc
-    if (e.key === 'Escape') {
-        var popover = document.getElementById('nuxes-voice-popover');
-        if (popover && popover.classList.contains('show')) {
             closeNuxesVoiceSettings();
-            return;
+
         }
-        if (isOpen) toggleNuxesAI();
-        return;
-    }
 
-    // Ctrl/Cmd + M
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm' && isOpen) {
-        e.preventDefault();
-        toggleNuxesVoice();
-        return;
-    }
-
-    // Ctrl/Cmd + /
-    if ((e.ctrlKey || e.metaKey) && e.key === '/' && isOpen) {
-        e.preventDefault();
-        var input = document.getElementById('nuxes-ai-input');
-        if (input) input.focus();
-    }
-});
-
-/* =========================================================
-   CLICK OUTSIDE POPOVER
-   ========================================================= */
-
-document.addEventListener('click', function(e) {
-    var popover = document.getElementById('nuxes-voice-popover');
-    var toggle = document.getElementById('nuxes-voice-settings-toggle');
-
-    if (!popover || !popover.classList.contains('show')) return;
-
-    if (!popover.contains(e.target) && !toggle.contains(e.target)) {
-        closeNuxesVoiceSettings();
-    }
-});
-
-/* =========================================================
-   VOICES LOADED
-   ========================================================= */
-
-if (window.speechSynthesis) {
-    window.speechSynthesis.onvoiceschanged = function() {
-        // Voices cached — no action needed
     };
-}
 
-/* =========================================================
-   ONLINE / OFFLINE
-   ========================================================= */
 
-window.addEventListener('online', function() {
-    showNuxesToast('Back online ✅', 'success');
-});
+    /* =====================================================
+       LANGUAGE
+       ===================================================== */
 
-window.addEventListener('offline', function() {
-    showNuxesToast('You are offline', 'error');
-});
+    window.changeNuxesLanguage = function (language) {
+
+        if (!LANGUAGES[language]) return;
+
+        STATE.language = language;
+
+        save(STORAGE.language, language);
+
+        applyLanguage(true);
+
+    };
+
+
+    function applyLanguage(showToast) {
+
+        const config =
+            LANGUAGES[STATE.language];
+
+        if (!config) return;
+
+
+        const select =
+            document.getElementById("nuxes-ai-language");
+
+        if (select) {
+
+            select.value = STATE.language;
+
+        }
+
+
+        const input =
+            document.getElementById("nuxes-ai-input");
+
+        if (input) {
+
+            input.placeholder =
+                config.placeholder;
+
+        }
+
+
+        /*
+         * IMPORTANT:
+         * Response language and voice language
+         * stay synchronized.
+         */
+        STATE.voiceLang = config.voice;
+
+        save(STORAGE.voice, STATE.voiceLang);
+
+        if (STATE.recognition) {
+
+            STATE.recognition.lang =
+                STATE.voiceLang;
+
+        }
+
+
+        updateVoiceButtons();
+
+        updateBadges();
+
+
+        if (showToast) {
+
+            showToast(
+                "Language: " + config.short,
+                "info"
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       VOICE LANGUAGE
+       ===================================================== */
+
+    function initVoiceButtons() {
+
+        document
+            .querySelectorAll(".nuxes-voice-btn")
+            .forEach(function (button) {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        const lang =
+                            button.dataset.vlang;
+
+                        if (!lang) return;
+
+                        STATE.voiceLang = lang;
+
+                        save(
+                            STORAGE.voice,
+                            lang
+                        );
+
+                        if (STATE.recognition) {
+
+                            STATE.recognition.lang =
+                                lang;
+
+                        }
+
+                        updateVoiceButtons();
+
+                        updateBadges();
+
+                    }
+                );
+
+            });
+
+    }
+
+
+    function updateVoiceButtons() {
+
+        document
+            .querySelectorAll(".nuxes-voice-btn")
+            .forEach(function (button) {
+
+                button.classList.toggle(
+                    "active",
+                    button.dataset.vlang ===
+                    STATE.voiceLang
+                );
+
+            });
+
+    }
+
+
+    /* =====================================================
+       VOICE SETTINGS
+       ===================================================== */
+
+    window.toggleNuxesVoiceSettings = function (event) {
+
+        if (event) {
+
+            event.stopPropagation();
+
+        }
+
+        const popover =
+            document.getElementById(
+                "nuxes-voice-popover"
+            );
+
+        const button =
+            document.getElementById(
+                "nuxes-voice-settings-toggle"
+            );
+
+        if (!popover) return;
+
+        const show =
+            !popover.classList.contains("show");
+
+        popover.classList.toggle(
+            "show",
+            show
+        );
+
+        if (button) {
+
+            button.classList.toggle(
+                "active",
+                show
+            );
+
+        }
+
+    };
+
+
+    window.closeNuxesVoiceSettings =
+        closeNuxesVoiceSettings;
+
+
+    function closeNuxesVoiceSettings() {
+
+        const popover =
+            document.getElementById(
+                "nuxes-voice-popover"
+            );
+
+        const button =
+            document.getElementById(
+                "nuxes-voice-settings-toggle"
+            );
+
+        if (popover) {
+
+            popover.classList.remove("show");
+
+        }
+
+        if (button) {
+
+            button.classList.remove("active");
+
+        }
+
+    }
+
+
+    /* =====================================================
+       SPEED
+       ===================================================== */
+
+    window.updateNuxesSpeed = function (value) {
+
+        const speed =
+            parseFloat(value);
+
+        if (isNaN(speed)) return;
+
+        STATE.speechRate = speed;
+
+        save(
+            STORAGE.rate,
+            speed
+        );
+
+        updateSpeedUI();
+
+    };
+
+
+    function updateSpeedUI() {
+
+        const slider =
+            document.getElementById(
+                "nuxes-speed-slider"
+            );
+
+        const value =
+            document.getElementById(
+                "nuxes-speed-value"
+            );
+
+        if (slider) {
+
+            slider.value =
+                STATE.speechRate;
+
+        }
+
+        if (value) {
+
+            value.textContent =
+                STATE.speechRate.toFixed(1) + "x";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       TTS
+       ===================================================== */
+
+    window.toggleNuxesTTS = function () {
+
+        STATE.ttsEnabled =
+            !STATE.ttsEnabled;
+
+        save(
+            STORAGE.tts,
+            STATE.ttsEnabled
+        );
+
+        updateTTSUI();
+
+        if (!STATE.ttsEnabled &&
+            window.speechSynthesis) {
+
+            window.speechSynthesis.cancel();
+
+        }
+
+    };
+
+
+    function updateTTSUI() {
+
+        const button =
+            document.getElementById(
+                "nuxes-tts"
+            );
+
+        if (!button) return;
+
+        button.classList.toggle(
+            "active",
+            STATE.ttsEnabled
+        );
+
+        button.textContent =
+            STATE.ttsEnabled
+                ? "🔊 Auto-speak: ON"
+                : "🔇 Auto-speak: OFF";
+
+    }
+
+
+    /* =====================================================
+       BADGES
+       ===================================================== */
+
+    function updateBadges() {
+
+        const lang =
+            document.getElementById(
+                "nuxes-lang-badge"
+            );
+
+        const voice =
+            document.getElementById(
+                "nuxes-voice-badge"
+            );
+
+        if (lang) {
+
+            lang.textContent =
+                LANGUAGES[STATE.language].short;
+
+        }
+
+        if (voice) {
+
+            voice.textContent =
+                STATE.voiceLang;
+
+        }
+
+    }
+
+
+    /* =====================================================
+       DEVICE CONTEXT
+       ===================================================== */
+
+    function updateDeviceContext() {
+
+        const element =
+            document.getElementById(
+                "nuxes-device-context"
+            );
+
+        if (!element) return;
+
+        let device = "";
+
+
+        try {
+
+            if (
+                typeof selectedDeviceId !==
+                "undefined"
+            ) {
+
+                device =
+                    selectedDeviceId || "";
+
+            }
+
+        } catch (e) {}
+
+
+        if (!device) {
+
+            const active =
+                document.querySelector(
+                    "[data-device-id].active"
+                );
+
+            if (active) {
+
+                device =
+                    active.getAttribute(
+                        "data-device-id"
+                    ) || "";
+
+            }
+
+        }
+
+
+        if (device) {
+
+            element.innerHTML =
+                '<span class="nuxes-context-value">' +
+                escapeHTML(device) +
+                "</span>";
+
+        } else {
+
+            element.textContent =
+                "No IoT device selected";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       INPUT
+       ===================================================== */
+
+    window.handleNuxesEnter = function (event) {
+
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey
+        ) {
+
+            event.preventDefault();
+
+            sendNuxesAI();
+
+        }
+
+    };
+
+
+    window.autoResizeNuxesInput =
+        function (element) {
+
+            element.style.height = "auto";
+
+            element.style.height =
+                Math.min(
+                    element.scrollHeight,
+                    80
+                ) + "px";
+
+        };
+
+
+    window.updateNuxesCharCount =
+        function () {
+
+            const input =
+                document.getElementById(
+                    "nuxes-ai-input"
+                );
+
+            const counter =
+                document.getElementById(
+                    "nuxes-char-count"
+                );
+
+            if (!input || !counter) return;
+
+            counter.textContent =
+                input.value.length +
+                " / 1000";
+
+        };
+
+
+    /* =====================================================
+       QUICK QUESTIONS
+       ===================================================== */
+
+    window.askNuxesQuick =
+        function (question) {
+
+            const input =
+                document.getElementById(
+                    "nuxes-ai-input"
+                );
+
+            if (!input) return;
+
+            input.value = question;
+
+            updateCharCount();
+
+            autoResizeNuxesInput(input);
+
+            sendNuxesAI();
+
+        };
+
+
+    /* =====================================================
+       SEND
+       ===================================================== */
+
+    window.sendNuxesAI = async function () {
+
+        if (STATE.loading) return;
+
+        const input =
+            document.getElementById(
+                "nuxes-ai-input"
+            );
+
+        if (!input) return;
+
+        const question =
+            input.value.trim();
+
+        if (!question) return;
+
+        await sendQuestion(question);
+
+    };
+
+
+    async function sendQuestion(question) {
+
+        const input =
+            document.getElementById(
+                "nuxes-ai-input"
+            );
+
+        const send =
+            document.getElementById(
+                "nuxes-ai-send"
+            );
+
+
+        addUserMessage(question);
+
+        STATE.lastQuestion =
+            question;
+
+        input.value = "";
+
+        updateCharCount();
+
+        input.style.height =
+            "auto";
+
+
+        STATE.loading = true;
+
+        if (send) {
+
+            send.disabled = true;
+
+        }
+
+
+        showTyping();
+
+
+        try {
+
+            let deviceId = "";
+
+            try {
+
+                if (
+                    typeof selectedDeviceId !==
+                    "undefined"
+                ) {
+
+                    deviceId =
+                        selectedDeviceId || "";
+
+                }
+
+            } catch (e) {}
+
+
+            const controller =
+                new AbortController();
+
+            const timeout =
+                setTimeout(
+                    function () {
+                        controller.abort();
+                    },
+                    30000
+                );
+
+
+            const response =
+                await fetch(
+                    "/api/ai",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            question:
+                                question,
+
+                            language:
+                                STATE.language,
+
+                            device_id:
+                                deviceId
+
+                        }),
+
+                        signal:
+                            controller.signal
+                    }
+                );
+
+
+            clearTimeout(timeout);
+
+
+            let result;
+
+            try {
+
+                result =
+                    await response.json();
+
+            } catch (e) {
+
+                throw new Error(
+                    "Invalid server response"
+                );
+
+            }
+
+
+            removeTyping();
+
+
+            if (
+                response.ok &&
+                result &&
+                result.success
+            ) {
+
+                addAIMessage(
+                    result.answer ||
+                    "No answer received."
+                );
+
+            } else {
+
+                addAIMessage(
+                    result.error ||
+                    "Nuxes AI could not process your request."
+                );
+
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                "Nuxes AI:",
+                error
+            );
+
+            removeTyping();
+
+
+            let message =
+                "Nuxes AI connection failed. Please try again.";
+
+
+            if (
+                error.name ===
+                "AbortError"
+            ) {
+
+                message =
+                    "Request timeout. Please try again.";
+
+            } else if (
+                !navigator.onLine
+            ) {
+
+                message =
+                    "You are offline.";
+
+            }
+
+
+            addAIMessage(message);
+
+        } finally {
+
+            STATE.loading = false;
+
+            if (send) {
+
+                send.disabled = false;
+
+            }
+
+            if (input) {
+
+                input.focus();
+
+            }
+
+        }
+
+    }
+
+
+    /* =====================================================
+       USER MESSAGE
+       ===================================================== */
+
+    function addUserMessage(text) {
+
+        const container =
+            document.getElementById(
+                "nuxes-ai-messages"
+            );
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.className =
+            "nuxes-message user";
+
+
+        const content =
+            document.createElement("div");
+
+        content.className =
+            "nuxes-message-content";
+
+
+        const bubble =
+            document.createElement("div");
+
+        bubble.className =
+            "nuxes-bubble";
+
+        bubble.textContent =
+            text;
+
+
+        content.appendChild(bubble);
+
+        wrapper.appendChild(content);
+
+        container.appendChild(wrapper);
+
+
+        STATE.history.push({
+
+            role: "user",
+
+            text: text
+
+        });
+
+        saveHistory();
+
+        scrollBottom();
+
+    }
+
+
+    /* =====================================================
+       AI MESSAGE
+       ===================================================== */
+
+    function addAIMessage(text) {
+
+        const container =
+            document.getElementById(
+                "nuxes-ai-messages"
+            );
+
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.className =
+            "nuxes-message ai";
+
+
+        const avatar =
+            document.createElement("div");
+
+        avatar.className =
+            "nuxes-avatar";
+
+        avatar.innerHTML =
+            '<i class="fas fa-brain"></i>';
+
+
+        const content =
+            document.createElement("div");
+
+        content.className =
+            "nuxes-message-content";
+
+
+        const bubble =
+            document.createElement("div");
+
+        bubble.className =
+            "nuxes-bubble";
+
+        bubble.innerHTML =
+            renderMarkdown(text);
+
+
+        const tools =
+            document.createElement("div");
+
+        tools.className =
+            "nuxes-message-tools";
+
+
+        /* COPY */
+        const copy =
+            document.createElement("button");
+
+        copy.className =
+            "nuxes-tool";
+
+        copy.title =
+            "Copy";
+
+        copy.innerHTML =
+            '<i class="far fa-copy"></i>';
+
+        copy.onclick =
+            function () {
+
+                copyText(text);
+
+                showToast(
+                    "Copied",
+                    "success"
+                );
+
+            };
+
+
+        /* SPEAK */
+        const speak =
+            document.createElement("button");
+
+        speak.className =
+            "nuxes-tool";
+
+        speak.title =
+            "Read aloud";
+
+        speak.innerHTML =
+            '<i class="fas fa-volume-up"></i>';
+
+        speak.onclick =
+            function () {
+
+                speakText(text);
+
+            };
+
+
+        /* REGENERATE */
+        const regenerate =
+            document.createElement("button");
+
+        regenerate.className =
+            "nuxes-tool";
+
+        regenerate.title =
+            "Regenerate";
+
+        regenerate.innerHTML =
+            '<i class="fas fa-redo"></i>';
+
+        regenerate.onclick =
+            function () {
+
+                if (
+                    STATE.lastQuestion &&
+                    !STATE.loading
+                ) {
+
+                    sendQuestion(
+                        STATE.lastQuestion
+                    );
+
+                }
+
+            };
+
+
+        tools.appendChild(copy);
+
+        tools.appendChild(speak);
+
+        tools.appendChild(regenerate);
+
+
+        content.appendChild(bubble);
+
+        content.appendChild(tools);
+
+        wrapper.appendChild(avatar);
+
+        wrapper.appendChild(content);
+
+        container.appendChild(wrapper);
+
+
+        STATE.history.push({
+
+            role: "ai",
+
+            text: text
+
+        });
+
+        saveHistory();
+
+        scrollBottom();
+
+
+        if (STATE.ttsEnabled) {
+
+            speakText(text);
+
+        }
+
+    }
+
+
+    /* =====================================================
+       TYPING
+       ===================================================== */
+
+    function showTyping() {
+
+        const container =
+            document.getElementById(
+                "nuxes-ai-messages"
+            );
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.id =
+            "nuxes-typing-message";
+
+        wrapper.className =
+            "nuxes-message ai";
+
+
+        wrapper.innerHTML =
+            '<div class="nuxes-avatar">' +
+                '<i class="fas fa-brain"></i>' +
+            '</div>' +
+
+            '<div class="nuxes-message-content">' +
+                '<div class="nuxes-bubble">' +
+                    '<div class="nuxes-typing">' +
+                        '<span></span>' +
+                        '<span></span>' +
+                        '<span></span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+
+        container.appendChild(wrapper);
+
+        scrollBottom();
+
+    }
+
+
+    function removeTyping() {
+
+        const typing =
+            document.getElementById(
+                "nuxes-typing-message"
+            );
+
+        if (typing) {
+
+            typing.remove();
+
+        }
+
+    }
+
+
+    /* =====================================================
+       MARKDOWN
+       ===================================================== */
+
+    function renderMarkdown(text) {
+
+        let html =
+            escapeHTML(text || "");
+
+
+        html =
+            html.replace(
+                /```([\s\S]*?)```/g,
+                function (_, code) {
+
+                    return (
+                        "<pre><code>" +
+                        code.trim() +
+                        "</code></pre>"
+                    );
+
+                }
+            );
+
+
+        html =
+            html.replace(
+                /`([^`]+)`/g,
+                "<code>$1</code>"
+            );
+
+
+        html =
+            html.replace(
+                /\*\*(.*?)\*\*/g,
+                "<strong>$1</strong>"
+            );
+
+
+        html =
+            html.replace(
+                /\*([^*]+)\*/g,
+                "<em>$1</em>"
+            );
+
+
+        return html;
+
+    }
+
+
+    /* =====================================================
+       HISTORY
+       ===================================================== */
+
+    function saveHistory() {
+
+        try {
+
+            localStorage.setItem(
+                STORAGE.history,
+                JSON.stringify(
+                    STATE.history.slice(-30)
+                )
+            );
+
+        } catch (e) {}
+
+    }
+
+
+    function restoreHistory() {
+
+        try {
+
+            const raw =
+                localStorage.getItem(
+                    STORAGE.history
+                );
+
+            if (!raw) return;
+
+            const history =
+                JSON.parse(raw);
+
+            if (!Array.isArray(history))
+                return;
+
+            STATE.history =
+                history.slice(-30);
+
+            history.forEach(function (item) {
+
+                if (item.role === "user") {
+
+                    renderHistoryUser(
+                        item.text
+                    );
+
+                } else if (
+                    item.role === "ai"
+                ) {
+
+                    renderHistoryAI(
+                        item.text
+                    );
+
+                }
+
+            });
+
+            scrollBottom();
+
+        } catch (e) {}
+
+    }
+
+
+    function renderHistoryUser(text) {
+
+        const container =
+            document.getElementById(
+                "nuxes-ai-messages"
+            );
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.className =
+            "nuxes-message user";
+
+        wrapper.innerHTML =
+            '<div class="nuxes-message-content">' +
+                '<div class="nuxes-bubble"></div>' +
+            '</div>';
+
+        wrapper
+            .querySelector(".nuxes-bubble")
+            .textContent = text;
+
+        container.appendChild(wrapper);
+
+    }
+
+
+    function renderHistoryAI(text) {
+
+        const container =
+            document.getElementById(
+                "nuxes-ai-messages"
+            );
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.className =
+            "nuxes-message ai";
+
+        wrapper.innerHTML =
+            '<div class="nuxes-avatar">' +
+                '<i class="fas fa-brain"></i>' +
+            '</div>' +
+
+            '<div class="nuxes-message-content">' +
+                '<div class="nuxes-bubble"></div>' +
+            '</div>';
+
+        wrapper
+            .querySelector(".nuxes-bubble")
+            .innerHTML =
+                renderMarkdown(text);
+
+        container.appendChild(wrapper);
+
+    }
+
+
+    /* =====================================================
+       CLEAR
+       ===================================================== */
+
+    window.clearNuxesChat =
+        function () {
+
+            const container =
+                document.getElementById(
+                    "nuxes-ai-messages"
+                );
+
+            if (!container) return;
+
+            container.innerHTML =
+                '<div class="nuxes-welcome">' +
+
+                    '<div class="nuxes-welcome-title">' +
+                        '<i class="fas fa-sparkles"></i> ' +
+                        'New conversation' +
+                    '</div>' +
+
+                    '<div class="nuxes-welcome-text">' +
+                        'Ask me about your Nexus Core project, IoT, maintenance or viva.' +
+                    '</div>' +
+
+                '</div>';
+
+
+            STATE.history = [];
+
+            STATE.lastQuestion = "";
+
+            saveHistory();
+
+            updateDeviceContext();
+
+        };
+
+
+    /* =====================================================
+       COPY
+       ===================================================== */
+
+    async function copyText(text) {
+
+        try {
+
+            await navigator.clipboard.writeText(
+                text
+            );
+
+        } catch (e) {
+
+            const textarea =
+                document.createElement(
+                    "textarea"
+                );
+
+            textarea.value = text;
+
+            document.body.appendChild(
+                textarea
+            );
+
+            textarea.select();
+
+            document.execCommand(
+                "copy"
+            );
+
+            textarea.remove();
+
+        }
+
+    }
+
+
+    /* =====================================================
+       SPEECH RECOGNITION
+       ===================================================== */
+
+    function initSpeechRecognition() {
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+
+        if (!SpeechRecognition) {
+
+            const mic =
+                document.getElementById(
+                    "nuxes-ai-mic"
+                );
+
+            if (mic) {
+
+                mic.disabled = true;
+
+                mic.title =
+                    "Voice input not supported";
+
+            }
+
+            return;
+
+        }
+
+
+        const recognition =
+            new SpeechRecognition();
+
+        recognition.continuous =
+            false;
+
+        recognition.interimResults =
+            true;
+
+        recognition.lang =
+            STATE.voiceLang;
+
+
+        recognition.onstart =
+            function () {
+
+                STATE.recording =
+                    true;
+
+                updateRecordingUI(true);
+
+            };
+
+
+        recognition.onresult =
+            function (event) {
+
+                let text = "";
+
+                for (
+                    let i =
+                        event.resultIndex;
+                    i <
+                        event.results.length;
+                    i++
+                ) {
+
+                    text +=
+                        event.results[i][0]
+                            .transcript;
+
+                }
+
+
+                const input =
+                    document.getElementById(
+                        "nuxes-ai-input"
+                    );
+
+                if (input) {
+
+                    input.value = text;
+
+                    updateCharCount();
+
+                    autoResizeNuxesInput(
+                        input
+                    );
+
+                }
+
+
+                const last =
+                    event.results[
+                        event.results.length - 1
+                    ];
+
+                if (
+                    last &&
+                    last.isFinal
+                ) {
+
+                    setTimeout(
+                        function () {
+
+                            sendNuxesAI();
+
+                        },
+                        300
+                    );
+
+                }
+
+            };
+
+
+        recognition.onerror =
+            function (event) {
+
+                STATE.recording =
+                    false;
+
+                updateRecordingUI(false);
+
+                showToast(
+                    "Voice input error: " +
+                    event.error,
+                    "error"
+                );
+
+            };
+
+
+        recognition.onend =
+            function () {
+
+                STATE.recording =
+                    false;
+
+                updateRecordingUI(false);
+
+            };
+
+
+        STATE.recognition =
+            recognition;
+
+    }
+
+
+    window.toggleNuxesVoice =
+        function () {
+
+            if (!STATE.recognition) {
+
+                showToast(
+                    "Voice input is not supported in this browser.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (STATE.recording) {
+
+                try {
+
+                    STATE.recognition.stop();
+
+                } catch (e) {}
+
+                return;
+
+            }
+
+
+            try {
+
+                STATE.recognition.lang =
+                    STATE.voiceLang;
+
+                STATE.recognition.start();
+
+            } catch (e) {
+
+                console.error(e);
+
+            }
+
+        };
+
+
+    function updateRecordingUI(active) {
+
+        const mic =
+            document.getElementById(
+                "nuxes-ai-mic"
+            );
+
+        if (!mic) return;
+
+        mic.classList.toggle(
+            "recording",
+            active
+        );
+
+        mic.innerHTML =
+            active
+                ? '<i class="fas fa-stop"></i>'
+                : '<i class="fas fa-microphone"></i>';
+
+    }
+
+
+    /* =====================================================
+       TEXT TO SPEECH
+       ===================================================== */
+
+    window.speakNuxesText =
+        speakText;
+
+
+    function speakText(text) {
+
+        if (
+            !text ||
+            !window.speechSynthesis
+        ) {
+
+            return;
+
+        }
+
+
+        window.speechSynthesis.cancel();
+
+
+        const clean =
+            text
+                .replace(
+                    /```[\s\S]*?```/g,
+                    " code "
+                )
+                .replace(
+                    /`([^`]+)`/g,
+                    "$1"
+                )
+                .replace(
+                    /\*\*(.*?)\*\*/g,
+                    "$1"
+                )
+                .replace(
+                    /\*([^*]+)\*/g,
+                    "$1"
+                );
+
+
+        const utterance =
+            new SpeechSynthesisUtterance(
+                clean
+            );
+
+        utterance.lang =
+            STATE.voiceLang;
+
+        utterance.rate =
+            STATE.speechRate;
+
+        utterance.pitch =
+            1;
+
+
+        const voices =
+            window.speechSynthesis
+                .getVoices();
+
+
+        /*
+         * Browser voice matching.
+         */
+        let voice =
+            voices.find(function (v) {
+
+                return v.lang ===
+                    STATE.voiceLang;
+
+            });
+
+
+        if (!voice) {
+
+            const prefix =
+                STATE.voiceLang
+                    .split("-")[0];
+
+            voice =
+                voices.find(function (v) {
+
+                    return v.lang
+                        .toLowerCase()
+                        .startsWith(
+                            prefix.toLowerCase()
+                        );
+
+                });
+
+        }
+
+
+        if (voice) {
+
+            utterance.voice =
+                voice;
+
+        }
+
+
+        window.speechSynthesis
+            .speak(utterance);
+
+    }
+
+
+    /* =====================================================
+       TOAST
+       ===================================================== */
+
+    let toastTimer = null;
+
+
+    function showToast(
+        message,
+        type
+    ) {
+
+        const old =
+            document.querySelector(
+                ".nuxes-toast"
+            );
+
+        if (old) old.remove();
+
+
+        const toast =
+            document.createElement(
+                "div"
+            );
+
+        toast.className =
+            "nuxes-toast";
+
+
+        toast.innerHTML =
+            "<span>" +
+            escapeHTML(message) +
+            "</span>";
+
+
+        document.body.appendChild(
+            toast
+        );
+
+
+        clearTimeout(toastTimer);
+
+
+        toastTimer =
+            setTimeout(
+                function () {
+
+                    toast.remove();
+
+                },
+                2200
+            );
+
+    }
+
+
+    /* =====================================================
+       UTILITIES
+       ===================================================== */
+
+    function escapeHTML(value) {
+
+        return String(value)
+
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+
+            .replace(
+                /</g,
+                "&lt;"
+            )
+
+            .replace(
+                />/g,
+                "&gt;"
+            )
+
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+
+    }
+
+
+    function scrollBottom() {
+
+        const container =
+            document.getElementById(
+                "nuxes-ai-messages"
+            );
+
+        if (!container) return;
+
+        requestAnimationFrame(
+            function () {
+
+                container.scrollTop =
+                    container.scrollHeight;
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       KEYBOARD
+       ===================================================== */
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            const panel =
+                document.getElementById(
+                    "nuxes-ai-panel"
+                );
+
+            const open =
+                panel &&
+                panel.classList.contains(
+                    "active"
+                );
+
+
+            if (
+                (event.ctrlKey ||
+                 event.metaKey) &&
+                event.key.toLowerCase() === "k"
+            ) {
+
+                event.preventDefault();
+
+                toggleNuxesAI();
+
+            }
+
+
+            if (
+                event.key === "Escape" &&
+                open
+            ) {
+
+                closeNuxesVoiceSettings();
+
+                toggleNuxesAI();
+
+            }
+
+
+            if (
+                (event.ctrlKey ||
+                 event.metaKey) &&
+                event.key.toLowerCase() === "m" &&
+                open
+            ) {
+
+                event.preventDefault();
+
+                toggleNuxesVoice();
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       OUTSIDE POPOVER
+       ===================================================== */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const popover =
+                document.getElementById(
+                    "nuxes-voice-popover"
+                );
+
+            const toggle =
+                document.getElementById(
+                    "nuxes-voice-settings-toggle"
+                );
+
+            if (
+                !popover ||
+                !popover.classList.contains(
+                    "show"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !popover.contains(
+                    event.target
+                ) &&
+                !toggle.contains(
+                    event.target
+                )
+            ) {
+
+                closeNuxesVoiceSettings();
+
+            }
+
+        }
+    );
+
 
 })();
 </script>
-
 </body>
 </html>
