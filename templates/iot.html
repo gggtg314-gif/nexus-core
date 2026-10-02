@@ -4643,7 +4643,13 @@ function renderDevices(){
             var statusClass = 
                 status === 'online' 
                     ? 'online' 
-                    : 'offline'; 
+                    : 'offline';
+
+
+            var statusText =
+                status === 'online'
+                    ? 'Online'
+                    : 'Offline'; 
  
  
             return ` 
@@ -4712,7 +4718,7 @@ function renderDevices(){
  
                             <span class="dot"></span> 
  
-                            ${status} 
+                            ${statusText} 
  
                         </div> 
  
@@ -8018,6 +8024,18 @@ window.addEventListener(
                 input.value.length + 
                 " / 1000"; 
  
+        };
+
+    /* =====================================================
+       BACKWARD COMPATIBILITY
+       Existing Nuxes AI code calls updateCharCount()
+       ===================================================== */
+
+    window.updateCharCount =
+        function () {
+
+            window.updateNuxesCharCount();
+
         }; 
  
  
