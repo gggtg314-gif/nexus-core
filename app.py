@@ -5316,11 +5316,21 @@ def iot_dashboard():
     return render_template('iot.html')
 
 
+# ============================================================
+# IOT DEVICES API
+# REAL-TIME ONLINE / OFFLINE STATUS
+# ============================================================
+
 @app.route('/api/iot/devices', methods=['GET'])
 @login_required
 def get_iot_devices():
 
     try:
+
+        # ESP32 ko itne seconds ke andar data bhejna hoga
+        # tabhi device ONLINE maana jayega.
+        offline_threshold = 20
+
         rows = db.session.execute(
             text("""
                 SELECT
@@ -5336,34 +5346,88 @@ def get_iot_devices():
             """)
         ).mappings().all()
 
+        now = datetime.utcnow()
+
         devices = []
 
         for row in rows:
+
+            last_seen = row['last_seen']
+
+            # Default = OFFLINE
+            connection_status = 'offline'
+
+            if last_seen is not None:
+
+                try:
+
+                    age_seconds = (
+                        now - last_seen
+                    ).total_seconds()
+
+                    # Last ESP32 data 20 sec ke andar aaya
+                    if age_seconds <= offline_threshold:
+                        connection_status = 'online'
+
+                except Exception as status_error:
+
+                    logger.warning(
+                        f"Unable to calculate IoT status "
+                        f"for {row['device_id']}: "
+                        f"{status_error}"
+                    )
+
+                    connection_status = 'offline'
+
             devices.append({
+
                 'id': row['id'],
-                'device_id': row['device_id'],
-                'device_name': row['device_name'],
-                'sensor_type': row['sensor_type'],
-                'status': row['status'],
-                'last_seen': (
-                    row['last_seen'].isoformat()
-                    if row['last_seen']
-                    else None
-                ),
-                'created_at': (
-                    row['created_at'].isoformat()
-                    if row['created_at']
-                    else None
-                )
+
+                'device_id':
+                    row['device_id'],
+
+                'device_name':
+                    row['device_name'],
+
+                'sensor_type':
+                    row['sensor_type'],
+
+                # IMPORTANT:
+                # DB ka old status directly use nahi karna.
+                # Real-time status last_seen se calculate hoga.
+                'status':
+                    connection_status,
+
+                'last_seen':
+                    (
+                        last_seen.isoformat()
+                        if last_seen
+                        else None
+                    ),
+
+                'created_at':
+                    (
+                        row['created_at'].isoformat()
+                        if row['created_at']
+                        else None
+                    )
             })
 
         return jsonify({
             'success': True,
-            'devices': devices
+            'devices': devices,
+            'offline_threshold': offline_threshold
         }), 200
 
     except Exception as e:
-        logger.error(f"IoT devices error: {e}")
+
+        logger.error(
+            f"IoT devices error: {e}"
+        )
+
+        logger.error(
+            traceback.format_exc()
+        )
 
         return jsonify({
             'success': False,
@@ -5371,11 +5435,19 @@ def get_iot_devices():
         }), 500
 
 
-@app.route('/api/iot/readings/<string:device_id>', methods=['GET'])
+@# ============================================================
+# IOT READINGS API
+# ============================================================
+
+@app.route(
+    '/api/iot/readings/<string:device_id>',
+    methods=['GET']
+)
 @login_required
 def get_iot_readings(device_id):
 
     try:
+
         rows = db.session.execute(
             text("""
                 SELECT
@@ -5397,24 +5469,35 @@ def get_iot_readings(device_id):
         readings = []
 
         for row in rows:
+
             readings.append({
-                'id': row['id'],
-                'device_id': row['device_id'],
-                'temperature': (
-                    float(row['temperature'])
-                    if row['temperature'] is not None
-                    else None
-                ),
-                'humidity': (
-                    float(row['humidity'])
-                    if row['humidity'] is not None
-                    else None
-                ),
-                'recorded_at': (
-                    row['recorded_at'].isoformat()
-                    if row['recorded_at']
-                    else None
-                )
+
+                'id':
+                    row['id'],
+
+                'device_id':
+                    row['device_id'],
+
+                'temperature':
+                    (
+                        float(row['temperature'])
+                        if row['temperature'] is not None
+                        else None
+                    ),
+
+                'humidity':
+                    (
+                        float(row['humidity'])
+                        if row['humidity'] is not None
+                        else None
+                    ),
+
+                'recorded_at':
+                    (
+                        row['recorded_at'].isoformat()
+                        if row['recorded_at']
+                        else None
+                    )
             })
 
         return jsonify({
@@ -5423,7 +5506,14 @@ def get_iot_readings(device_id):
         }), 200
 
     except Exception as e:
-        logger.error(f"IoT readings error: {e}")
+
+        logger.error(
+            f"IoT readings error: {e}"
+        )
+
+        logger.error(
+            traceback.format_exc()
+        )
 
         return jsonify({
             'success': False,
