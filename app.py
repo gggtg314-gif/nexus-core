@@ -1908,6 +1908,7 @@ def predictions():
         total_warnings = 0
         total_info = 0
 
+        # System settings
         settings_data = get_system_settings()
 
         cpu_warning = settings_data['cpu_warning']
@@ -1919,9 +1920,87 @@ def predictions():
         disk_warning = settings_data['disk_warning']
         disk_critical = settings_data['disk_critical']
 
+        # -----------------------------------------
+        # CURRENT ONLINE / OFFLINE THRESHOLD
+        # -----------------------------------------
+
+        offline_seconds = int(
+            settings_data.get('offline_threshold', 20)
+        )
+
+        offline_threshold = (
+            datetime.utcnow()
+            - timedelta(seconds=offline_seconds)
+        )
+
+        # -----------------------------------------
+        # PROCESS EVERY COMPUTER
+        # -----------------------------------------
+
         for comp in computers:
 
             preds = []
+
+            # -----------------------------------------
+            # CALCULATE REAL-TIME CONNECTION STATUS
+            # USING LAST HEARTBEAT
+            # -----------------------------------------
+
+            last_update = comp.last_update
+
+            if last_update:
+
+                # Handle string datetime if required
+                if isinstance(last_update, str):
+
+                    try:
+
+                        last_update = datetime.fromisoformat(
+                            last_update.replace('Z', '+00:00')
+                        )
+
+                        # Convert timezone-aware datetime
+                        # to naive UTC datetime
+                        if last_update.tzinfo is not None:
+                            last_update = last_update.replace(
+                                tzinfo=None
+                            )
+
+                    except Exception:
+
+                        last_update = None
+
+                # Current heartbeat is recent
+                if (
+                    last_update is not None
+                    and last_update >= offline_threshold
+                ):
+
+                    connection_status = 'online'
+
+                else:
+
+                    connection_status = 'offline'
+
+            else:
+
+                connection_status = 'offline'
+
+            # -----------------------------------------
+            # STORE CURRENT CONNECTION STATUS
+            # -----------------------------------------
+            #
+            # This makes Predictions use the same
+            # online/offline status as Dashboard/API.
+            #
+            # Do NOT use old DB status for connection.
+            # -----------------------------------------
+
+            comp.connection_status = connection_status
+
+            # -----------------------------------------
+            # CPU PREDICTION
+            # -----------------------------------------
 
             cpu = comp.cpu_usage or 0
 
@@ -1961,6 +2040,10 @@ def predictions():
 
                 total_warnings += 1
 
+            # -----------------------------------------
+            # RAM PREDICTION
+            # -----------------------------------------
+
             ram = comp.ram_usage or 0
 
             if ram >= ram_critical:
@@ -1998,6 +2081,10 @@ def predictions():
                 })
 
                 total_warnings += 1
+
+            # -----------------------------------------
+            # DISK PREDICTION
+            # -----------------------------------------
 
             disk = comp.disk_usage or 0
 
@@ -2037,6 +2124,10 @@ def predictions():
 
                 total_warnings += 1
 
+            # -----------------------------------------
+            # GPU PREDICTION
+            # -----------------------------------------
+
             gpu = comp.gpu_usage or 0
 
             if gpu > 90:
@@ -2057,7 +2148,11 @@ def predictions():
 
                 total_warnings += 1
 
-            if comp.status == 'offline':
+            # -----------------------------------------
+            # ONLINE / OFFLINE PREDICTION
+            # -----------------------------------------
+
+            if connection_status == 'offline':
 
                 preds.append({
                     'type': 'critical',
@@ -2073,6 +2168,10 @@ def predictions():
                 })
 
                 total_critical += 1
+
+            # -----------------------------------------
+            # CRITICAL HEALTH STATUS
+            # -----------------------------------------
 
             elif comp.status == 'critical':
 
@@ -2091,6 +2190,10 @@ def predictions():
                 })
 
                 total_critical += 1
+
+            # -----------------------------------------
+            # BATTERY PREDICTION
+            # -----------------------------------------
 
             if comp.battery_percent is not None:
 
@@ -2140,6 +2243,10 @@ def predictions():
 
                     total_warnings += 1
 
+            # -----------------------------------------
+            # UPTIME PREDICTION
+            # -----------------------------------------
+
             if comp.uptime:
 
                 uptime = str(
@@ -2181,6 +2288,10 @@ def predictions():
                     except Exception:
                         pass
 
+            # -----------------------------------------
+            # HEALTH SCORE
+            # -----------------------------------------
+
             if preds:
 
                 health_score = 100
@@ -2188,12 +2299,15 @@ def predictions():
                 for p in preds:
 
                     if p['type'] == 'critical':
+
                         health_score -= 25
 
                     elif p['type'] == 'warning':
+
                         health_score -= 15
 
                     elif p['type'] == 'info':
+
                         health_score -= 5
 
                 health_score = max(
@@ -2203,6 +2317,10 @@ def predictions():
                         health_score
                     )
                 )
+
+                # -------------------------------------
+                # HEALTH STATUS
+                # -------------------------------------
 
                 if health_score >= 80:
 
@@ -2222,40 +2340,71 @@ def predictions():
                     health_color = '#ef4444'
                     health_icon = 'fa-exclamation-circle'
 
+                # -------------------------------------
+                # ADD COMPUTER DATA
+                # -------------------------------------
+
                 predictions_data.append({
+
                     'computer': comp,
+
                     'predictions': preds,
+
                     'health_score': health_score,
+
                     'health_status': health_status,
+
                     'health_color': health_color,
+
                     'health_icon': health_icon,
+
                     'total_predictions': len(preds),
+
                     'critical_count': sum(
-                        1 for p in preds
+                        1
+                        for p in preds
                         if p['type'] == 'critical'
                     ),
+
                     'warning_count': sum(
-                        1 for p in preds
+                        1
+                        for p in preds
                         if p['type'] == 'warning'
                     ),
+
                     'info_count': sum(
-                        1 for p in preds
+                        1
+                        for p in preds
                         if p['type'] == 'info'
                     )
                 })
 
+        # -----------------------------------------
+        # RENDER PREDICTIONS PAGE
+        # -----------------------------------------
+
         return render_template(
             'predictions.html',
+
             predictions_data=predictions_data,
+
             total_systems=len(computers),
+
             total_issues=sum(
                 len(p['predictions'])
                 for p in predictions_data
             ),
+
             total_critical=total_critical,
+
             total_warnings=total_warnings,
+
             total_info=total_info
         )
+
+    # ---------------------------------------------
+    # ERROR HANDLING
+    # ---------------------------------------------
 
     except Exception as e:
 
@@ -2274,11 +2423,17 @@ def predictions():
 
         return render_template(
             'predictions.html',
+
             predictions_data=[],
+
             total_systems=0,
+
             total_issues=0,
+
             total_critical=0,
+
             total_warnings=0,
+
             total_info=0
         )
 
