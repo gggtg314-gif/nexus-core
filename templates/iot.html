@@ -5764,8 +5764,8 @@ window.addEventListener(
  
 </script> 
 <!-- =========================================================
-     NUXES AI v3.8 — Clean Blue Glow Theme
-     Readable Text • Soft Glow • Ocean Blue + Cyan
+     NUXES AI v3.8 — Clean Professional Shadow Theme
+     Simple • Professional • No Glow • Only Soft Shadows
      ========================================================= -->
 
 <style>
@@ -5773,10 +5773,10 @@ window.addEventListener(
    ROOT
    ========================================================= */
 #nuxes-ai-root{
-    --blue-1:#0ea5e9;
-    --blue-2:#38bdf8;
-    --blue-3:#0284c7;
-    --cyan-1:#22d3ee;
+    --blue-1:#2563eb;
+    --blue-2:#3b82f6;
+    --blue-3:#1d4ed8;
+    --cyan-1:#0891b2;
     --cyan-2:#06b6d4;
 
     --nx-surface:var(--bg-surface,#ffffff);
@@ -5794,157 +5794,101 @@ window.addEventListener(
 
 #nuxes-ai-root *{box-sizing:border-box}
 
-/* DARK — Deep Ocean Blue, clean readable */
+/* DARK — clean shadow only */
 [data-theme="dark"] #nuxes-ai-root{
-    --bg-glow-1:rgba(14,165,233,.16);
-    --bg-glow-2:rgba(34,211,238,.12);
-    --bg-glow-3:rgba(56,189,248,.08);
+    --panel-bg:#0f172a;
+    --panel-border:#1e2a3a;
+    --panel-glass:rgba(15,23,42,.98);
 
-    --glow-blue:rgba(14,165,233,.55);
-    --glow-cyan:rgba(34,211,238,.55);
-
-    --panel-bg:#0a0f1c;
-    --panel-border:rgba(56,189,248,.32);
-    --panel-glass:rgba(10,15,28,.92);
-
-    --text-main:#f0f9ff;
-    --text-sub:#bae6fd;
-    --text-muted:#7dd3fc;
+    --text-main:#f1f5f9;
+    --text-sub:#cbd5e1;
+    --text-muted:#94a3b8;
     --text-fade:#64748b;
 
-    --bubble-ai-bg:rgba(30,58,90,.55);
-    --bubble-ai-border:rgba(56,189,248,.28);
-    --bubble-ai-text:#e0f2fe;
+    --bubble-ai-bg:#1e293b;
+    --bubble-ai-border:#334155;
+    --bubble-ai-text:#e2e8f0;
 
-    --input-bg:rgba(6,12,24,.85);
-    --input-border:rgba(56,189,248,.35);
+    --input-bg:#0b1220;
+    --input-border:#334155;
 
-    --btn-bg:rgba(30,58,90,.5);
-    --btn-border:rgba(56,189,248,.3);
-    --btn-text:#bae6fd;
+    --btn-bg:#1e293b;
+    --btn-border:#334155;
+    --btn-text:#cbd5e1;
 
     --nx-panel-shadow:
-        0 0 0 1px rgba(56,189,248,.2),
-        0 32px 90px rgba(0,0,0,.85),
-        0 0 80px rgba(14,165,233,.22),
-        0 0 40px rgba(34,211,238,.14);
+        0 20px 40px rgba(0,0,0,.5),
+        0 8px 16px rgba(0,0,0,.35);
 }
 
-/* LIGHT — Clean white with blue accents */
+/* LIGHT — clean shadow only */
 [data-theme="light"] #nuxes-ai-root{
-    --bg-glow-1:rgba(14,165,233,.08);
-    --bg-glow-2:rgba(34,211,238,.06);
-    --bg-glow-3:rgba(56,189,248,.04);
-
-    --glow-blue:rgba(14,165,233,.28);
-    --glow-cyan:rgba(34,211,238,.28);
-
     --panel-bg:#ffffff;
-    --panel-border:rgba(14,165,233,.28);
-    --panel-glass:rgba(255,255,255,.96);
+    --panel-border:#e5e9f0;
+    --panel-glass:rgba(255,255,255,.98);
 
-    --text-main:#0c1e3a;
-    --text-sub:#334e68;
-    --text-muted:#5c7a9a;
+    --text-main:#0f172a;
+    --text-sub:#334155;
+    --text-muted:#64748b;
     --text-fade:#94a3b8;
 
-    --bubble-ai-bg:#f0f9ff;
-    --bubble-ai-border:rgba(14,165,233,.25);
-    --bubble-ai-text:#0c1e3a;
+    --bubble-ai-bg:#f1f5f9;
+    --bubble-ai-border:#e2e8f0;
+    --bubble-ai-text:#0f172a;
 
     --input-bg:#f8fafc;
-    --input-border:rgba(14,165,233,.3);
+    --input-border:#e2e8f0;
 
-    --btn-bg:#f0f9ff;
-    --btn-border:rgba(14,165,233,.25);
-    --btn-text:#0369a1;
+    --btn-bg:#f8fafc;
+    --btn-border:#e2e8f0;
+    --btn-text:#2563eb;
 
     --nx-panel-shadow:
-        0 0 0 1px rgba(14,165,233,.15),
-        0 24px 60px rgba(14,165,233,.18),
-        0 0 60px rgba(14,165,233,.08);
+        0 20px 40px rgba(15,23,42,.08),
+        0 8px 16px rgba(15,23,42,.05);
 }
 
 /* =========================================================
-   LAUNCHER
+   LAUNCHER — simple shadow, no glow
    ========================================================= */
 #nuxes-ai-launcher{
     position:fixed;right:22px;bottom:22px;
-    width:64px;height:64px;border:0;border-radius:50%;
+    width:62px;height:62px;border:0;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;z-index:99990;color:#fff;
 
-    background:
-        radial-gradient(circle at 35% 25%,rgba(255,255,255,.55),transparent 45%),
-        linear-gradient(135deg,#0284c7 0%,#0ea5e9 50%,#22d3ee 100%);
+    background:linear-gradient(145deg,#2563eb 0%,#1d4ed8 100%);
 
     box-shadow:
-        0 0 0 2px rgba(14,165,233,.5),
-        0 0 28px rgba(14,165,233,.65),
-        0 0 56px rgba(34,211,238,.4),
-        0 12px 36px rgba(0,0,0,.4),
-        inset 0 2px 8px rgba(255,255,255,.35);
+        0 10px 24px rgba(37,99,235,.28),
+        0 4px 10px rgba(15,23,42,.15);
 
-    transition:transform .4s cubic-bezier(.34,1.56,.64,1),
-               box-shadow .35s ease;
-    animation:nxFloat 4s ease-in-out infinite;
-    overflow:visible;
+    transition:transform .3s cubic-bezier(.34,1.4,.64,1),
+               box-shadow .3s ease;
+    animation:nxFloat 4.5s ease-in-out infinite;
     isolation:isolate;
 }
 
 @keyframes nxFloat{
     0%,100%{transform:translateY(0)}
-    50%{transform:translateY(-7px)}
-}
-
-#nuxes-ai-launcher::before{
-    content:"";
-    position:absolute;inset:0;
-    border-radius:50%;
-    background:radial-gradient(circle at 40% 30%,rgba(255,255,255,.65),transparent 45%);
-    pointer-events:none;
-    z-index:2;
-    animation:nxHighlight 2.8s ease-in-out infinite;
-}
-
-@keyframes nxHighlight{
-    0%,100%{opacity:.7;transform:scale(1)}
-    50%{opacity:1;transform:scale(1.08)}
-}
-
-#nuxes-ai-launcher::after{
-    content:"";
-    position:absolute;inset:0;
-    border-radius:50%;
-    border:2px solid rgba(56,189,248,.75);
-    animation:nxRipple 2.6s cubic-bezier(.3,0,.7,1) infinite;
-    pointer-events:none;
-}
-
-@keyframes nxRipple{
-    0%{transform:scale(1);opacity:1}
-    100%{transform:scale(2.3);opacity:0}
+    50%{transform:translateY(-5px)}
 }
 
 #nuxes-ai-launcher:hover{
-    transform:translateY(-9px) scale(1.14);
-    animation:nxFloat 2s ease-in-out infinite;
+    transform:translateY(-7px) scale(1.05);
+    animation-play-state:paused;
     box-shadow:
-        0 0 0 3px rgba(34,211,238,.7),
-        0 0 40px rgba(14,165,233,.85),
-        0 0 80px rgba(34,211,238,.55),
-        0 16px 44px rgba(0,0,0,.5),
-        inset 0 2px 10px rgba(255,255,255,.45);
+        0 18px 34px rgba(37,99,235,.35),
+        0 8px 16px rgba(15,23,42,.2);
 }
 
-#nuxes-ai-launcher:active{transform:scale(.92)}
+#nuxes-ai-launcher:active{transform:scale(.95)}
 
-/* Logo — Hexagon with cyan glow */
+/* Logo — hexagon, no glow */
 .nuxes-orb-icon{
     position:relative;z-index:5;
-    width:38px;height:38px;
+    width:34px;height:34px;
     display:flex;align-items:center;justify-content:center;
-    filter:drop-shadow(0 0 8px rgba(56,189,248,.9));
 }
 
 .nuxes-orb-icon svg{width:100%;height:100%;overflow:visible}
@@ -5954,16 +5898,15 @@ window.addEventListener(
     stroke:#ffffff;
     stroke-width:1.8;
     stroke-linejoin:round;
-    filter:drop-shadow(0 0 3px #fff);
 }
 
 .nuxes-orb-icon .nx-dash-ring{
     fill:none;
-    stroke:rgba(255,255,255,.9);
+    stroke:rgba(255,255,255,.7);
     stroke-width:1.2;
     stroke-dasharray:2 3;
     transform-origin:center;
-    animation:nxRingSpin 6s linear infinite;
+    animation:nxRingSpin 9s linear infinite;
 }
 
 @keyframes nxRingSpin{
@@ -5973,54 +5916,37 @@ window.addEventListener(
 
 .nuxes-orb-icon .nx-core{
     fill:#ffffff;
-    filter:drop-shadow(0 0 4px #fff);
     transform-origin:center;
-    animation:nxCorePulse 1.8s ease-in-out infinite;
+    animation:nxCorePulse 2.4s ease-in-out infinite;
 }
 
 @keyframes nxCorePulse{
     0%,100%{transform:scale(1);opacity:1}
-    50%{transform:scale(1.35);opacity:.85}
+    50%{transform:scale(1.15);opacity:.9}
 }
 
 .nuxes-orb-icon .nx-electron{
-    fill:#22d3ee;
-    filter:drop-shadow(0 0 5px #22d3ee);
+    fill:#bae6fd;
     transform-origin:16px 16px;
-    animation:nxOrbit 3s linear infinite;
+    animation:nxOrbit 4s linear infinite;
 }
 
 @keyframes nxOrbit{
-    from{transform:rotate(0deg) translateX(11px) rotate(0deg)}
-    to{transform:rotate(360deg) translateX(11px) rotate(-360deg)}
+    from{transform:rotate(0deg) translateX(10px) rotate(0deg)}
+    to{transform:rotate(360deg) translateX(10px) rotate(-360deg)}
 }
 
 .nuxes-launcher-status{
-    position:absolute;right:0;top:0;
-    width:14px;height:14px;border-radius:50%;
+    position:absolute;right:1px;top:1px;
+    width:13px;height:13px;border-radius:50%;
     background:#22c55e;
-    border:2.5px solid #0a0f1c;
-    box-shadow:
-        0 0 0 2px rgba(34,197,94,.35),
-        0 0 14px #22c55e;
+    border:2.5px solid #ffffff;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
     z-index:7;
 }
 
-[data-theme="light"] .nuxes-launcher-status{
-    border-color:#fff;
-}
-
-.nuxes-launcher-status::before{
-    content:"";
-    position:absolute;inset:-2px;
-    border-radius:50%;
-    border:2px solid rgba(34,197,94,.6);
-    animation:nxRadarPing 2s ease-out infinite;
-}
-
-@keyframes nxRadarPing{
-    0%{transform:scale(1);opacity:1}
-    100%{transform:scale(2.4);opacity:0}
+[data-theme="dark"] .nuxes-launcher-status{
+    border-color:#0f172a;
 }
 
 .nuxes-orb-pulse{display:none}
@@ -6043,55 +5969,14 @@ window.addEventListener(
     transform-origin:bottom right;
 }
 
-[data-theme="dark"] #nuxes-ai-panel{
-    background:
-        radial-gradient(circle at 100% 0%,var(--bg-glow-1),transparent 45%),
-        radial-gradient(circle at 0% 100%,var(--bg-glow-2),transparent 45%),
-        var(--panel-bg);
-}
-
-[data-theme="light"] #nuxes-ai-panel{
-    background:
-        radial-gradient(circle at 100% 0%,var(--bg-glow-1),transparent 45%),
-        radial-gradient(circle at 0% 100%,var(--bg-glow-2),transparent 45%),
-        var(--panel-bg);
-}
-
 #nuxes-ai-panel.active{
     display:flex;
-    animation:nxOpen .4s cubic-bezier(.34,1.56,.64,1);
+    animation:nxOpen .35s cubic-bezier(.2,.9,.3,1);
 }
 
 @keyframes nxOpen{
-    from{opacity:0;transform:translateY(24px) scale(.9)}
+    from{opacity:0;transform:translateY(18px) scale(.98)}
     to{opacity:1;transform:translateY(0) scale(1)}
-}
-
-/* Top beam */
-#nuxes-ai-panel > *:first-child::before{
-    content:"";
-    position:absolute;top:0;left:0;right:0;
-    height:3px;
-    background:linear-gradient(90deg,
-        transparent 0%,
-        #0284c7 20%,
-        #0ea5e9 40%,
-        #22d3ee 60%,
-        #38bdf8 80%,
-        transparent 100%);
-    background-size:200% 100%;
-    animation:nxBeam 3.5s linear infinite;
-    z-index:20;
-    border-top-left-radius:22px;
-    border-top-right-radius:22px;
-    box-shadow:
-        0 0 12px rgba(14,165,233,.7),
-        0 0 24px rgba(34,211,238,.4);
-}
-
-@keyframes nxBeam{
-    from{background-position:0% 0}
-    to{background-position:200% 0}
 }
 
 /* =========================================================
@@ -6099,9 +5984,10 @@ window.addEventListener(
    ========================================================= */
 .nuxes-header{
     position:relative;z-index:5;
-    min-height:64px;padding:0 14px;
+    min-height:64px;padding:0 16px;
     display:flex;align-items:center;justify-content:space-between;
     border-bottom:1px solid var(--panel-border);
+    border-radius:22px 22px 0 0;
 }
 
 .nuxes-brand{display:flex;align-items:center;gap:11px}
@@ -6110,42 +5996,14 @@ window.addEventListener(
     width:40px;height:40px;border-radius:12px;
     display:flex;align-items:center;justify-content:center;
     color:#fff;font-size:17px;
-    background:
-        radial-gradient(circle at 35% 25%,rgba(255,255,255,.5),transparent 50%),
-        linear-gradient(135deg,#0284c7 0%,#0ea5e9 50%,#22d3ee 100%);
-    box-shadow:
-        0 0 0 1px rgba(56,189,248,.5),
-        0 0 18px rgba(14,165,233,.55),
-        0 6px 18px rgba(0,0,0,.4),
-        inset 0 1px 0 rgba(255,255,255,.35);
-    position:relative;
-    overflow:hidden;
+    background:linear-gradient(145deg,#2563eb,#1d4ed8);
+    box-shadow:0 4px 10px rgba(37,99,235,.25);
     flex-shrink:0;
-    animation:nxLogoPulse 3s ease-in-out infinite;
 }
 
-@keyframes nxLogoPulse{
-    0%,100%{transform:scale(1)}
-    50%{transform:scale(1.04)}
-}
-
-.nuxes-brand-logo::before{
-    content:"";
-    position:absolute;top:-50%;left:-50%;
-    width:200%;height:200%;
-    background:linear-gradient(45deg,transparent 40%,rgba(255,255,255,.6) 50%,transparent 60%);
-    animation:nxShine 3s ease-in-out infinite;
-}
-
-@keyframes nxShine{
-    0%{transform:translate(-100%,-100%)}
-    100%{transform:translate(100%,100%)}
-}
-
-/* Title — NO glow, clean readable */
 .nuxes-brand-title{
     color:var(--text-main);
-    font-size:13px;font-weight:750;
+    font-size:13px;font-weight:700;
     letter-spacing:-.01em;
     display:flex;align-items:center;gap:6px;
 }
@@ -6153,10 +6011,9 @@ window.addEventListener(
 .nuxes-version{
     padding:2px 6px;border-radius:5px;
     color:#fff;
-    background:linear-gradient(135deg,#0ea5e9,#22d3ee);
-    border:0;
+    background:#2563eb;
     font-size:7px;font-weight:800;letter-spacing:.05em;
-    box-shadow:0 0 10px rgba(14,165,233,.5);
+    box-shadow:0 2px 5px rgba(37,99,235,.25);
 }
 
 .nuxes-brand-subtitle{
@@ -6167,7 +6024,7 @@ window.addEventListener(
 }
 
 .nuxes-online{
-    color:#4ade80;
+    color:#22c55e;
     display:inline-flex;align-items:center;gap:3px;font-weight:700;
 }
 
@@ -6176,13 +6033,12 @@ window.addEventListener(
 .nuxes-online-dot{
     display:inline-block;width:5px;height:5px;
     border-radius:50%;background:currentColor;
-    box-shadow:0 0 6px currentColor;
-    animation:nxBlinkDot 1.8s ease-in-out infinite;
+    animation:nxBlinkDot 2s ease-in-out infinite;
 }
 
 @keyframes nxBlinkDot{
     0%,100%{opacity:1;transform:scale(1)}
-    50%{opacity:.4;transform:scale(.7)}
+    50%{opacity:.4;transform:scale(.75)}
 }
 
 .nuxes-header-controls{display:flex;gap:5px;align-items:center}
@@ -6195,22 +6051,21 @@ window.addEventListener(
     color:var(--btn-text);
     cursor:pointer;font-size:11px;
     display:flex;align-items:center;justify-content:center;
-    transition:.25s cubic-bezier(.34,1.56,.64,1);
+    transition:all .2s ease;
 }
 
 .nuxes-icon-btn:hover{
+    background:#2563eb;
+    border-color:#2563eb;
     color:#fff;
-    background:linear-gradient(135deg,#0284c7,#0ea5e9);
-    border-color:transparent;
-    transform:translateY(-2px);
-    box-shadow:0 6px 18px rgba(14,165,233,.5);
+    box-shadow:0 4px 10px rgba(37,99,235,.25);
 }
 
 .nuxes-icon-btn.active{
+    background:#2563eb;
+    border-color:#2563eb;
     color:#fff;
-    background:linear-gradient(135deg,#0284c7,#22d3ee);
-    border-color:transparent;
-    box-shadow:0 6px 18px rgba(14,165,233,.6);
+    box-shadow:0 4px 10px rgba(37,99,235,.25);
 }
 
 .nuxes-language{
@@ -6221,12 +6076,12 @@ window.addEventListener(
     color:var(--text-main);
     font-size:9px;outline:0;cursor:pointer;
     font-family:inherit;font-weight:700;
-    transition:.22s ease;
+    transition:all .2s ease;
 }
 
 .nuxes-language:hover{
-    border-color:#22d3ee;
-    box-shadow:0 0 0 3px rgba(34,211,238,.15);
+    border-color:#2563eb;
+    box-shadow:0 2px 6px rgba(37,99,235,.15);
 }
 
 .nuxes-language option{
@@ -6239,40 +6094,24 @@ window.addEventListener(
    ========================================================= */
 .nuxes-context{
     position:relative;z-index:5;
-    min-height:38px;margin:10px 12px 0;padding:0 12px;
+    min-height:38px;margin:10px 14px 0;padding:0 12px;
     display:flex;align-items:center;justify-content:space-between;
     border:1px solid var(--bubble-ai-border);
     border-radius:11px;
     background:var(--bubble-ai-bg);
-    transition:.25s ease;
-    overflow:hidden;
-}
-
-.nuxes-context::before{
-    content:"";
-    position:absolute;left:0;top:0;bottom:0;
-    width:3px;
-    background:linear-gradient(180deg,#0ea5e9,#22d3ee);
-    border-radius:3px;
-    box-shadow:0 0 10px rgba(14,165,233,.7);
+    transition:all .2s ease;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
 }
 
 .nuxes-context:hover{
-    border-color:#22d3ee;
-    transform:translateY(-1px);
-    box-shadow:0 6px 18px rgba(14,165,233,.2);
+    border-color:#2563eb;
+    box-shadow:0 3px 8px rgba(37,99,235,.1);
 }
 
 .nuxes-context-left{display:flex;align-items:center;gap:8px;min-width:0}
 
 .nuxes-context-icon{
-    color:#22d3ee;font-size:11px;
-    animation:nxIconPulse 2.2s ease-in-out infinite;
-}
-
-@keyframes nxIconPulse{
-    0%,100%{opacity:1;transform:scale(1)}
-    50%{opacity:.7;transform:scale(.9)}
+    color:#2563eb;font-size:11px;
 }
 
 .nuxes-context-text{
@@ -6283,15 +6122,14 @@ window.addEventListener(
 .nuxes-context-value{
     padding:3px 7px;border-radius:6px;
     color:#fff;
-    background:linear-gradient(135deg,#0284c7,#0ea5e9);
-    border:0;
+    background:#2563eb;
     font-family:'JetBrains Mono',monospace;
     font-size:8px;font-weight:700;
-    box-shadow:0 0 10px rgba(14,165,233,.5);
+    box-shadow:0 2px 5px rgba(37,99,235,.2);
 }
 
 .nuxes-context-live{
-    color:#4ade80;font-size:8px;font-weight:800;
+    color:#22c55e;font-size:8px;font-weight:800;
     letter-spacing:.06em;
     display:flex;align-items:center;gap:4px;
 }
@@ -6301,8 +6139,7 @@ window.addEventListener(
 .nuxes-context-live::before{
     content:"";width:5px;height:5px;
     border-radius:50%;background:currentColor;
-    box-shadow:0 0 6px currentColor;
-    animation:nxBlinkDot 1.4s infinite;
+    animation:nxBlinkDot 1.6s infinite;
 }
 
 /* =========================================================
@@ -6317,39 +6154,36 @@ window.addEventListener(
 
 #nuxes-ai-messages::-webkit-scrollbar{width:5px}
 #nuxes-ai-messages::-webkit-scrollbar-thumb{
-    background:linear-gradient(180deg,#0ea5e9,#22d3ee);
+    background:#cbd5e1;
     border-radius:20px;
+}
+[data-theme="dark"] #nuxes-ai-messages::-webkit-scrollbar-thumb{
+    background:#334155;
 }
 #nuxes-ai-messages::-webkit-scrollbar-track{background:transparent}
 
 .nuxes-welcome{
     padding:14px;margin-bottom:14px;border-radius:14px;
-    background:linear-gradient(135deg,
-        rgba(14,165,233,.1),
-        rgba(34,211,238,.06));
+    background:var(--bubble-ai-bg);
     border:1px solid var(--bubble-ai-border);
-    position:relative;overflow:hidden;
-    animation:nxSlideIn .5s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 1px 3px rgba(15,23,42,.04);
+    animation:nxSlideIn .4s cubic-bezier(.2,.9,.3,1);
 }
 
-.nuxes-welcome::before{
-    content:"";
-    position:absolute;top:0;left:0;right:0;height:2px;
-    background:linear-gradient(90deg,#0ea5e9,#22d3ee,#38bdf8);
-    background-size:200% 100%;
-    animation:nxBeam 3s linear infinite;
+@keyframes nxSlideIn{
+    from{opacity:0;transform:translateY(8px)}
+    to{opacity:1;transform:translateY(0)}
 }
 
 .nuxes-welcome-title{
     color:var(--text-main);
-    font-size:12px;font-weight:750;
+    font-size:12px;font-weight:700;
     margin-bottom:5px;
     display:flex;align-items:center;gap:7px;
 }
 
 .nuxes-welcome-title i{
-    color:#22d3ee;
-    filter:drop-shadow(0 0 6px rgba(34,211,238,.6));
+    color:#2563eb;
 }
 
 .nuxes-welcome-text{
@@ -6359,11 +6193,11 @@ window.addEventListener(
 
 .nuxes-message{
     display:flex;margin-bottom:12px;
-    animation:nxMsgIn .42s cubic-bezier(.34,1.56,.64,1);
+    animation:nxMsgIn .35s cubic-bezier(.2,.9,.3,1);
 }
 
 @keyframes nxMsgIn{
-    from{opacity:0;transform:translateY(16px) scale(.9)}
+    from{opacity:0;transform:translateY(10px) scale(.98)}
     to{opacity:1;transform:translateY(0) scale(1)}
 }
 
@@ -6373,27 +6207,9 @@ window.addEventListener(
     width:28px;height:28px;flex:0 0 28px;margin-right:9px;margin-top:1px;
     display:flex;align-items:center;justify-content:center;
     border-radius:50%;color:#fff;font-size:11px;
-    background:
-        radial-gradient(circle at 35% 25%,rgba(255,255,255,.45),transparent 50%),
-        linear-gradient(135deg,#0284c7 0%,#0ea5e9 50%,#22d3ee 100%);
-    box-shadow:
-        0 0 0 1px rgba(56,189,248,.4),
-        0 4px 14px rgba(14,165,233,.4);
-    position:relative;overflow:hidden;
+    background:linear-gradient(145deg,#2563eb,#1d4ed8);
+    box-shadow:0 3px 8px rgba(37,99,235,.2);
     flex-shrink:0;
-}
-
-.nuxes-avatar::after{
-    content:"";
-    position:absolute;inset:0;
-    background:linear-gradient(45deg,transparent 40%,rgba(255,255,255,.5) 50%,transparent 60%);
-    transform:translateX(-100%);
-    animation:nxAvatarShine 3.2s ease-in-out infinite;
-}
-
-@keyframes nxAvatarShine{
-    0%,100%{transform:translateX(-100%)}
-    50%{transform:translateX(100%)}
 }
 
 .nuxes-message-content{max-width:85%;min-width:0}
@@ -6402,9 +6218,10 @@ window.addEventListener(
     padding:10px 13px;border-radius:14px;
     font-size:10.5px;line-height:1.55;
     word-break:break-word;white-space:pre-wrap;
+    box-shadow:0 1px 3px rgba(15,23,42,.04);
 }
 
-/* AI bubble — CLEAN, READABLE */
+/* AI bubble */
 .nuxes-message.ai .nuxes-bubble{
     color:var(--bubble-ai-text);
     background:var(--bubble-ai-bg);
@@ -6412,40 +6229,43 @@ window.addEventListener(
     border-top-left-radius:5px;
 }
 
-/* User bubble — blue gradient */
+/* User bubble */
 .nuxes-message.user .nuxes-bubble{
     color:#fff;
-    background:linear-gradient(135deg,#0284c7 0%,#0ea5e9 50%,#22d3ee 100%);
+    background:#2563eb;
     border-top-right-radius:5px;
-    box-shadow:0 6px 18px rgba(14,165,233,.4);
+    box-shadow:0 4px 12px rgba(37,99,235,.25);
 }
 
 .nuxes-bubble code{
     padding:1.5px 6px;border-radius:5px;
-    color:#0ea5e9;
-    background:rgba(14,165,233,.12);
+    color:#2563eb;
+    background:rgba(37,99,235,.08);
     font-family:'JetBrains Mono',monospace;
     font-size:9px;
-    border:1px solid rgba(14,165,233,.28);
+    border:1px solid rgba(37,99,235,.15);
     font-weight:600;
 }
 
 [data-theme="dark"] .nuxes-bubble code{
-    color:#7dd3fc;
-    background:rgba(14,165,233,.16);
-    border-color:rgba(56,189,248,.35);
+    color:#93c5fd;
+    background:rgba(37,99,235,.2);
+    border-color:rgba(37,99,235,.3);
 }
 
 .nuxes-bubble pre{
     margin:8px 0;padding:10px;overflow-x:auto;
     border-radius:9px;
-    background:rgba(0,0,0,.4);
-    border:1px solid rgba(56,189,248,.2);
+    background:#eef2f7;
+    border:1px solid var(--bubble-ai-border);
 }
 
 [data-theme="light"] .nuxes-bubble pre{
     background:#f1f5f9;
-    border-color:rgba(14,165,233,.2);
+}
+
+[data-theme="dark"] .nuxes-bubble pre{
+    background:#0b1220;
 }
 
 .nuxes-bubble pre code{
@@ -6453,7 +6273,6 @@ window.addEventListener(
     color:inherit;
 }
 
-/* Bold / Em — clean, no heavy glow */
 .nuxes-bubble strong{
     color:var(--text-main);
     font-weight:700;
@@ -6464,18 +6283,18 @@ window.addEventListener(
 }
 
 .nuxes-bubble em{
-    color:#0ea5e9;
+    color:#2563eb;
     font-style:italic;
     font-weight:600;
 }
 
-[data-theme="dark"] .nuxes-bubble em{color:#7dd3fc}
+[data-theme="dark"] .nuxes-bubble em{color:#93c5fd}
 [data-theme="dark"] .nuxes-message.user .nuxes-bubble em{color:#fff}
 
 .nuxes-message-tools{
     display:flex;gap:4px;margin-top:5px;
-    opacity:0;transform:translateY(-3px);
-    transition:opacity .25s ease,transform .25s ease;
+    opacity:0;transform:translateY(-2px);
+    transition:opacity .2s ease,transform .2s ease;
 }
 
 .nuxes-message:hover .nuxes-message-tools{
@@ -6491,15 +6310,14 @@ window.addEventListener(
     color:var(--btn-text);
     cursor:pointer;font-size:9px;
     display:flex;align-items:center;justify-content:center;
-    transition:.22s cubic-bezier(.34,1.56,.64,1);
+    transition:all .2s ease;
 }
 
 .nuxes-tool:hover{
+    background:#2563eb;
+    border-color:#2563eb;
     color:#fff;
-    background:linear-gradient(135deg,#0284c7,#22d3ee);
-    border-color:transparent;
-    transform:translateY(-2px);
-    box-shadow:0 4px 14px rgba(14,165,233,.5);
+    box-shadow:0 3px 8px rgba(37,99,235,.2);
 }
 
 /* =========================================================
@@ -6509,17 +6327,16 @@ window.addEventListener(
 
 .nuxes-typing span{
     width:6px;height:6px;border-radius:50%;
-    background:linear-gradient(135deg,#0ea5e9,#22d3ee);
+    background:#94a3b8;
     animation:nxWave 1.4s ease-in-out infinite;
-    box-shadow:0 0 8px rgba(14,165,233,.6);
 }
 
 .nuxes-typing span:nth-child(2){animation-delay:.2s}
 .nuxes-typing span:nth-child(3){animation-delay:.4s}
 
 @keyframes nxWave{
-    0%,60%,100%{opacity:.4;transform:translateY(0) scale(.85)}
-    30%{opacity:1;transform:translateY(-7px) scale(1.25)}
+    0%,60%,100%{opacity:.35;transform:translateY(0) scale(.85)}
+    30%{opacity:1;transform:translateY(-5px) scale(1.15)}
 }
 
 /* =========================================================
@@ -6527,7 +6344,7 @@ window.addEventListener(
    ========================================================= */
 .nuxes-quick-section{
     position:relative;z-index:5;
-    padding:0 12px 10px;
+    padding:0 14px 10px;
 }
 
 .nuxes-quick-label{
@@ -6551,26 +6368,26 @@ window.addEventListener(
     cursor:pointer;font-size:8.5px;
     font-weight:600;font-family:inherit;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    transition:.25s cubic-bezier(.34,1.56,.64,1);
+    transition:all .2s ease;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
 }
 
 .nuxes-quick-btn i{
-    color:#22d3ee;
+    color:#2563eb;
     font-size:10px;
-    transition:.25s ease;
+    transition:all .2s ease;
 }
 
 .nuxes-quick-btn:hover{
-    color:#fff;
-    background:linear-gradient(135deg,#0284c7,#0ea5e9);
-    border-color:transparent;
-    transform:translateY(-2px);
-    box-shadow:0 6px 18px rgba(14,165,233,.45);
+    background:rgba(37,99,235,.08);
+    border-color:#2563eb;
+    color:#2563eb;
+    box-shadow:0 3px 8px rgba(37,99,235,.12);
 }
 
 .nuxes-quick-btn:hover i{
-    color:#fff;
-    transform:scale(1.2) rotate(-8deg);
+    color:#2563eb;
+    transform:scale(1.1);
 }
 
 /* =========================================================
@@ -6578,7 +6395,7 @@ window.addEventListener(
    ========================================================= */
 .nuxes-input-area{
     position:relative;z-index:5;
-    padding:10px 12px 11px;
+    padding:10px 14px 12px;
     border-top:1px solid var(--panel-border);
 }
 
@@ -6587,30 +6404,13 @@ window.addEventListener(
     border:1px solid var(--input-border);
     border-radius:13px;
     background:var(--input-bg);
-    transition:.3s cubic-bezier(.34,1.56,.64,1);
-    position:relative;
-    overflow:hidden;
-}
-
-.nuxes-input-wrapper::before{
-    content:"";
-    position:absolute;left:0;top:0;bottom:0;
-    width:0;
-    background:linear-gradient(180deg,#0ea5e9,#22d3ee);
-    transition:width .35s ease;
-    border-radius:13px 0 0 13px;
+    transition:all .2s ease;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
 }
 
 .nuxes-input-wrapper:focus-within{
-    border-color:#22d3ee;
-    box-shadow:
-        0 0 0 3px rgba(34,211,238,.15),
-        0 0 24px rgba(14,165,233,.25);
-    transform:translateY(-2px);
-}
-
-.nuxes-input-wrapper:focus-within::before{
-    width:3px;
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.1),0 3px 8px rgba(37,99,235,.1);
 }
 
 #nuxes-ai-input{
@@ -6619,7 +6419,6 @@ window.addEventListener(
     color:var(--text-main);
     padding:7px 6px;
     font-family:inherit;font-size:11px;line-height:1.5;
-    position:relative;z-index:2;
 }
 
 #nuxes-ai-input::placeholder{color:var(--text-fade)}
@@ -6628,9 +6427,8 @@ window.addEventListener(
     width:32px;height:32px;flex:0 0 32px;
     border-radius:10px;display:flex;align-items:center;
     justify-content:center;cursor:pointer;
-    transition:.25s cubic-bezier(.34,1.56,.64,1);
+    transition:all .2s ease;
     font-size:11.5px;
-    position:relative;z-index:2;
 }
 
 .nuxes-mic{
@@ -6640,45 +6438,38 @@ window.addEventListener(
 }
 
 .nuxes-mic:hover{
-    color:#fff;
-    background:linear-gradient(135deg,#0284c7,#0ea5e9);
-    border-color:transparent;
-    transform:scale(1.08);
-    box-shadow:0 4px 14px rgba(14,165,233,.5);
+    background:rgba(37,99,235,.08);
+    border-color:#2563eb;
+    color:#2563eb;
+    box-shadow:0 3px 8px rgba(37,99,235,.12);
 }
 
 .nuxes-mic.recording{
     color:#fff;
-    background:linear-gradient(135deg,#ef4444,#ec4899);
-    border-color:transparent;
-    animation:nxMicRec 1s infinite;
+    background:#ef4444;
+    border-color:#ef4444;
+    animation:nxMicRec 1.4s infinite;
 }
 
 @keyframes nxMicRec{
-    0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.6)}
-    50%{box-shadow:0 0 0 12px rgba(239,68,68,0)}
+    0%,100%{opacity:1}
+    50%{opacity:.7}
 }
 
 .nuxes-send{
     border:0;color:#fff;
-    background:linear-gradient(135deg,#0284c7 0%,#0ea5e9 50%,#22d3ee 100%);
-    box-shadow:0 4px 14px rgba(14,165,233,.5);
-    background-size:200% 200%;
-    animation:nxSendGlow 5s ease infinite;
-}
-
-@keyframes nxSendGlow{
-    0%,100%{background-position:0% 50%}
-    50%{background-position:100% 50%}
+    background:#2563eb;
+    box-shadow:0 4px 12px rgba(37,99,235,.25);
 }
 
 .nuxes-send:hover{
-    transform:translateY(-2px) scale(1.06);
-    box-shadow:0 8px 24px rgba(14,165,233,.65);
+    background:#1d4ed8;
+    transform:translateY(-1px);
+    box-shadow:0 6px 16px rgba(37,99,235,.35);
 }
 
-.nuxes-send:active{transform:scale(.94)}
-.nuxes-send:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;animation:none}
+.nuxes-send:active{transform:scale(.96)}
+.nuxes-send:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 
 .nuxes-meta{
     margin-top:6px;display:flex;justify-content:space-between;
@@ -6690,57 +6481,47 @@ window.addEventListener(
     display:inline-flex;align-items:center;gap:3px;
     padding:2px 6px;margin-right:4px;
     border-radius:5px;
-    background:rgba(14,165,233,.14);
-    border:1px solid rgba(14,165,233,.3);
-    color:#0ea5e9;
+    background:rgba(37,99,235,.08);
+    border:1px solid rgba(37,99,235,.2);
+    color:#2563eb;
     font-size:6.5px;font-weight:800;
     letter-spacing:.04em;
 }
 
 [data-theme="dark"] .nuxes-badge{
-    color:#7dd3fc;
-    background:rgba(14,165,233,.2);
-    border-color:rgba(56,189,248,.4);
+    color:#93c5fd;
+    background:rgba(37,99,235,.2);
+    border-color:rgba(37,99,235,.3);
 }
 
 /* =========================================================
    VOICE POPOVER
    ========================================================= */
 .nuxes-popover{
-    position:absolute;right:12px;bottom:100%;
+    position:absolute;right:14px;bottom:100%;
     width:260px;padding:14px;margin-bottom:10px;
     display:none;
 
     background:var(--panel-bg);
     border:1px solid var(--panel-border);
-    border-radius:14px;
-    box-shadow:
-        0 0 0 1px rgba(56,189,248,.15),
-        0 0 40px rgba(14,165,233,.3),
-        0 26px 60px rgba(0,0,0,.55);
+    border-radius:16px;
+    box-shadow:0 20px 40px rgba(15,23,42,.15),
+               0 8px 16px rgba(15,23,42,.08);
     z-index:20;
 }
 
 [data-theme="dark"] .nuxes-popover{
-    background:
-        radial-gradient(circle at 100% 0%,rgba(14,165,233,.1),transparent 50%),
-        var(--panel-bg);
-}
-
-[data-theme="light"] .nuxes-popover{
-    box-shadow:
-        0 0 0 1px rgba(14,165,233,.15),
-        0 0 40px rgba(14,165,233,.15),
-        0 26px 60px rgba(0,0,0,.15);
+    box-shadow:0 20px 40px rgba(0,0,0,.5),
+               0 8px 16px rgba(0,0,0,.35);
 }
 
 .nuxes-popover.show{
     display:block;
-    animation:nxPopIn .32s cubic-bezier(.34,1.56,.64,1);
+    animation:nxPopIn .28s cubic-bezier(.2,.9,.3,1);
 }
 
 @keyframes nxPopIn{
-    from{opacity:0;transform:translateY(12px) scale(.92)}
+    from{opacity:0;transform:translateY(10px) scale(.97)}
     to{opacity:1;transform:translateY(0) scale(1)}
 }
 
@@ -6754,7 +6535,7 @@ window.addEventListener(
 }
 
 .nuxes-popover-title i{
-    color:#22d3ee;margin-right:5px;
+    color:#2563eb;margin-right:5px;
 }
 
 .nuxes-voice-grid{
@@ -6769,23 +6550,22 @@ window.addEventListener(
     color:var(--btn-text);
     cursor:pointer;font-size:8px;
     font-weight:600;font-family:inherit;
-    text-align:left;transition:.25s cubic-bezier(.34,1.56,.64,1);
+    text-align:left;transition:all .2s ease;
     display:flex;align-items:center;gap:4px;
 }
 
 .nuxes-voice-btn:hover{
-    border-color:#22d3ee;
-    color:#fff;
-    background:linear-gradient(135deg,rgba(2,132,199,.35),rgba(34,211,238,.3));
-    transform:translateY(-2px);
-    box-shadow:0 4px 14px rgba(14,165,233,.35);
+    border-color:#2563eb;
+    color:#2563eb;
+    background:rgba(37,99,235,.08);
+    box-shadow:0 3px 8px rgba(37,99,235,.1);
 }
 
 .nuxes-voice-btn.active{
     color:#fff;
-    border-color:transparent;
-    background:linear-gradient(135deg,#0284c7,#22d3ee);
-    box-shadow:0 4px 14px rgba(14,165,233,.5);
+    border-color:#2563eb;
+    background:#2563eb;
+    box-shadow:0 4px 10px rgba(37,99,235,.25);
 }
 
 .nuxes-speed{margin-top:13px}
@@ -6798,34 +6578,38 @@ window.addEventListener(
 }
 
 .nuxes-speed-label strong{
-    color:#0ea5e9;
+    color:#2563eb;
     font-family:'JetBrains Mono',monospace;
     font-size:9.5px;
     font-weight:800;
 }
 
-[data-theme="dark"] .nuxes-speed-label strong{color:#7dd3fc}
+[data-theme="dark"] .nuxes-speed-label strong{color:#93c5fd}
 
 .nuxes-speed input[type=range]{
     -webkit-appearance:none;width:100%;
     height:5px;border-radius:5px;
-    background:linear-gradient(90deg,#0284c7,#0ea5e9,#22d3ee);
+    background:#e2e8f0;
     outline:0;cursor:pointer;
+}
+
+[data-theme="dark"] .nuxes-speed input[type=range]{
+    background:#334155;
 }
 
 .nuxes-speed input[type=range]::-webkit-slider-thumb{
     -webkit-appearance:none;
     width:16px;height:16px;border-radius:50%;
-    background:#fff;
-    border:2px solid #0ea5e9;
-    box-shadow:0 2px 8px rgba(14,165,233,.5);
+    background:#2563eb;
+    border:2px solid #fff;
+    box-shadow:0 2px 6px rgba(37,99,235,.3);
     cursor:pointer;
-    transition:.2s cubic-bezier(.34,1.56,.64,1);
+    transition:all .2s ease;
 }
 
 .nuxes-speed input[type=range]::-webkit-slider-thumb:hover{
-    transform:scale(1.2);
-    box-shadow:0 4px 14px rgba(14,165,233,.7);
+    transform:scale(1.15);
+    box-shadow:0 4px 10px rgba(37,99,235,.4);
 }
 
 .nuxes-tts{
@@ -6835,22 +6619,21 @@ window.addEventListener(
     background:var(--btn-bg);
     color:var(--btn-text);
     cursor:pointer;font-size:8.5px;font-weight:700;
-    font-family:inherit;transition:.25s ease;
+    font-family:inherit;transition:all .2s ease;
 }
 
 .nuxes-tts:hover{
-    border-color:#22d3ee;
-    color:#fff;
-    background:linear-gradient(135deg,rgba(2,132,199,.35),rgba(34,211,238,.3));
-    transform:translateY(-2px);
-    box-shadow:0 4px 14px rgba(14,165,233,.35);
+    border-color:#2563eb;
+    color:#2563eb;
+    background:rgba(37,99,235,.08);
+    box-shadow:0 3px 8px rgba(37,99,235,.1);
 }
 
 .nuxes-tts.active{
     color:#fff;
-    border-color:transparent;
-    background:linear-gradient(135deg,#0284c7,#22d3ee);
-    box-shadow:0 4px 14px rgba(14,165,233,.5);
+    border-color:#2563eb;
+    background:#2563eb;
+    box-shadow:0 4px 10px rgba(37,99,235,.25);
 }
 
 /* =========================================================
@@ -6863,25 +6646,21 @@ window.addEventListener(
     border-radius:11px;
     background:var(--panel-bg);
     color:var(--text-main);
-    box-shadow:
-        0 0 0 1px rgba(56,189,248,.2),
-        0 0 30px rgba(14,165,233,.35),
-        0 18px 44px rgba(0,0,0,.5);
+    box-shadow:0 12px 28px rgba(15,23,42,.12),
+               0 4px 10px rgba(15,23,42,.06);
     font-size:9.5px;font-weight:700;
     font-family:Inter,system-ui,sans-serif;
-    animation:nxToastIn .4s cubic-bezier(.34,1.56,.64,1);
+    animation:nxToastIn .3s cubic-bezier(.2,.9,.3,1);
     display:flex;align-items:center;gap:9px;
 }
 
-[data-theme="light"] .nuxes-toast{
-    box-shadow:
-        0 0 0 1px rgba(14,165,233,.15),
-        0 0 30px rgba(14,165,233,.2),
-        0 18px 44px rgba(0,0,0,.15);
+[data-theme="dark"] .nuxes-toast{
+    box-shadow:0 12px 28px rgba(0,0,0,.5),
+               0 4px 10px rgba(0,0,0,.35);
 }
 
 @keyframes nxToastIn{
-    from{opacity:0;transform:translateY(16px) scale(.92)}
+    from{opacity:0;transform:translateY(12px) scale(.97)}
     to{opacity:1;transform:translateY(0) scale(1)}
 }
 
@@ -6893,7 +6672,7 @@ window.addEventListener(
         right:14px;bottom:14px;
         width:58px;height:58px;
     }
-    .nuxes-orb-icon{width:34px;height:34px}
+    .nuxes-orb-icon{width:30px;height:30px}
 
     #nuxes-ai-panel{
         left:8px;right:8px;bottom:80px;
@@ -6906,20 +6685,13 @@ window.addEventListener(
 
 @media(prefers-reduced-motion:reduce){
     #nuxes-ai-launcher,
-    #nuxes-ai-launcher::before,
-    #nuxes-ai-launcher::after,
     .nuxes-orb-icon .nx-dash-ring,
     .nuxes-orb-icon .nx-core,
     .nuxes-orb-icon .nx-electron,
-    .nuxes-launcher-status::before,
     #nuxes-ai-panel,
-    .nuxes-brand-logo,
-    .nuxes-brand-logo::before,
-    .nuxes-avatar::after,
     .nuxes-typing span,
     .nuxes-message,
     .nuxes-welcome,
-    .nuxes-send,
     .nuxes-toast{
         animation:none!important;
     }
