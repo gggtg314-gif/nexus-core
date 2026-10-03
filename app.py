@@ -5408,7 +5408,7 @@ def get_iot_devices():
             'error': str(e) 
         }), 500 
  
- # ============================================================ 
+# ============================================================ 
 # IOT READINGS API 
 # ============================================================ 
  
@@ -5613,280 +5613,511 @@ def clear_iot_history(device_id):
         }), 500 
  
  
-# ============================================================
-# NUXES AI - FAST / SMART CONTEXT ENGINE
-# ============================================================
-
-NUXES_AI_LANGUAGES = {
-    'en': {
-        'name': 'English',
-        'instruction': 'Answer in clear, simple English.'
-    },
-    'hi': {
-        'name': 'Hindi',
-        'instruction': 'Answer in natural Hindi using Devanagari script. Keep technical names unchanged.'
-    },
-    'hinglish': {
-        'name': 'Hinglish',
-        'instruction': 'Answer in simple natural Hinglish. Keep technical terms, commands and code unchanged.'
-    },
-    'mr': {
-        'name': 'Marathi',
-        'instruction': 'Answer in natural Marathi. Keep technical names unchanged.'
-    },
-    'gu': {
-        'name': 'Gujarati',
-        'instruction': 'Answer in natural Gujarati. Keep technical names unchanged.'
-    },
-    'ne': {
-        'name': 'Nepali',
-        'instruction': 'Answer in natural Nepali. Keep technical names unchanged.'
-    },
-    'bho': {
-        'name': 'Bhojpuri',
-        'instruction': 'Answer in natural Bhojpuri. Keep technical names unchanged.'
-    }
-}
-
-
-def _nuxes_safe(value):
-    """Convert DB values to short safe text without exposing secrets."""
-    if value is None:
-        return 'N/A'
-    try:
-        if isinstance(value, datetime):
-            return value.strftime('%Y-%m-%d %H:%M:%S')
-    except Exception:
-        pass
-    text_value = str(value)
-    if len(text_value) > 500:
-        text_value = text_value[:500] + '...'
-    return text_value
-
-
-def _nuxes_record(obj, blocked=None):
-    """Serialize only non-sensitive SQLAlchemy columns."""
-    blocked = set(blocked or ())
-    blocked.update({
-        'password', 'password_hash', 'security_answer',
-        'security_answer_hash', 'api_key', 'secret',
-        'secret_key', 'token', 'access_token', 'refresh_token'
-    })
-
-    result = {}
-    try:
-        for column in obj.__table__.columns:
-            name = column.name
-            lower = name.lower()
-            if lower in blocked or any(x in lower for x in blocked):
-                continue
-            try:
-                result[name] = _nuxes_safe(getattr(obj, name, None))
-            except Exception:
-                pass
-    except Exception:
-        pass
-    return result
-
-
-def _nuxes_format_records(title, records, limit=10):
-    lines = [title]
-    if not records:
-        lines.append('- No records found.')
-        return '\n'.join(lines)
-
-    for index, record in enumerate(records[:limit], 1):
-        parts = []
-        for key, value in record.items():
-            parts.append(f'{key}={value}')
-        lines.append(f'{index}. ' + ', '.join(parts))
-    return '\n'.join(lines)
-
-
-def _nuxes_question_mode(question):
-    """Decide which DB context is actually needed. General questions get zero DB queries."""
-    q = question.lower()
-
-    pc = bool(__import__('re').search(r'\bpc\s*\d{3,}\b', q))
-    pc_words = (
-        'pc', 'computer', 'system', 'cpu', 'processor', 'ram', 'memory',
-        'gpu', 'graphics', 'disk', 'storage', 'ssd', 'hdd', 'battery',
-        'uptime', 'operating system', 'windows', 'linux', 'online', 'offline',
-        'heartbeat', 'telemetry', 'machine', 'desktop'
-    )
-    iot_words = (
-        'iot', 'esp32', 'dht11', 'dht22', 'sensor', 'temperature',
-        'humidity', 'reading', 'readings', 'device'
-    )
-    ticket_words = ('ticket', 'complaint', 'issue report', 'support request')
-    maintenance_words = ('maintenance', 'planner', 'repair', 'replacement', 'service')
-    inventory_words = ('inventory', 'stock', 'component', 'spare', 'parts')
-    project_words = (
-        'nexus core', 'my project', 'this project', 'dashboard', 'prediction',
-        'predictive maintenance', 'architecture', 'api', 'flask', 'database'
-    )
-
-    if pc or any(word in q for word in pc_words):
-        return 'pc'
-    if any(word in q for word in iot_words):
-        return 'iot'
-    if any(word in q for word in ticket_words):
-        return 'tickets'
-    if any(word in q for word in maintenance_words):
-        return 'maintenance'
-    if any(word in q for word in inventory_words):
-        return 'inventory'
-    if any(word in q for word in project_words):
-        return 'project'
-    return 'general'
-
-
-def _nuxes_project_context():
-    return """Nexus Core is a Flask + MySQL/SQLAlchemy PC Digital Twin and predictive-maintenance application.
-It includes PC monitoring, predictive maintenance, tickets, inventory, IoT/DHT sensor monitoring, QR/device workflows and Nuxes AI.
-Main technologies: Python, Flask, Flask-SQLAlchemy, MySQL/PyMySQL, psutil, HTML/CSS/JavaScript, Bootstrap, Font Awesome, Google Gemini, Docker, Gunicorn and Render.
-PC monitoring includes CPU, RAM, disk, GPU, network/IP, uptime, OS and hardware information.
-IoT uses iot_devices and iot_readings and accepts sensor updates through /api/iot/update.
-Monitoring thresholds include CPU 70/90, RAM 80/90 and disk 85/95 for warning/critical levels.
+# ============================================================ 
+# NUXES AI - PROJECT CONTEXT + LANGUAGE + LIVE DATA 
+# ============================================================ 
+ 
+# Supported response languages. 
+# Frontend se yehi codes /api/ai ko bhejne hain. 
+NUXES_AI_LANGUAGES = { 
+    'en': { 
+        'name': 'English', 
+        'instruction': 'Answer only in clear, simple English.' 
+    }, 
+    'hi': { 
+        'name': 'Hindi', 
+        'instruction': ( 
+            'Answer only in natural Hindi using Devanagari script. ' 
+            'Keep technical names, API names, code and model names unchanged.' 
+        ) 
+    }, 
+    'hinglish': { 
+        'name': 'Hinglish', 
+        'instruction': ( 
+            'Answer in simple Hinglish using easy Hindi + English ' 
+            'in Latin script. Do not use Devanagari unless necessary.' 
+        ) 
+    }, 
+    'mr': { 
+        'name': 'Marathi', 
+        'instruction': ( 
+            'Answer only in natural Marathi using Devanagari script. ' 
+            'Keep technical names, API names, code and model names unchanged.' 
+        ) 
+    }, 
+    'gu': { 
+        'name': 'Gujarati', 
+        'instruction': ( 
+            'Answer only in natural Gujarati script. ' 
+            'Keep technical names, API names, code and model names unchanged.' 
+        ) 
+    }, 
+    'ne': { 
+        'name': 'Nepali', 
+        'instruction': ( 
+            'Answer only in natural Nepali using Devanagari script. ' 
+            'Keep technical names, API names, code and model names unchanged.' 
+        ) 
+    }, 
+    'bho': { 
+        'name': 'Bhojpuri', 
+        'instruction': ( 
+            'Answer in natural Bhojpuri. Prefer Devanagari script. ' 
+            'Do not mechanically replace Hindi words; use natural Bhojpuri ' 
+            'wording where possible. Keep technical names, API names, ' 
+            'code and model names unchanged.' 
+        ) 
+    } 
+} 
+ 
+ 
+def _safe_value(value, default='N/A'): 
+    """ 
+    Return a safe compact value for AI context. 
+ 
+    Prevents None / empty values from appearing as misleading 
+    blank fields inside the Gemini prompt. 
+    """ 
+    if value is None or value == '': 
+        return default 
+ 
+    try: 
+        return str(value).strip() 
+    except Exception: 
+        return default 
+ 
+ 
+def _safe_number(value, decimals=1, default='N/A'): 
+    """ 
+    Safely format numeric telemetry values. 
+    """ 
+    if value is None or value == '': 
+        return default 
+ 
+    try: 
+        return f'{float(value):.{decimals}f}' 
+    except (TypeError, ValueError): 
+        return _safe_value(value, default) 
+ 
+ 
+def _format_pc_context(computer): 
+    """ 
+    Build a compact live snapshot for one monitored PC. 
+ 
+    Important: 
+    - Connection status is calculated from last_update. 
+    - Database health/status is NOT treated as the only 
+      source of live connectivity. 
+    """ 
+ 
+    if not computer: 
+        return ( 
+            'No specific PC is selected.\n' 
+            'Do not assume any PC telemetry.' 
+        ) 
+ 
+    try: 
+        settings_data = get_system_settings() or {} 
+    except Exception: 
+        settings_data = {} 
+ 
+    # -------------------------------------------------------- 
+    # Last update 
+    # -------------------------------------------------------- 
+    if computer.last_update: 
+        try: 
+            last_update = computer.last_update.strftime( 
+                '%Y-%m-%d %H:%M:%S' 
+            ) 
+        except Exception: 
+            last_update = _safe_value( 
+                computer.last_update 
+            ) 
+    else: 
+        last_update = 'N/A' 
+ 
+    # -------------------------------------------------------- 
+    # Dynamic connection status 
+    # -------------------------------------------------------- 
+    connection_status = 'offline' 
+ 
+    if computer.last_update: 
+        try: 
+            threshold = int( 
+                settings_data.get( 
+                    'offline_threshold', 
+                    20 
+                ) 
+            ) 
+ 
+            cutoff_time = ( 
+                datetime.utcnow() 
+                - timedelta(seconds=threshold) 
+            ) 
+ 
+            connection_status = ( 
+                'online' 
+                if computer.last_update >= cutoff_time 
+                else 'offline' 
+            ) 
+ 
+        except Exception: 
+            connection_status = 'unknown' 
+ 
+    # -------------------------------------------------------- 
+    # Battery 
+    # -------------------------------------------------------- 
+    battery = 'N/A' 
+ 
+    if computer.battery_percent is not None: 
+        try: 
+            battery_percent = float( 
+                computer.battery_percent 
+            ) 
+ 
+            charging = ( 
+                'charging' 
+                if computer.battery_charging 
+                else 'not charging' 
+            ) 
+ 
+            battery = ( 
+                f'{battery_percent:.1f}% ({charging})' 
+            ) 
+ 
+        except (TypeError, ValueError): 
+            battery = _safe_value( 
+                computer.battery_percent 
+            ) 
+ 
+    # -------------------------------------------------------- 
+    # Final compact context 
+    # -------------------------------------------------------- 
+    return f""" 
+SELECTED PC LIVE SNAPSHOT 
+ 
+Identity: 
+- Device ID: {_safe_value(computer.device_id)} 
+- Computer Name: {_safe_value(computer.computer_name)} 
+- Connection: {connection_status} 
+- Last Update: {last_update} 
+- IP Address: {_safe_value(computer.ip_address)} 
+- Operating System: {_safe_value(computer.operating_system)} 
+ 
+CPU: 
+- Usage: {_safe_number(computer.cpu_usage)}% 
+- Model: {_safe_value(computer.cpu_model)} 
+- Cores: {_safe_value(computer.cpu_cores)} 
+- Threads: {_safe_value(computer.cpu_threads)} 
+ 
+RAM: 
+- Usage: {_safe_number(computer.ram_usage)}% 
+- Total: {_safe_number(computer.ram_total)} GB 
+- Used: {_safe_number(computer.ram_used)} GB 
+- Available: {_safe_number(computer.ram_available)} GB 
+ 
+GPU: 
+- Model: {_safe_value(computer.gpu_model)} 
+- Usage: {_safe_number(computer.gpu_usage)}% 
+- VRAM: {_safe_number(computer.gpu_vram)} GB 
+ 
+STORAGE: 
+- Usage: {_safe_number(computer.disk_usage)}% 
+- Free: {_safe_value(computer.disk_free)} 
+- Model: {_safe_value(computer.storage_model)} 
+- Type: {_safe_value(computer.storage_type)} 
+- Total: {_safe_number(computer.storage_total)} GB 
+- Used: {_safe_number(computer.storage_used)} GB 
+ 
+HARDWARE: 
+- Manufacturer: {_safe_value(computer.manufacturer)} 
+- System Model: {_safe_value(computer.system_model)} 
+- Motherboard: {_safe_value(computer.motherboard)} 
+- BIOS: {_safe_value(computer.bios_version)} 
+- Architecture: {_safe_value(computer.architecture)} 
+ 
+BATTERY: 
+- Status: {battery} 
+ 
+UPTIME: 
+- {_safe_value(computer.uptime)} 
+""".strip() 
+ 
+ 
+def _build_nuxes_project_context():
+    return """
+NEXUS CORE PROJECT
+Nexus Core is a Flask PC Digital Twin, PC monitoring, IoT monitoring
+and predictive-maintenance platform using Flask, SQLAlchemy/MySQL,
+psutil, HTML/CSS/JS and Gemini.
+DATA: computers, history, iot_devices, iot_readings, tickets,
+maintenance_planner, inventory and system_settings.
+IOT APIs: /api/iot/update, /api/iot/devices, /api/iot/readings/<device_id>.
+Nuxes AI is read-only and must never modify database data.
 """.strip()
 
 
-def _nuxes_pc_context(question, device_id='', computer_id=None):
-    selected = None
+def _nuxes_detect(question):
+    q = (question or '').lower()
+    groups = {
+        'iot': ('iot','esp32','esp8266','dht11','dht22','sensor',
+                'temperature','temp','humidity','humid','reading'),
+        'pc': ('pc','computer','system','cpu','processor','ram','memory',
+               'gpu','graphics','disk','storage','ssd','hdd','battery',
+               'charging','uptime','online','offline','telemetry',
+               'performance','hardware'),
+        'tickets': ('ticket','tickets','complaint','complaints'),
+        'maintenance': ('maintenance','repair','service','planner',
+                         'scheduled','replacement'),
+        'inventory': ('inventory','stock','spare','component','asset'),
+        'database': ('database','db','mysql','record','records','count',
+                     'how many','table','tables','stored data'),
+        'project': ('nexus core','nuxes','api','endpoint','architecture',
+                    'project','flask','gemini','agent')
+    }
+    return {k: any(x in q for x in v) for k, v in groups.items()}
 
+
+def _nuxes_recent_rows(model, limit=10):
     try:
-        if computer_id not in (None, ''):
-            selected = db.session.get(Computer, int(computer_id))
-    except Exception:
-        selected = None
-
-    if selected is None and device_id:
-        try:
-            selected = Computer.query.filter_by(device_id=device_id).first()
-        except Exception:
-            selected = None
-
-    if selected is None:
-        import re
-        match = re.search(r'\b(PC\d{3,})\b', question, re.I)
-        if match:
-            wanted = match.group(1).upper()
-            try:
-                selected = Computer.query.filter_by(device_id=wanted).first()
-            except Exception:
-                selected = None
-
-    if selected is None:
-        return 'PC CONTEXT\n- No specific PC was selected or found.'
-
-    lines = ['SELECTED PC LIVE DATA']
-    record = _nuxes_record(selected)
-    for key, value in record.items():
-        lines.append(f'- {key}: {value}')
-
-    try:
-        history_rows = (
-            History.query
-            .filter_by(computer_id=selected.id)
-            .order_by(History.timestamp.desc())
-            .limit(20)
-            .all()
-        )
-        history_records = [_nuxes_record(row) for row in history_rows]
-        lines.append('')
-        lines.append(_nuxes_format_records('RECENT PC HISTORY (latest 20)', history_records, 20))
+        rows = model.query.order_by(model.id.desc()).limit(limit).all()
+        blocked = ('password', 'security_answer', 'secret', 'token')
+        result = []
+        for obj in rows:
+            item = {}
+            for col in model.__table__.columns:
+                name = col.name
+                if any(x in name.lower() for x in blocked):
+                    continue
+                value = getattr(obj, name, None)
+                if isinstance(value, datetime):
+                    value = value.strftime('%Y-%m-%d %H:%M:%S')
+                if value is not None:
+                    item[name] = str(value)
+            result.append(item)
+        return result
     except Exception as exc:
-        logger.warning(f'Nuxes PC history lookup failed: {exc}')
+        logger.warning(f'Nuxes AI model lookup failed: {exc}')
+        return []
 
+
+def _nuxes_rows_text(title, rows):
+    if not rows:
+        return f'{title}: No records found.'
+    lines = [title]
+    for i, row in enumerate(rows, 1):
+        values = [
+            f'{k}={_safe_value(v)}'
+            for k, v in row.items()
+            if v is not None and v != ''
+        ]
+        if values:
+            lines.append(f'{i}. ' + ' | '.join(values))
     return '\n'.join(lines)
 
 
-def _nuxes_iot_context(question, device_id=''):
-    import re
-    wanted = device_id
-    if not wanted:
-        match = re.search(r'\bESP32[-_A-Za-z0-9]*\b', question, re.I)
-        if match:
-            wanted = match.group(0)
-
+def _nuxes_iot_context(requested_device_id='', history=False,
+                       threshold=20):
+    """READ ONLY: automatically finds the latest IoT device."""
     try:
-        if wanted:
-            row = db.session.execute(text("""
-                SELECT d.*, r.temperature AS latest_temperature,
-                       r.humidity AS latest_humidity,
-                       r.recorded_at AS latest_recorded_at
-                FROM iot_devices d
-                LEFT JOIN iot_readings r
-                  ON r.id = (
-                    SELECT MAX(r2.id) FROM iot_readings r2
-                    WHERE r2.device_id = d.device_id
-                  )
-                WHERE d.device_id = :device_id
+        device = None
+
+        if requested_device_id:
+            device = db.session.execute(
+                text("""
+                    SELECT device_id, device_name, sensor_type,
+                           status, last_seen, created_at
+                    FROM iot_devices
+                    WHERE device_id = :device_id
+                    LIMIT 1
+                """),
+                {'device_id': requested_device_id}
+            ).mappings().first()
+
+        if not device:
+            device = db.session.execute(
+                text("""
+                    SELECT device_id, device_name, sensor_type,
+                           status, last_seen, created_at
+                    FROM iot_devices
+                    ORDER BY
+                        CASE WHEN last_seen IS NULL THEN 1 ELSE 0 END,
+                        last_seen DESC, created_at DESC
+                    LIMIT 1
+                """)
+            ).mappings().first()
+
+        if not device:
+            return (
+                'IOT DATABASE DATA\n'
+                '- No IoT device found.\n'
+                '- No temperature/humidity value is available.'
+            )
+
+        device_id = device['device_id']
+
+        reading = db.session.execute(
+            text("""
+                SELECT temperature, humidity, recorded_at
+                FROM iot_readings
+                WHERE device_id = :device_id
+                ORDER BY recorded_at DESC
                 LIMIT 1
-            """), {'device_id': wanted}).mappings().first()
+            """),
+            {'device_id': device_id}
+        ).mappings().first()
+
+        last_seen = device.get('last_seen')
+        live = False
+        try:
+            if isinstance(last_seen, str):
+                last_seen = datetime.fromisoformat(
+                    last_seen.replace('Z', '')
+                )
+            live = bool(
+                last_seen and
+                last_seen >= datetime.utcnow() -
+                timedelta(seconds=int(threshold or 20))
+            )
+        except Exception:
+            live = False
+
+        lines = [
+            'IOT DATABASE DATA',
+            f"- Device ID: {_safe_value(device.get('device_id'))}",
+            f"- Device Name: {_safe_value(device.get('device_name'))}",
+            f"- Sensor Type: {_safe_value(device.get('sensor_type'))}",
+            f"- Connection: {'recent/live' if live else 'offline/not recent'}",
+            f"- Last Seen: {_safe_value(device.get('last_seen'))}"
+        ]
+
+        if reading:
+            lines += [
+                f"- Temperature: {_safe_value(reading.get('temperature'))} °C",
+                f"- Humidity: {_safe_value(reading.get('humidity'))} %",
+                f"- Reading Time: {_safe_value(reading.get('recorded_at'))}",
+                (
+                    '- Interpretation: current/latest stored reading.'
+                    if live else
+                    '- Interpretation: last recorded reading; device is not live now.'
+                )
+            ]
         else:
-            row = db.session.execute(text("""
-                SELECT d.*, r.temperature AS latest_temperature,
-                       r.humidity AS latest_humidity,
-                       r.recorded_at AS latest_recorded_at
-                FROM iot_devices d
-                LEFT JOIN iot_readings r
-                  ON r.id = (
-                    SELECT MAX(r2.id) FROM iot_readings r2
-                    WHERE r2.device_id = d.device_id
-                  )
-                ORDER BY d.id DESC
-                LIMIT 1
-            """)).mappings().first()
+            lines.append('- No reading found for this device.')
 
-        if not row:
-            return 'IOT CONTEXT\n- No matching IoT device found.'
+        if history:
+            rows = db.session.execute(
+                text("""
+                    SELECT temperature, humidity, recorded_at
+                    FROM iot_readings
+                    WHERE device_id = :device_id
+                    ORDER BY recorded_at DESC
+                    LIMIT 10
+                """),
+                {'device_id': device_id}
+            ).mappings().all()
 
-        lines = ['SELECTED IOT DEVICE']
-        safe_keys = {
-            'device_id', 'device_name', 'sensor_type', 'status',
-            'last_seen', 'created_at', 'latest_temperature',
-            'latest_humidity', 'latest_recorded_at'
-        }
-        for key in safe_keys:
-            if key in row:
-                lines.append(f'- {key}: {_nuxes_safe(row[key])}')
+            lines.append('RECENT IOT HISTORY')
+            for i, row in enumerate(rows, 1):
+                lines.append(
+                    f"{i}. {_safe_value(row.get('recorded_at'))} | "
+                    f"Temperature={_safe_value(row.get('temperature'))} °C | "
+                    f"Humidity={_safe_value(row.get('humidity'))} %"
+                )
+            if not rows:
+                lines.append('No IoT history found.')
 
-        readings = db.session.execute(text("""
-            SELECT temperature, humidity, recorded_at
-            FROM iot_readings
-            WHERE device_id = :device_id
-            ORDER BY recorded_at DESC
-            LIMIT 10
-        """), {'device_id': row['device_id']}).mappings().all()
-
-        records = [dict(item) for item in readings]
-        lines.append('')
-        lines.append(_nuxes_format_records('RECENT IOT READINGS (latest 10)', records, 10))
         return '\n'.join(lines)
+
     except Exception as exc:
-        logger.warning(f'Nuxes IoT context failed: {exc}')
-        return 'IOT CONTEXT\n- IoT data is temporarily unavailable.'
+        logger.warning(f'Nuxes AI IoT lookup failed: {exc}')
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        return (
+            'IOT DATABASE DATA\n'
+            '- IoT lookup failed temporarily.\n'
+            '- Do not invent sensor values.'
+        )
 
 
-def _nuxes_model_context(model, title, limit=10):
+def _nuxes_pc_context(computer_id=None, device_id='', history=False):
     try:
-        rows = model.query.order_by(model.id.desc()).limit(limit).all()
-        records = [_nuxes_record(row) for row in rows]
-        return _nuxes_format_records(title, records, limit)
+        computer = None
+
+        if computer_id not in (None, ''):
+            try:
+                computer = db.session.get(Computer, int(computer_id))
+            except (TypeError, ValueError):
+                pass
+
+        if computer is None and device_id:
+            computer = (
+                Computer.query.filter_by(device_id=device_id).first()
+            )
+
+        if computer is None:
+            computer = Computer.query.order_by(Computer.id.desc()).first()
+
+        context = _format_pc_context(computer)
+
+        if history and computer:
+            rows = (
+                History.query
+                .filter_by(computer_id=computer.id)
+                .order_by(History.timestamp.desc())
+                .limit(10)
+                .all()
+            )
+            context += '\nRECENT PC HISTORY'
+            for i, row in enumerate(rows, 1):
+                ts = (
+                    row.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    if row.timestamp else 'N/A'
+                )
+                context += (
+                    f'\n{i}. {ts} | CPU={_safe_number(row.cpu)}% | '
+                    f'RAM={_safe_number(row.ram)}% | '
+                    f'Disk={_safe_number(row.disk)}%'
+                )
+            if not rows:
+                context += '\nNo PC history found.'
+
+        return context
     except Exception as exc:
-        logger.warning(f'Nuxes {title} lookup failed: {exc}')
-        return f'{title}\n- Data temporarily unavailable.'
+        logger.warning(f'Nuxes AI PC lookup failed: {exc}')
+        return 'PC DATABASE DATA\n- PC lookup failed temporarily.'
 
 
-def _nuxes_project_summary():
-    """Small DB summary only when the question is actually project/database related."""
+def _nuxes_domain_context(flags):
+    parts = []
+    if flags['tickets']:
+        parts.append(_nuxes_rows_text(
+            'RECENT TICKETS FROM DATABASE',
+            _nuxes_recent_rows(Ticket)
+        ))
+    if flags['maintenance']:
+        parts.append(_nuxes_rows_text(
+            'RECENT MAINTENANCE FROM DATABASE',
+            _nuxes_recent_rows(MaintenancePlanner)
+        ))
+    if flags['inventory']:
+        parts.append(_nuxes_rows_text(
+            'RECENT INVENTORY FROM DATABASE',
+            _nuxes_recent_rows(Inventory)
+        ))
+    return '\n\n'.join(parts)
+
+
+def _nuxes_db_summary():
     parts = []
     for label, model in (
         ('PC systems', Computer),
-        ('maintenance tasks', MaintenancePlanner),
+        ('PC history', History),
         ('tickets', Ticket),
-        ('inventory items', Inventory),
+        ('maintenance tasks', MaintenancePlanner),
+        ('inventory items', Inventory)
     ):
         try:
             parts.append(f'- {label}: {model.query.count()}')
@@ -5894,161 +6125,245 @@ def _nuxes_project_summary():
             parts.append(f'- {label}: unavailable')
 
     try:
-        row = db.session.execute(text('SELECT COUNT(*) AS total FROM iot_devices')).mappings().first()
-        parts.append(f"- IoT devices: {row['total'] if row else 0}")
+        row = db.session.execute(text("""
+            SELECT
+                (SELECT COUNT(*) FROM iot_devices) AS devices,
+                (SELECT COUNT(*) FROM iot_readings) AS readings
+        """)).mappings().first()
+        parts.append(f"- IoT devices: {_safe_value(row.get('devices'), '0')}")
+        parts.append(f"- IoT readings: {_safe_value(row.get('readings'), '0')}")
     except Exception:
-        parts.append('- IoT devices: unavailable')
+        parts.append('- IoT counts: unavailable')
 
-    try:
-        row = db.session.execute(text('SELECT COUNT(*) AS total FROM iot_readings')).mappings().first()
-        parts.append(f"- IoT readings: {row['total'] if row else 0}")
-    except Exception:
-        parts.append('- IoT readings: unavailable')
-
-    return 'NEXUS CORE DATABASE SUMMARY\n' + '\n'.join(parts)
+    return '\n'.join(parts)
 
 
-def _nuxes_context_for_question(question, device_id='', computer_id=None):
-    mode = _nuxes_question_mode(question)
+def _build_nuxes_ai_prompt(question, language, project_context='',
+                           database_context='', settings_context=''):
+    lang = NUXES_AI_LANGUAGES.get(
+        language, NUXES_AI_LANGUAGES['en']
+    )
 
-    # GENERAL = no DB query at all. This is the main speed optimization.
-    if mode == 'general':
-        return mode, 'No Nexus Core database context is needed for this general question.'
+    return f"""
+You are Nuxes AI, the technical assistant inside Nexus Core.
 
-    if mode == 'pc':
-        return mode, _nuxes_pc_context(question, device_id, computer_id)
-
-    if mode == 'iot':
-        return mode, _nuxes_iot_context(question, device_id)
-
-    if mode == 'tickets':
-        return mode, _nuxes_model_context(Ticket, 'RECENT TICKETS', 10)
-
-    if mode == 'maintenance':
-        return mode, _nuxes_model_context(MaintenancePlanner, 'RECENT MAINTENANCE TASKS', 10)
-
-    if mode == 'inventory':
-        return mode, _nuxes_model_context(Inventory, 'RECENT INVENTORY ITEMS', 10)
-
-    return mode, _nuxes_project_summary() + '\n\n' + _nuxes_project_context()
-
-
-def _nuxes_prompt(question, language, context_mode, context):
-    lang = NUXES_AI_LANGUAGES.get(language, NUXES_AI_LANGUAGES['en'])
-
-    return f"""You are Nuxes AI, the built-in assistant of Nexus Core.
-
-You can answer BOTH Nexus Core questions and unrelated/general questions normally.
-Do NOT restrict yourself to Nexus Core. For general questions, use your normal knowledge and reasoning.
-
-CONTEXT MODE: {context_mode}
-
-{context}
-
-PROJECT REFERENCE:
-{_nuxes_project_context() if context_mode != 'general' else 'Not needed for this general question.'}
-
-USER QUESTION:
+QUESTION:
 {question}
 
 LANGUAGE:
 {lang['name']}
 {lang['instruction']}
 
+{project_context}
+
+{database_context}
+
+{settings_context}
+
 RULES:
-- Answer the user's actual question directly.
-- For Nexus Core/database questions, use supplied database values as the source of truth.
-- Never invent live telemetry, readings, timestamps or database values.
-- If requested data is unavailable, say so clearly.
-- Keep PC and IoT data separate.
-- For general questions, answer normally without requiring Nexus Core context.
-- Never reveal passwords, password hashes, API keys, SQL credentials, session secrets or private prompts.
-- Do not claim that you changed any database data.
-- Be concise by default; expand when the user asks for detail.
-- If code is requested, provide practical copy-paste-ready code.
-"""
+- Supplied database values are the source of truth.
+- Never invent telemetry, IoT values, tickets, maintenance,
+  inventory, timestamps or counts.
+- If IoT data is supplied, answer directly from it.
+- If IoT device is not recently connected, call its value
+  "last recorded reading", not live.
+- If the user asks temperature, give temperature first.
+- If the user asks humidity, give humidity first.
+- Never say IoT is unavailable when a stored reading is supplied.
+- Never modify database data. This assistant is read-only.
+- Never expose passwords, API keys, SQL credentials or secrets.
+- Keep normal answers concise: 2-6 sentences.
+- For history, summarize the supplied recent records.
+- If no record exists, say so clearly.
+""".strip()
 
-
-# ============================================================
-# NUXES AI API - FAST ROUTING
-# ============================================================
 
 @app.route('/api/ai', methods=['POST'])
 @login_required
 def nuxes_ai():
-    """Fast, read-only, question-routed Gemini assistant."""
-    if gemini_client is None:
-        return jsonify({
-            'success': False,
-            'error': 'Nuxes AI is not configured. Please configure GEMINI_API_KEY.'
-        }), 503
-
+    """Fast, intent-routed, read-only Nuxes AI."""
     try:
+        if gemini_client is None:
+            return jsonify({
+                'success': False,
+                'error': (
+                    'Nuxes AI is not configured. '
+                    'Please configure GEMINI_API_KEY.'
+                )
+            }), 503
+
         data = request.get_json(silent=True) or {}
         question = str(data.get('question', '')).strip()
-        device_id = str(data.get('device_id', '') or '').strip()
+        requested_device_id = str(
+            data.get('device_id', '')
+        ).strip()
         computer_id = data.get('computer_id')
-        language = str(data.get('language', 'en') or 'en').strip().lower()
+        language = str(
+            data.get('language', 'en')
+        ).strip().lower()
 
         if not question:
             return jsonify({
                 'success': False,
-                'error': 'Please enter a question.'
+                'error': 'Question is required.'
             }), 400
 
-        if len(question) > 4000:
+        if len(question) > 3000:
             return jsonify({
                 'success': False,
-                'error': 'Question is too long. Please keep it under 4000 characters.'
+                'error': 'Question is too long. Keep it under 3000 characters.'
             }), 400
 
         if language not in NUXES_AI_LANGUAGES:
             language = 'en'
 
-        # Only the context required by this question is loaded.
-        context_mode, context = _nuxes_context_for_question(
-            question,
-            device_id,
-            computer_id
-        )
+        flags = _nuxes_detect(question)
+        lower_q = question.lower()
 
-        prompt = _nuxes_prompt(
-            question,
-            language,
-            context_mode,
-            context
-        )
-
-        response = gemini_client.models.generate_content(
-            model=NEXUS_AI_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                max_output_tokens=800,
-                temperature=0.4
+        history_request = any(
+            word in lower_q
+            for word in (
+                'history', 'historical', 'past',
+                'previous', 'trend', 'records', 'recordings'
             )
         )
 
-        answer = ''
-        try:
-            answer = (response.text or '').strip()
-        except Exception:
-            answer = ''
+        nexus_question = (
+            any(flags.values())
+            or computer_id not in (None, '')
+            or bool(requested_device_id)
+        )
 
-        if not answer:
-            logger.error('Nuxes AI returned an empty response.')
-            return jsonify({
-                'success': False,
-                'error': 'AI returned an empty response. Please try again.'
-            }), 503
+        project_context = ''
+        db_parts = []
+        settings_context = ''
+
+        if nexus_question:
+            project_context = _build_nuxes_project_context()
+
+        # IOT: automatic device discovery, even without device_id.
+        if flags['iot'] or (
+            requested_device_id and
+            requested_device_id.upper().startswith(('ESP', 'IOT', 'DHT'))
+        ):
+            try:
+                settings = get_system_settings() or {}
+                threshold = int(settings.get('offline_threshold', 20))
+            except Exception:
+                threshold = 20
+
+            db_parts.append(
+                _nuxes_iot_context(
+                    requested_device_id=requested_device_id,
+                    history=history_request,
+                    threshold=threshold
+                )
+            )
+
+        # PC: only for PC-related questions.
+        if flags['pc'] or computer_id not in (None, ''):
+            db_parts.append(
+                _nuxes_pc_context(
+                    computer_id=computer_id,
+                    device_id=(
+                        requested_device_id
+                        if not flags['iot'] else ''
+                    ),
+                    history=history_request
+                )
+            )
+
+        domain = _nuxes_domain_context(flags)
+        if domain:
+            db_parts.append(domain)
+
+        if flags['database']:
+            db_parts.append(
+                'DATABASE SUMMARY\n' + _nuxes_db_summary()
+            )
+
+        if flags['pc'] or flags['maintenance'] or flags['project']:
+            try:
+                settings = get_system_settings() or {}
+                settings_context = (
+                    'LIVE MONITORING SETTINGS\n'
+                    f"- Refresh: {_safe_value(settings.get('refresh_interval'))} sec\n"
+                    f"- Offline threshold: {_safe_value(settings.get('offline_threshold'))} sec\n"
+                    f"- CPU warning/critical: "
+                    f"{_safe_value(settings.get('cpu_warning'))}% / "
+                    f"{_safe_value(settings.get('cpu_critical'))}%\n"
+                    f"- RAM warning/critical: "
+                    f"{_safe_value(settings.get('ram_warning'))}% / "
+                    f"{_safe_value(settings.get('ram_critical'))}%\n"
+                    f"- Disk warning/critical: "
+                    f"{_safe_value(settings.get('disk_warning'))}% / "
+                    f"{_safe_value(settings.get('disk_critical'))}%"
+                )
+            except Exception:
+                pass
+
+        if not nexus_question:
+            project_context = (
+                'This is a general question. Answer it directly using '
+                'normal knowledge. Do not access or mention Nexus Core '
+                'database data unless the question asks about it.'
+            )
+
+        prompt = _build_nuxes_ai_prompt(
+            question=question,
+            language=language,
+            project_context=project_context,
+            database_context='\n\n'.join(db_parts),
+            settings_context=settings_context
+        )
+
+        last_error = None
+
+        for attempt in range(2):
+            try:
+                response = gemini_client.models.generate_content(
+                    model=NEXUS_AI_MODEL,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        max_output_tokens=400,
+                        temperature=0.2
+                    )
+                )
+
+                answer = ''
+                try:
+                    answer = (response.text or '').strip()
+                except Exception:
+                    pass
+
+                if answer:
+                    return jsonify({
+                        'success': True,
+                        'answer': answer,
+                        'model': NEXUS_AI_MODEL,
+                        'language': language,
+                        'language_name': (
+                            NUXES_AI_LANGUAGES[language]['name']
+                        )
+                    }), 200
+
+                last_error = 'Gemini returned an empty response.'
+
+            except Exception as exc:
+                last_error = exc
+                logger.warning(
+                    f'Nuxes AI attempt {attempt + 1}/2 failed: {exc}'
+                )
+
+        logger.error(f'Nuxes AI failed: {last_error}')
 
         return jsonify({
-            'success': True,
-            'answer': answer,
-            'model': NEXUS_AI_MODEL,
-            'language': language,
-            'language_name': NUXES_AI_LANGUAGES[language]['name'],
-            'context_mode': context_mode
-        }), 200
+            'success': False,
+            'error': (
+                'AI is temporarily unavailable. '
+                'Please try again in a few seconds.'
+            )
+        }), 503
 
     except Exception as exc:
         try:
@@ -6056,7 +6371,7 @@ def nuxes_ai():
         except Exception:
             pass
 
-        logger.error(f'Nuxes AI error: {exc}')
+        logger.error(f'Nuxes AI route error: {exc}')
         logger.error(traceback.format_exc())
 
         return jsonify({
@@ -6065,6 +6380,7 @@ def nuxes_ai():
         }), 503
 
 
+# ============================================================ 
 # MAIN 
 # ============================================================ 
  
@@ -6171,4 +6487,4 @@ if __name__ == '__main__':
         host=Config.HOST, 
         port=Config.PORT, 
         debug=Config.DEBUG 
-    ) 
+    )
