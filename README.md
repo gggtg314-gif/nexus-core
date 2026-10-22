@@ -470,6 +470,186 @@ Generate Maintenance Insights
 ```
 
 ---
+Dhtt code
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <DHT.h>
+#include <WiFiManager.h>
+
+// =========================
+// DHT11 Configuration
+// =========================
+
+#define DHTPIN 4
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+
+// =========================
+// Device ID
+// =========================
+
+const char* DEVICE_ID = "ESP32-DHT11-01";
+
+// =========================
+// Nexus Core API
+// =========================
+
+const char* SERVER_URL =
+  "https://nexus-core-jewi.onrender.com/api/iot/update";
+
+// =========================
+// Setup
+// =========================
+
+void setup() {
+
+  Serial.begin(115200);
+
+  delay(1000);
+
+  Serial.println();
+  Serial.println("==============================");
+  Serial.println("Nexus Core DHT11 Agent");
+  Serial.println("==============================");
+
+  // Start DHT11
+  dht.begin();
+
+  // =========================
+  // WiFi Manager
+  // =========================
+
+  WiFiManager wm;
+
+  Serial.println("Connecting to Wi-Fi...");
+
+  if (!wm.autoConnect("NexusCore-DHT11")) {
+
+    Serial.println("Wi-Fi connection failed.");
+    Serial.println("Restarting...");
+
+    ESP.restart();
+  }
+
+  Serial.println("Wi-Fi Connected!");
+
+  Serial.print("ESP32 IP: ");
+  Serial.println(WiFi.localIP());
+
+  Serial.println("==============================");
+}
+
+// =========================
+// Loop
+// =========================
+
+void loop() {
+
+  // Check Wi-Fi
+  if (WiFi.status() != WL_CONNECTED) {
+
+    Serial.println("Wi-Fi disconnected.");
+
+    delay(5000);
+
+    return;
+  }
+
+  // =========================
+  // Read DHT11
+  // =========================
+
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+
+  // Check sensor values
+
+  if (isnan(humidity) || isnan(temperature)) {
+
+    Serial.println("Failed to read from DHT11!");
+
+    delay(5000); 
+
+    return;
+  }
+
+  // =========================
+  // Serial Output
+  // =========================
+
+  Serial.println();
+  Serial.println("========== DHT11 ==========");
+
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" °C");
+
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.println(" %");
+
+  Serial.print("Device ID: ");
+  Serial.println(DEVICE_ID);
+
+  // =========================
+  // Send Data to Nexus Core
+  // =========================
+
+  HTTPClient http;
+
+  http.begin(SERVER_URL);
+
+  http.addHeader("Content-Type", "application/json");
+
+  String jsonData = "{";
+
+  jsonData += "\"device_id\":\"";
+  jsonData += DEVICE_ID;
+  jsonData += "\",";
+
+  jsonData += "\"temperature\":";
+  jsonData += String(temperature, 2);
+  jsonData += ",";
+
+  jsonData += "\"humidity\":";
+  jsonData += String(humidity, 2);
+
+  jsonData += "}";
+
+  Serial.println("Sending data to Nexus Core...");
+
+  int httpResponseCode = http.POST(jsonData);
+
+  // =========================
+  // Response
+  // =========================
+
+  if (httpResponseCode > 0) {
+
+    Serial.print("HTTP Response Code: ");
+    Serial.println(httpResponseCode);
+
+    String response = http.getString();
+
+    Serial.print("Server Response: ");
+    Serial.println(response);
+
+  } else {
+
+    Serial.print("HTTP Error: ");
+    Serial.println(httpResponseCode);
+  }
+
+  http.end();
+
+  Serial.println("============================");
+
+  // Send every 5 seconds
+
+  delay(5000);
+}
+
 
 # 🚦 System Status
 
@@ -821,7 +1001,9 @@ The project combines system monitoring, data collection, health analysis, and ma
 GitHub Repository:
 
 https://github.com/gggtg314-gif/nexus-core
+nexus core 
 
+https://nexus-core-jewi.onrender.com
 ---
 
 # 📄 License
